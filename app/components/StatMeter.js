@@ -3,7 +3,7 @@
 export default function StatMeter({ label, abbr, tooltip, value, color, description }) {
   return (
     <div
-      className="flex flex-col gap-2 rounded-2xl border border-indigo-100/60 bg-white/80 p-4 shadow-sm"
+      className="flex flex-col gap-2 rounded-xl border border-slate-200 bg-white p-4"
       title={tooltip}
     >
       <div className="flex items-center justify-between">
@@ -18,7 +18,7 @@ export default function StatMeter({ label, abbr, tooltip, value, color, descript
         </span>
         <span className="text-lg font-bold text-[#5a4b81]">{value}</span>
       </div>
-      <div className="h-3 w-full overflow-hidden rounded-full bg-indigo-100/60">
+      <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
         <div
           className="h-full rounded-full transition-all duration-300"
           style={{ width: `${value}%`, backgroundColor: color }}

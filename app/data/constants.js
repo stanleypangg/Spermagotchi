@@ -35,28 +35,126 @@ export const STAT_CONFIG = Object.freeze([
 
 export const NAV_ITEMS = Object.freeze([
   { id: 'home', label: 'Home', icon: '🏠' },
-  { id: 'habits', label: 'Habits', icon: '📝' },
+  { id: 'boosts', label: 'Boosts', icon: '✨' },
   { id: 'history', label: 'History', icon: '📈' },
   { id: 'settings', label: 'Settings', icon: '⚙️' },
 ]);
 
-export const DEFAULT_HABIT_FORM = Object.freeze({
-  exercise: false,
-  sleep: false,
-  hydration: false,
-  noAlcohol: false,
-  noNicotine: false,
-  lCarnitine: false,
-  coq10: false,
-  micronutrients: false,
-  matchaOrPineapple: false,
-});
+export const GOOD_HABITS_CONFIG = Object.freeze([
+  {
+    key: 'drinkMatcha',
+    title: 'Drink Matcha',
+    effect: '+1 SIG · +0.5 FLOW',
+    look: 'Matcha Glow',
+    category: 'good',
+    imageOverride: {
+      asset: '/happy.png',
+      alt: 'Matcha glow buddy',
+    },
+  },
+  {
+    key: 'goon',
+    title: 'Goon Session',
+    effect: '+1.2 MOT · +0.5 SIG',
+    look: 'Charge Sprint',
+    category: 'good',
+    imageOverride: {
+      asset: '/happier.png',
+      alt: 'Charged sprint buddy',
+    },
+  },
+  {
+    key: 'sleep8Hours',
+    title: 'Sleep 8 Hours',
+    effect: '+1.5 LIN · +0.5 MOT',
+    look: 'Well Rested',
+    category: 'good',
+    imageOverride: {
+      asset: '/neutral.png',
+      alt: 'Well rested buddy',
+    },
+  },
+  {
+    key: 'drink2LWater',
+    title: 'Drink 2L Water',
+    effect: '+1.2 FLOW · +0.3 LIN',
+    look: 'Hydro Glide',
+    category: 'good',
+    imageOverride: {
+      asset: '/happy.png',
+      alt: 'Hydrated buddy',
+    },
+  },
+]);
+
+export const BAD_HABITS_CONFIG = Object.freeze([
+  {
+    key: 'drinkAlcohol',
+    title: 'Drink Alcohol',
+    effect: '−1.5 MOT · −1 LIN · −0.5 SIG',
+    look: 'Tipsy Drift',
+    category: 'bad',
+    imageOverride: {
+      asset: '/sad.png',
+      alt: 'Tipsy drift buddy',
+    },
+  },
+  {
+    key: 'smokeCigarettes',
+    title: 'Smoke Cigarettes',
+    effect: '−2 MOT · −1 SIG',
+    look: 'Smoky Fade',
+    category: 'bad',
+    imageOverride: {
+      asset: '/sadder.png',
+      alt: 'Smoky fade buddy',
+    },
+  },
+  {
+    key: 'eatFastFood',
+    title: 'Eat Fast Food',
+    effect: '−1 MOT · −0.7 FLOW',
+    look: 'Grease Crash',
+    category: 'bad',
+    imageOverride: {
+      asset: '/sad.png',
+      alt: 'Grease crash buddy',
+    },
+  },
+  {
+    key: 'hotLaptop',
+    title: 'Hot Laptop on Lap',
+    effect: '−1.2 MOT · −1 FLOW',
+    look: 'Overheated',
+    category: 'bad',
+    imageOverride: {
+      asset: '/sadder.png',
+      alt: 'Overheated buddy',
+    },
+  },
+]);
+
+const habitDefaults = {};
+const habitOverrides = {};
+
+for (const habit of [...GOOD_HABITS_CONFIG, ...BAD_HABITS_CONFIG]) {
+  habitDefaults[habit.key] = false;
+  habitOverrides[habit.key] = {
+    asset: habit.imageOverride.asset,
+    alt: habit.imageOverride.alt,
+    label: habit.look,
+  };
+}
+
+export const DEFAULT_HABIT_FORM = Object.freeze(habitDefaults);
+
+export const HABIT_IMAGE_OVERRIDES = Object.freeze(habitOverrides);
 
 export const WELLNESS_STATES = Object.freeze([
   { threshold: 0, key: 'sadder', asset: '/sadder.png', alt: 'Sadder sperm buddy' },
   { threshold: 25, key: 'sad', asset: '/sad.png', alt: 'Sad sperm buddy' },
-  { threshold: 40, key: 'neutral', asset: '/neutral.png', alt: 'Neutral sperm buddy' },
-  { threshold: 75, key: 'happy', asset: '/happy.png', alt: 'Happy sperm buddy' },
+  { threshold: 45, key: 'neutral', asset: '/neutral.png', alt: 'Neutral sperm buddy' },
+  { threshold: 70, key: 'happy', asset: '/happy.png', alt: 'Happy sperm buddy' },
   { threshold: 90, key: 'happiest', asset: '/happier.png', alt: 'Happiest sperm buddy' },
 ]);
 
