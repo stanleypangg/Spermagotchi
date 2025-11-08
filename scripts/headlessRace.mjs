@@ -51,7 +51,17 @@ if (placeSet.size !== summary.placements.length) {
   throw new Error('Duplicate placement detected in headless race.');
 }
 
+if (summary.placements.length !== MOCK_RACERS.length) {
+  throw new Error('Not all racers reached the finish.');
+}
+
+if (summary.time < 5 || summary.time > 120) {
+  throw new Error(`Unexpected race duration (${summary.time}s).`);
+}
+
 if (!frame.isFinished) {
+  const topProgress = Math.max(...frame.lanes.map((lane) => lane.progress));
+  console.error('Top progress at timeout:', topProgress.toFixed(3));
   throw new Error('Race did not finish within allotted steps.');
 }
 
@@ -60,6 +70,25 @@ summary.events.forEach((event) => {
     throw new Error('Encountered NaN timestamp in event log.');
   }
 });
+
+const laneOrder = frame.lanes
+  .filter((lane) => lane.finished)
+  .sort((a, b) => a.place - b.place)
+  .map((lane) => lane.id);
+
+const summaryOrder = summary.placements
+  .slice()
+  .sort((a, b) => a.place - b.place)
+  .map((entry) => entry.id);
+
+if (JSON.stringify(laneOrder) !== JSON.stringify(summaryOrder)) {
+  throw new Error('Finish order mismatch between frame and summary.');
+}
+
+if (!frame.lanes.every((lane) => lane.finished && lane.progress >= 0.99)) {
+  throw new Error('One or more racers did not complete the lap.');
+}
+
 
 
 
