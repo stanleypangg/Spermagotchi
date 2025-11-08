@@ -2,7 +2,7 @@ export const STAT_CONFIG = Object.freeze([
   {
     key: 'motility',
     label: 'Motility',
-    abbr: 'MOT',
+    abbr: 'M',
     description: 'Swim speed. Feeds base speed in every zone.',
     tooltip: 'Swim speed (akin to CASA VCL).',
     color: '#7dd3fc',
@@ -10,7 +10,7 @@ export const STAT_CONFIG = Object.freeze([
   {
     key: 'linearity',
     label: 'Linearity',
-    abbr: 'LIN',
+    abbr: 'L',
     description: 'How straight you swim. Converts speed into forward progress.',
     tooltip: 'Swim straighter for real progress (VSL/VCL).',
     color: '#a5b4fc',
@@ -18,7 +18,7 @@ export const STAT_CONFIG = Object.freeze([
   {
     key: 'flow',
     label: 'Flow',
-    abbr: 'FLOW',
+    abbr: 'F',
     description: 'Handling in currents and thicker mucus.',
     tooltip: 'Handle currents and thickness (rheotaxis/viscosity).',
     color: '#bef264',
@@ -26,7 +26,7 @@ export const STAT_CONFIG = Object.freeze([
   {
     key: 'signals',
     label: 'Signals',
-    abbr: 'SIG',
+    abbr: 'S',
     description: 'How well you follow cues and trigger bursts.',
     tooltip: 'Follow cues and time bursts (chemotaxis/hyperactivation).',
     color: '#f9a8d4',
@@ -35,7 +35,7 @@ export const STAT_CONFIG = Object.freeze([
 
 export const NAV_ITEMS = Object.freeze([
   { id: 'home', label: 'Home', icon: '🏠' },
-  { id: 'boosts', label: 'Boosts', icon: '✨' },
+  { id: 'shop', label: 'Shop', icon: '🛍️' },
   { id: 'history', label: 'History', icon: '📈' },
   { id: 'settings', label: 'Settings', icon: '⚙️' },
 ]);
@@ -48,7 +48,7 @@ export const GOOD_HABITS_CONFIG = Object.freeze([
     look: 'Matcha Glow',
     category: 'good',
     imageOverride: {
-      asset: '/happy.png',
+      asset: '/matcha.png',
       alt: 'Matcha glow buddy',
     },
   },
@@ -151,10 +151,83 @@ export const DEFAULT_HABIT_FORM = Object.freeze(habitDefaults);
 export const HABIT_IMAGE_OVERRIDES = Object.freeze(habitOverrides);
 
 export const WELLNESS_STATES = Object.freeze([
-  { threshold: 0, key: 'sadder', asset: '/sadder.png', alt: 'Sadder sperm buddy' },
-  { threshold: 25, key: 'sad', asset: '/sad.png', alt: 'Sad sperm buddy' },
-  { threshold: 45, key: 'neutral', asset: '/neutral.png', alt: 'Neutral sperm buddy' },
-  { threshold: 70, key: 'happy', asset: '/happy.png', alt: 'Happy sperm buddy' },
-  { threshold: 90, key: 'happiest', asset: '/happier.png', alt: 'Happiest sperm buddy' },
+  {
+    threshold: 0,
+    key: 'sadder',
+    asset: '/sadder.png',
+    alt: 'Sadder sperm buddy',
+    label: 'Sadder',
+  },
+  {
+    threshold: 25,
+    key: 'sad',
+    asset: '/sad.png',
+    alt: 'Sad sperm buddy',
+    label: 'Sad',
+  },
+  {
+    threshold: 45,
+    key: 'neutral',
+    asset: '/neutral.png',
+    alt: 'Neutral sperm buddy',
+    label: 'Neutral',
+  },
+  {
+    threshold: 70,
+    key: 'happy',
+    asset: '/happy.png',
+    alt: 'Happy sperm buddy',
+    label: 'Happy',
+  },
+  {
+    threshold: 90,
+    key: 'happiest',
+    asset: '/happier.png',
+    alt: 'Happiest sperm buddy',
+    label: 'Happiest',
+  },
+]);
+
+export const SHOP_CLOTHING_ITEMS = Object.freeze([
+  {
+    id: 'lingerie',
+    name: 'Silky Lingerie Set',
+    price: 42,
+    rarity: 'Rare',
+    imagePath: '/lingerie.png',
+    description: 'Because even petri dishes deserve a runway moment.',
+  },
+  {
+    id: 'among-us',
+    name: 'Sus Capsule Suit',
+    price: 55,
+    rarity: 'Legendary',
+    imagePath: '/among-us.png',
+    description: 'Task: look adorable. Venting optional.',
+  },
+  {
+    id: '67',
+    name: 'No. 67 Race Kit',
+    price: 36,
+    rarity: 'Common',
+    imagePath: '/67.png',
+    description: 'Coach says channel your inner lane sixty-seven.',
+  },
+  {
+    id: 'butt-plug',
+    name: 'Chromed Plug Fin',
+    price: 48,
+    rarity: 'Rare',
+    imagePath: '/plug.jpg',
+    description: 'Hydrodynamics? Questionable. Confidence? Unshakable.',
+  },
+  {
+    id: 'speed-core',
+    name: 'I Need This',
+    price: 60,
+    rarity: 'Legendary',
+    imagePath: '/speed.png',
+    description: 'Built for reckless velocity and chaos energy.',
+  },
 ]);
 
