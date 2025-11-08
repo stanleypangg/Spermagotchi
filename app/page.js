@@ -12,31 +12,11 @@ import HistoryPanel from './components/HistoryPanel';
 import SettingsPanel from './components/SettingsPanel';
 import HomePanel from './components/HomePanel';
 import NavigationBar from './components/NavigationBar';
-
-const STAT_CONFIG = [
-  { key: 'happiness', label: 'Happiness', icon: '😊', color: '#ff99c8' },
-  { key: 'vitality', label: 'Vitality', icon: '⚡', color: '#90dbf4' },
-  { key: 'motility', label: 'Motility', icon: '🏊', color: '#9bf6ff' },
-  { key: 'morphology', label: 'Morphology', icon: '🧬', color: '#caffbf' },
-];
-
-const NAV_ITEMS = [
-  { id: 'home', label: 'Home', icon: '🏠' },
-  { id: 'habits', label: 'Habits', icon: '📝' },
-  { id: 'history', label: 'History', icon: '📈' },
-  { id: 'settings', label: 'Settings', icon: '⚙️' },
-];
-
-const DEFAULT_HABIT_FORM = Object.freeze({
-  tookSupplements: false,
-  exerciseMinutes: 0,
-  drankWaterLiters: 0,
-  sleepHours: 8,
-  atePineapple: false,
-  drankMatchaOrTea: false,
-  alcoholUnits: 0,
-  smokedCigarettes: 0,
-});
+import {
+  STAT_CONFIG,
+  NAV_ITEMS,
+  DEFAULT_HABIT_FORM,
+} from './data/constants';
 
 export default function Home() {
   const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
