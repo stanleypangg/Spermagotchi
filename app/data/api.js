@@ -2,7 +2,7 @@ export async function fetchSpermState(id) {
   const res = await fetch(`/api/sperm/${id}/state`, { cache: 'no-store' });
   if (!res.ok) {
     if (res.status === 404) {
-      throw new Error('not-found');
+      return null;
     }
     throw new Error('state-failed');
   }

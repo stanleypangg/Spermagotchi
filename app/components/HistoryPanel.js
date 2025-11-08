@@ -21,10 +21,10 @@ export default function HistoryPanel({ history, loading }) {
               >
                 <div className="text-base font-bold text-[#3f3d56]">{entry.date}</div>
                 <div className="flex flex-wrap gap-3 text-[#5a4b81]">
-                  <span>😊 {entry.stats.happiness}</span>
-                  <span>⚡ {entry.stats.vitality}</span>
-                  <span>🏊 {entry.stats.motility}</span>
-                  <span>🧬 {entry.stats.morphology}</span>
+                  <span>MOT {Math.round(entry.stats.motility ?? 0)}</span>
+                  <span>LIN {Math.round(entry.stats.linearity ?? 0)}</span>
+                  <span>FLOW {Math.round(entry.stats.flow ?? 0)}</span>
+                  <span>SIG {Math.round(entry.stats.signals ?? 0)}</span>
                 </div>
                 <div className="flex flex-wrap gap-3 text-slate-500">
                   <span>Health {entry.overallHealthScore}</span>

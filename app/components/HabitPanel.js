@@ -27,7 +27,7 @@ const HABIT_CARDS = [
     key: 'noNicotine',
     title: 'No nicotine today',
     daily: 'Stacks with consistency',
-    weekly: '6+ days → +1 to every stat',
+    weekly: '6+ days → +1 all stats',
   },
   {
     key: 'lCarnitine',
@@ -43,7 +43,7 @@ const HABIT_CARDS = [
   },
   {
     key: 'micronutrients',
-    title: 'Zinc / Selenium / Folate',
+    title: 'Zinc · Selenium · Folate',
     daily: '+1 LIN',
     weekly: '5+ days → +1 FLOW',
   },
@@ -108,43 +108,6 @@ export default function HabitPanel({
         {submitting ? 'Saving…' : 'Save Check-In'}
       </button>
     </form>
-  );
-}
-
-function ToggleRow({ label, value, onChange }) {
-  return (
-    <label className="flex items-center justify-between gap-3 rounded-2xl border border-indigo-100/80 bg-white px-4 py-3 font-semibold text-[#4f4c68] shadow-sm">
-      <span>{label}</span>
-      <input
-        type="checkbox"
-        className="h-5 w-5 accent-[#8f54ff]"
-        checked={value}
-        onChange={(event) => onChange(event.target.checked)}
-      />
-    </label>
-  );
-}
-
-function SliderRow({ label, suffix, min, max, step, value, onChange }) {
-  return (
-    <label className="flex flex-col gap-3 rounded-2xl border border-indigo-100/80 bg-white px-4 py-3 font-semibold text-[#4f4c68] shadow-sm">
-      <div className="flex items-center justify-between">
-        <span>{label}</span>
-        <span className="text-sm font-bold text-[#5a4b81]">
-          {value}
-          {suffix ? ` ${suffix}` : ''}
-        </span>
-      </div>
-      <input
-        type="range"
-        min={min}
-        max={max}
-        step={step}
-        value={value}
-        onChange={(event) => onChange(Number(event.target.value))}
-        className="accent-[#8f54ff]"
-      />
-    </label>
   );
 }
 

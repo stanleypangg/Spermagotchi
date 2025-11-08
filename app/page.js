@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import neutralSprite from '@/public/neutral.png';
+import petriDish from '@/public/petri.png';
 import StatMeter from './components/StatMeter';
 import DerivedBadge from './components/DerivedBadge';
 import LandingScreen from './components/LandingScreen';
@@ -54,9 +55,13 @@ export default function Home() {
 
   const fetchSpermState = useCallback(async (id) => {
     const data = await fetchSpermStateApi(id);
+    if (!data) {
+      return null;
+    }
     setSperm(data.sperm);
     setDerived(data.derived);
     setLatestCheckIn(data.latestCheckIn ?? null);
+    return data;
   }, []);
 
   const fetchHistory = useCallback(async (id, limit = 14) => {
@@ -101,29 +106,40 @@ export default function Home() {
         return;
       }
 
-      try {
-        await fetchSpermState(storedId);
+    try {
+      const data = await fetchSpermState(storedId);
+      if (!data) {
+        window.localStorage.removeItem('spermId');
         if (!isCancelled) {
-          setSpermId(storedId);
-          setShowLanding(false);
+          setSpermId(null);
+          setSperm(null);
+          setDerived(null);
+          setLatestCheckIn(null);
+          setHistory([]);
+          setShowLanding(true);
         }
-      } catch (err) {
-        console.error(err);
-        if (err.message === 'not-found') {
-          window.localStorage.removeItem('spermId');
-          if (!isCancelled) {
-            setSpermId(null);
-            setSperm(null);
-            setDerived(null);
-            setLatestCheckIn(null);
-            setHistory([]);
-            setShowLanding(true);
-            setError(null);
-          }
-        } else if (!isCancelled) {
-          setError('Unable to load buddy. Please refresh.');
+        return;
+      }
+      if (!isCancelled) {
+        setSpermId(storedId);
+        setShowLanding(false);
+      }
+    } catch (err) {
+      window.localStorage.removeItem('spermId');
+      if (!isCancelled) {
+        setSpermId(null);
+        setSperm(null);
+        setDerived(null);
+        setLatestCheckIn(null);
+        setHistory([]);
+        setShowLanding(true);
+        if (err?.message && err.message !== 'state-failed') {
+          setError(err.message);
+        } else {
+          setError(null);
         }
-      } finally {
+      }
+    } finally {
         if (!isCancelled) {
           setLoading(false);
         }
@@ -174,13 +190,20 @@ export default function Home() {
       setHabitForm({ ...DEFAULT_HABIT_FORM });
       setHistory([]);
       setActiveTab('home');
-      await fetchSpermState(newSperm.id);
+      const data = await fetchSpermState(newSperm.id);
+      if (!data) {
+        throw new Error('Could not locate the newly hatched buddy.');
+      }
       setShowLanding(false);
       setCreateName('');
       scheduleFeedbackClear('Buddy hatched! 🌟');
     } catch (err) {
       console.error(err);
-      setCreateError(err.message ?? 'Could not hatch buddy. Try again.');
+      const message =
+        err?.message && err.message !== 'state-failed'
+          ? err.message
+          : 'Could not hatch buddy. Try again.';
+      setCreateError(message);
     } finally {
       setCreating(false);
       setLoading(false);
@@ -221,7 +244,11 @@ export default function Home() {
       setActiveTab('home');
     } catch (err) {
       console.error(err);
-      setError(err.message);
+      const message =
+        err?.message && err.message !== 'state-failed'
+          ? err.message
+          : 'Unable to record those habits. Please try again.';
+      setError(message);
     } finally {
       setSubmitting(false);
     }
@@ -309,15 +336,25 @@ export default function Home() {
         <div className="rounded-full bg-pink-100/50 px-4 py-1 text-sm font-semibold text-pink-500">
           {moodLabel}
         </div>
-        <div className="relative flex h-64 w-64 items-center justify-center animate-float md:h-72 md:w-72">
+        <div className="relative flex h-64 w-64 items-center justify-center md:h-72 md:w-72">
           <Image
-            src={neutralSprite}
-            alt="Sperm buddy"
-            width={240}
-            height={240}
+            src={petriDish}
+            alt="Petri dish backdrop"
+            width={280}
+            height={280}
+            className="absolute translate-y-20 h-[280px] w-[280px] object-contain md:bottom-[-22px] md:h-[320px] md:w-[320px]"
             priority
-            className="h-full w-full object-contain drop-shadow-[0_16px_32px_rgba(63,61,86,0.24)]"
           />
+          <div className="relative z-10 flex h-full w-full items-center justify-center animate-float">
+            <Image
+              src={neutralSprite}
+              alt="Sperm buddy"
+              width={240}
+              height={240}
+              priority
+              className="h-full w-full object-contain drop-shadow-[0_16px_32px_rgba(63,61,86,0.24)]"
+            />
+          </div>
         </div>
       </section>
 

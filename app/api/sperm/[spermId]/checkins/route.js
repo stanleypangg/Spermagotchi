@@ -7,9 +7,9 @@ function handleError(error) {
   return NextResponse.json({ error: message }, { status });
 }
 
-export async function POST(request, { params }) {
+export async function POST(request, context) {
   try {
-    const { spermId } = params;
+    const { spermId } = await context.params;
     const body = await request.json();
     if (!spermId) {
       return NextResponse.json({ error: 'Missing spermId.' }, { status: 400 });
