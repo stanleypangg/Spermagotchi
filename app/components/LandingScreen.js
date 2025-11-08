@@ -28,7 +28,7 @@ export default function LandingScreen({
           </p>
         </div>
 
-        <div className="relative flex w-full items-center justify-center">
+        {/* <div className="relative flex w-full items-center justify-center">
           <div className="absolute h-72 w-72 rounded-full bg-[radial-gradient(circle,rgba(175,209,255,0.45)_0%,rgba(255,255,255,0)_70%)] blur-[2px] md:h-80 md:w-80" />
           <Image
             src={neutralSprite}
@@ -38,7 +38,7 @@ export default function LandingScreen({
             priority
             className="relative h-52 w-52 drop-shadow-[0_20px_40px_rgba(91,79,155,0.28)] md:h-60 md:w-60"
           />
-        </div>
+        </div> */}
 
         <form className="flex w-full flex-col gap-5" onSubmit={handleSubmit}>
           <div className="flex flex-col items-start gap-2 text-left">
