@@ -35,7 +35,7 @@ export const STAT_CONFIG = Object.freeze([
 
 export const NAV_ITEMS = Object.freeze([
   { id: 'home', label: 'Home', icon: '🏠' },
-  { id: 'habits', label: 'Habits', icon: '📝' },
+  { id: 'boosts', label: 'Boosts', icon: '✨' },
   { id: 'history', label: 'History', icon: '📈' },
   { id: 'settings', label: 'Settings', icon: '⚙️' },
 ]);
@@ -55,8 +55,8 @@ export const DEFAULT_HABIT_FORM = Object.freeze({
 export const WELLNESS_STATES = Object.freeze([
   { threshold: 0, key: 'sadder', asset: '/sadder.png', alt: 'Sadder sperm buddy' },
   { threshold: 25, key: 'sad', asset: '/sad.png', alt: 'Sad sperm buddy' },
-  { threshold: 40, key: 'neutral', asset: '/neutral.png', alt: 'Neutral sperm buddy' },
-  { threshold: 75, key: 'happy', asset: '/happy.png', alt: 'Happy sperm buddy' },
+  { threshold: 45, key: 'neutral', asset: '/neutral.png', alt: 'Neutral sperm buddy' },
+  { threshold: 70, key: 'happy', asset: '/happy.png', alt: 'Happy sperm buddy' },
   { threshold: 90, key: 'happiest', asset: '/happier.png', alt: 'Happiest sperm buddy' },
 ]);
 

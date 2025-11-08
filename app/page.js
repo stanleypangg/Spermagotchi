@@ -67,6 +67,15 @@ export default function Home() {
         closeModal();
         return;
       }
+      if (tab === 'habits') {
+        setActiveTab('habits');
+        setActiveModal(null);
+        const panel = document.getElementById('habits-panel');
+        if (panel) {
+          panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        return;
+      }
       setActiveTab(tab);
       setActiveModal(tab);
     },
@@ -174,10 +183,10 @@ export default function Home() {
   }, [fetchSpermState]);
 
   useEffect(() => {
-    if (activeTab === 'history' && spermId) {
+    if ((activeTab === 'history' || activeModal === 'history') && spermId) {
       fetchHistory(spermId);
     }
-  }, [activeTab, fetchHistory, spermId]);
+  }, [activeModal, activeTab, fetchHistory, spermId]);
 
   const handleLandingNameChange = useCallback(
     (value) => {
@@ -235,44 +244,59 @@ export default function Home() {
     scheduleFeedbackClear,
   ]);
 
-  const handleHabitChange = (key, value) => {
-    setHabitForm((prev) => ({
-      ...prev,
-      [key]: value,
-    }));
-  };
-
-  const handleHabitSubmit = async (event) => {
-    event.preventDefault();
-    if (!spermId) {
-      return;
-    }
-    setSubmitting(true);
-    setError(null);
-    try {
-      await submitHabitCheckInApi({
-        spermId,
-        date: today,
-        habits: habitForm,
-      });
-      await fetchSpermState(spermId);
-      if (activeTab === 'history') {
-        await fetchHistory(spermId);
+  const syncHabitForm = useCallback(
+    async (nextHabits, previousHabits) => {
+      if (!spermId) {
+        return;
       }
-      setHabitForm({ ...DEFAULT_HABIT_FORM });
-      scheduleFeedbackClear('Daily care recorded!');
-      closeModal();
-    } catch (err) {
-      console.error(err);
-      const message =
-        err?.message && err.message !== 'state-failed'
-          ? err.message
-          : 'Unable to record those habits. Please try again.';
-      setError(message);
-    } finally {
-      setSubmitting(false);
-    }
-  };
+      setSubmitting(true);
+      setError(null);
+      try {
+        await submitHabitCheckInApi({
+          spermId,
+          date: today,
+          habits: nextHabits,
+        });
+        await fetchSpermState(spermId);
+        if (activeTab === 'history' || activeModal === 'history') {
+          await fetchHistory(spermId);
+        }
+        scheduleFeedbackClear('Daily care recorded!');
+      } catch (err) {
+        console.error(err);
+        const message =
+          err?.message && err.message !== 'state-failed'
+            ? err.message
+            : 'Unable to record those habits. Please try again.';
+        setError(message);
+        if (previousHabits) {
+          setHabitForm(previousHabits);
+        }
+      } finally {
+        setSubmitting(false);
+      }
+    },
+    [
+      activeModal,
+      activeTab,
+      fetchHistory,
+      fetchSpermState,
+      scheduleFeedbackClear,
+      spermId,
+      today,
+    ],
+  );
+
+  const handleHabitToggle = useCallback(
+    (key, value) => {
+      setHabitForm((prev) => {
+        const next = { ...prev, [key]: value };
+        syncHabitForm(next, prev);
+        return next;
+      });
+    },
+    [syncHabitForm],
+  );
 
   const handleReset = () => {
     if (typeof window === 'undefined') {
@@ -332,136 +356,90 @@ export default function Home() {
     return current;
   }, WELLNESS_STATES[0]);
 
+  const topStats = [
+    { id: 'points', label: 'Points', value: derived?.overallHealthScore ?? '--' },
+    { id: 'energy', label: 'Energy', value: Math.round(effectiveScore) ?? '--' },
+    { id: 'settings', label: 'Settings', action: () => handleNavSelect('settings') },
+    { id: 'streak', label: 'Streak', value: latestCheckIn?.streak ?? '0' },
+  ];
+
   return (
     <>
-      <main className="flex min-h-screen items-center justify-center bg-linear-to-b from-[#fdf2ff] to-[#dff3ff] px-4 py-10">
-        <div className="w-full max-w-4xl rounded-[28px] border border-white/60 bg-white/80 p-8 shadow-[0_32px_120px_rgba(115,88,210,0.18)] backdrop-blur">
-          <div className="grid gap-6 md:grid-cols-[240px_1fr] md:items-start">
-            <section className="flex flex-col items-center gap-4 text-center">
-              <div className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
-                {sperm?.name ?? 'Buddy'} · Day {sperm?.currentDayIndex ?? 1}
-              </div>
-              <div className="rounded-full bg-pink-100/60 px-4 py-1 text-xs font-semibold text-pink-500">
-                {moodLabel}
-              </div>
-              <div className="relative flex h-48 w-48 items-center justify-center md:h-56 md:w-56">
-                <Image
-                  src={petriDish}
-                  alt="Petri dish backdrop"
-                  width={240}
-                  height={240}
-                  className="absolute h-[220px] w-[220px] translate-y-12 object-contain opacity-90"
-                  priority
-                />
-                <div className="relative z-10 flex h-full w-full items-center justify-center animate-float">
-                  <Image
-                    src={wellnessState.asset}
-                    alt={wellnessState.alt}
-                    width={220}
-                    height={220}
-                    priority
-                    className="h-full w-full object-contain drop-shadow-[0_16px_32px_rgba(63,61,86,0.24)]"
-                  />
-                </div>
-              </div>
-              <div className="rounded-full bg-white px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.35em] text-indigo-500">
-                {wellnessState.alt}
-              </div>
-              <div className="text-[0.7rem] font-semibold uppercase tracking-[0.35em] text-slate-500">
-                Wellness {Math.round(effectiveScore)}
-              </div>
-              <div className="flex w-full flex-col items-stretch gap-2 text-left">
-                <label className="text-[0.65rem] font-semibold uppercase tracking-[0.3em] text-slate-500">
-                  Debug Wellness
-                </label>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  step="1"
-                  value={debugWellness ?? Math.round(combinedScore)}
-                  onChange={(event) => setDebugWellness(Number(event.target.value))}
-                  className="accent-[#8f54ff]"
-                />
+      <main className="relative flex min-h-screen flex-col bg-white pb-32">
+        <header className="flex items-center justify-between px-6 pt-6">
+          {topStats.map((item) => (
+            <div key={item.id} className="flex flex-col items-center text-sm font-semibold text-slate-600">
+              <span className="text-xs uppercase tracking-[0.3em] text-slate-400">{item.label}</span>
+              {item.action ? (
                 <button
                   type="button"
-                  onClick={() => setDebugWellness(null)}
-                  className="self-end text-xs font-semibold text-indigo-500 underline"
+                  onClick={item.action}
+                  className="mt-1 rounded-full bg-slate-100 px-4 py-1 text-xs font-semibold text-slate-600"
                 >
-                  reset
+                  Open
                 </button>
-              </div>
-            </section>
+              ) : (
+                <span className="mt-1 text-lg text-slate-700">{item.value}</span>
+              )}
+            </div>
+          ))}
+        </header>
 
-            <section className="flex flex-col gap-5">
-              <section className="grid grid-cols-3 gap-3">
-                <DerivedBadge
-                  label="Health"
-                  value={derived?.overallHealthScore ?? '--'}
-                  accent="#ffafcc"
-                />
-                <DerivedBadge
-                  label="Consistency"
-                  value={derived?.consistencyScore ?? '--'}
-                  accent="#bde0fe"
-                />
-                <DerivedBadge
-                  label="Performance"
-                  value={derived?.performanceRating ?? '--'}
-                  accent="#caffbf"
-                />
-              </section>
-
-              <section className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                {STAT_CONFIG.map((stat) => (
-                  <StatMeter
-                    key={stat.key}
-                    label={stat.label}
-                    abbr={stat.abbr}
-                    tooltip={stat.tooltip}
-                    description={stat.description}
-                    value={Math.round(sperm?.stats?.[stat.key] ?? 0)}
-                    color={stat.color}
-                  />
-                ))}
-              </section>
-
-              <section className="rounded-3xl border border-indigo-100/70 bg-white/90 px-5 py-4 shadow-sm">
-                {loading ? (
-                  <div className="flex min-h-[120px] items-center justify-center text-sm font-semibold text-slate-500">
-                    Loading…
-                  </div>
-                ) : (
-                  renderPanel()
-                )}
-              </section>
-            </section>
+        <section className="flex flex-1 flex-col items-center justify-center px-6">
+          <div className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
+            {sperm?.name ?? 'Buddy'} · Day {sperm?.currentDayIndex ?? 1}
           </div>
-        </div>
+          <div className="rounded-full bg-pink-100/60 px-4 py-1 text-xs font-semibold text-pink-500">
+            {moodLabel}
+          </div>
+          <div className="relative mt-6 flex h-56 w-56 items-center justify-center">
+            <Image
+              src={petriDish}
+              alt="Petri dish backdrop"
+              width={240}
+              height={240}
+              className="absolute h-[220px] w-[220px] translate-y-12 object-contain opacity-90"
+              priority
+            />
+            <div className="relative z-10 flex h-full w-full items-center justify-center animate-float">
+              <Image
+                src={wellnessState.asset}
+                alt={wellnessState.alt}
+                width={220}
+                height={220}
+                priority
+                className="h-full w-full object-contain drop-shadow-[0_16px_32px_rgba(63,61,86,0.24)]"
+              />
+            </div>
+          </div>
+          <div className="mt-4 text-[0.7rem] font-semibold uppercase tracking-[0.35em] text-slate-500">
+            Wellness {Math.round(effectiveScore)}
+          </div>
+        </section>
+
+        <section className="px-6">
+          <div className="mb-2 flex items-center justify-between text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
+            <span>Daily Check-In</span>
+            <span>{today}</span>
+          </div>
+          <div className="max-h-48 overflow-y-auto rounded-3xl border border-slate-200 bg-white/90 px-4 py-3">
+            <HabitPanel today={today} habitForm={habitForm} onToggle={handleHabitToggle} submitting={submitting} />
+          </div>
+        </section>
       </main>
 
       {feedback && !error && (
-        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 rounded-full bg-linear-to-r from-[#a1c4fd] to-[#c2e9fb] px-4 py-2 text-sm font-semibold text-[#3f3d56] shadow-[0_12px_30px_rgba(102,126,234,0.35)]">
+        <div className="fixed bottom-32 left-1/2 -translate-x-1/2 rounded-full bg-linear-to-r from-[#a1c4fd] to-[#c2e9fb] px-4 py-2 text-sm font-semibold text-[#3f3d56] shadow-[0_12px_30px_rgba(102,126,234,0.35)]">
           {feedback}
         </div>
       )}
       {error && (
-        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 rounded-full bg-rose-500 px-4 py-2 text-sm font-semibold text-white shadow-[0_12px_30px_rgba(255,82,82,0.35)]">
+        <div className="fixed bottom-32 left-1/2 -translate-x-1/2 rounded-full bg-rose-500 px-4 py-2 text-sm font-semibold text-white shadow-[0_12px_30px_rgba(255,82,82,0.35)]">
           {error}
         </div>
       )}
 
       <NavigationBar items={NAV_ITEMS} activeTab={activeTab} onSelect={handleNavSelect} />
-
-      <Modal title="Daily Check-In" open={activeModal === 'habits'} onClose={closeModal}>
-        <HabitPanel
-          today={today}
-          habitForm={habitForm}
-          onHabitChange={handleHabitChange}
-          onSubmit={handleHabitSubmit}
-          submitting={submitting}
-        />
-      </Modal>
 
       <Modal title="Progress History" open={activeModal === 'history'} onClose={closeModal}>
         <HistoryPanel history={history} loading={historyLoading} />
