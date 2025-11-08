@@ -59,6 +59,64 @@ function DerivedBadge({ label, value, accent }) {
   );
 }
 
+function LandingScreen({ name, onNameChange, onSubmit, creating, error }) {
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    onSubmit();
+  };
+
+  return (
+    <main className={styles.landingContainer}>
+      <div className={styles.landingShell}>
+        <div className={styles.landingHeader}>
+          <span className={styles.landingBadge}>Welcome to Sperm Buddy</span>
+          <h1>Hatch Your New Pal</h1>
+          <p>
+            Start the adventure by naming your sperm buddy. Check in daily to keep them happy,
+            healthy, and ready for the big race.
+          </p>
+        </div>
+
+        <div className={styles.landingHero}>
+          <div className={styles.landingHalo} />
+          <Image
+            src={neutralSprite}
+            alt="New sperm buddy illustration"
+            width={240}
+            height={240}
+            priority
+            className={styles.landingImage}
+          />
+        </div>
+
+        <form className={styles.landingForm} onSubmit={handleSubmit}>
+          <div className={styles.landingInputGroup}>
+            <label htmlFor="sperm-name">Name Your Buddy</label>
+            <input
+              id="sperm-name"
+              type="text"
+              value={name}
+              onChange={(event) => onNameChange(event.target.value)}
+              placeholder="e.g. Splash, Bolt, Luna"
+              maxLength={24}
+              autoComplete="off"
+            />
+          </div>
+          {error && <p className={styles.landingError}>{error}</p>}
+          <button className={styles.startButton} type="submit" disabled={creating}>
+            {creating ? 'Hatching...' : 'Start the Adventure'}
+          </button>
+        </form>
+
+        <div className={styles.landingTips}>
+          <strong>Pro tip:</strong>
+          <span>Daily check-ins boost stats and unlock special milestones.</span>
+        </div>
+      </div>
+    </main>
+  );
+}
+
 export default function Home() {
   const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
   const [loading, setLoading] = useState(true);
@@ -73,6 +131,10 @@ export default function Home() {
   const [submitting, setSubmitting] = useState(false);
   const [feedback, setFeedback] = useState(null);
   const [error, setError] = useState(null);
+  const [showLanding, setShowLanding] = useState(false);
+  const [createName, setCreateName] = useState('');
+  const [createError, setCreateError] = useState(null);
+  const [creating, setCreating] = useState(false);
 
   const scheduleFeedbackClear = useCallback((message) => {
     setFeedback(message);
@@ -118,17 +180,17 @@ export default function Home() {
     }
   }, []);
 
-  const createRemoteSperm = useCallback(async (name = 'Spark') => {
+  const createRemoteSperm = useCallback(async (name) => {
     const res = await fetch('/api/sperm', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name }),
     });
+    const payload = await res.json().catch(() => ({}));
     if (!res.ok) {
-      throw new Error('create-failed');
+      throw new Error(payload?.error ?? 'Could not hatch buddy.');
     }
-    const data = await res.json();
-    return data.sperm;
+    return payload.sperm;
   }, []);
 
   useEffect(() => {
@@ -141,39 +203,42 @@ export default function Home() {
       setLoading(true);
       setError(null);
 
-      let id = window.localStorage.getItem('spermId');
-      try {
-        if (!id) {
-          const newSperm = await createRemoteSperm();
-          id = newSperm.id;
-          window.localStorage.setItem('spermId', id);
-        }
+      const storedId = window.localStorage.getItem('spermId');
 
-        await fetchSpermState(id);
+      if (!storedId) {
         if (!isCancelled) {
-          setSpermId(id);
+          setSpermId(null);
+          setSperm(null);
+          setDerived(null);
+          setLatestCheckIn(null);
+          setHistory([]);
+          setShowLanding(true);
+          setLoading(false);
+        }
+        return;
+      }
+
+      try {
+        await fetchSpermState(storedId);
+        if (!isCancelled) {
+          setSpermId(storedId);
+          setShowLanding(false);
         }
       } catch (err) {
         console.error(err);
         if (err.message === 'not-found') {
-          try {
-            const newSperm = await createRemoteSperm();
-            id = newSperm.id;
-            window.localStorage.setItem('spermId', id);
-            await fetchSpermState(id);
-            if (!isCancelled) {
-              setSpermId(id);
-            }
-          } catch (innerError) {
-            console.error(innerError);
-            if (!isCancelled) {
-              setError('Unable to load buddy. Please refresh.');
-            }
-          }
-        } else {
+          window.localStorage.removeItem('spermId');
           if (!isCancelled) {
-            setError('Unable to load buddy. Please refresh.');
+            setSpermId(null);
+            setSperm(null);
+            setDerived(null);
+            setLatestCheckIn(null);
+            setHistory([]);
+            setShowLanding(true);
+            setError(null);
           }
+        } else if (!isCancelled) {
+          setError('Unable to load buddy. Please refresh.');
         }
       } finally {
         if (!isCancelled) {
@@ -187,13 +252,62 @@ export default function Home() {
     return () => {
       isCancelled = true;
     };
-  }, [createRemoteSperm, fetchSpermState]);
+  }, [fetchSpermState]);
 
   useEffect(() => {
     if (activeTab === 'history' && spermId) {
       fetchHistory(spermId);
     }
   }, [activeTab, fetchHistory, spermId]);
+
+  const handleLandingNameChange = useCallback(
+    (value) => {
+      setCreateName(value);
+      if (createError) {
+        setCreateError(null);
+      }
+    },
+    [createError],
+  );
+
+  const handleLandingSubmit = useCallback(async () => {
+    const trimmedName = createName.trim();
+    if (!trimmedName) {
+      setCreateError('Give your buddy a name to begin.');
+      return;
+    }
+
+    setCreating(true);
+    setCreateError(null);
+    setError(null);
+    setLoading(true);
+
+    try {
+      const newSperm = await createRemoteSperm(trimmedName);
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem('spermId', newSperm.id);
+      }
+      setSpermId(newSperm.id);
+      setHabitForm({ ...DEFAULT_HABIT_FORM });
+      setHistory([]);
+      setActiveTab('home');
+      await fetchSpermState(newSperm.id);
+      setShowLanding(false);
+      setCreateName('');
+      scheduleFeedbackClear('Buddy hatched! 🌟');
+    } catch (err) {
+      console.error(err);
+      setCreateError(err.message ?? 'Could not hatch buddy. Try again.');
+    } finally {
+      setCreating(false);
+      setLoading(false);
+    }
+  }, [
+    createName,
+    createRemoteSperm,
+    fetchSpermState,
+    scheduleFeedbackClear,
+  ]);
 
   const handleHabitChange = (key, value) => {
     setHabitForm((prev) => ({
@@ -234,27 +348,25 @@ export default function Home() {
     }
   };
 
-  const handleReset = async () => {
+  const handleReset = () => {
     if (typeof window === 'undefined') {
       return;
     }
-    setLoading(true);
+    window.localStorage.removeItem('spermId');
+    setSpermId(null);
+    setSperm(null);
+    setDerived(null);
+    setLatestCheckIn(null);
+    setHistory([]);
+    setHabitForm({ ...DEFAULT_HABIT_FORM });
+    setActiveTab('home');
+    setFeedback(null);
     setError(null);
-    try {
-      const newSperm = await createRemoteSperm();
-      window.localStorage.setItem('spermId', newSperm.id);
-      setSpermId(newSperm.id);
-      setHabitForm({ ...DEFAULT_HABIT_FORM });
-      await fetchSpermState(newSperm.id);
-      setHistory([]);
-      scheduleFeedbackClear('New buddy hatched!');
-      setActiveTab('home');
-    } catch (err) {
-      console.error(err);
-      setError('Could not reset buddy.');
-    } finally {
-      setLoading(false);
-    }
+    setCreateName('');
+    setCreateError(null);
+    setLoading(false);
+    setHistoryLoading(false);
+    setShowLanding(true);
   };
 
   const renderPanel = () => {
@@ -458,97 +570,105 @@ export default function Home() {
     );
   };
 
+  if (showLanding) {
+    return (
+      <LandingScreen
+        name={createName}
+        onNameChange={handleLandingNameChange}
+        onSubmit={handleLandingSubmit}
+        creating={creating}
+        error={createError}
+      />
+    );
+  }
+
   return (
-    <main className={styles.container}>
-      <div className={styles.phoneShell}>
-        <header className={styles.header}>
-          <div>
-            <h1>Sperm Buddy</h1>
-            <span className={styles.subtleText}>
-              {sperm?.name ?? 'Loading...'} · Day {sperm?.currentDayIndex ?? 1}
-            </span>
-          </div>
-          <div className={styles.badge}>
-            <span role="img" aria-label="sparkles">
-              ✨
-            </span>
-            Caring Mode
-          </div>
-        </header>
+    <main className={styles.app}>
+      <header className={styles.header}>
+        <div>
+          <h1>Sperm Buddy</h1>
+          <span className={styles.subtleText}>
+            {sperm?.name ?? 'Loading...'} · Day {sperm?.currentDayIndex ?? 1}
+          </span>
+        </div>
+      </header>
 
-        <section className={styles.stage}>
-          <div className={styles.moodTag}>
-            {derived?.overallHealthScore >= 70
-              ? 'Glowing!'
-              : derived?.overallHealthScore >= 40
-              ? 'Steady'
-              : 'Needs Care'}
-          </div>
-          <div className={styles.avatarWrapper}>
-            <Image
-              src={neutralSprite}
-              alt="Sperm buddy"
-              width={220}
-              height={240}
-              priority
-              className={styles.avatarImage}
+      <section className={styles.stage}>
+        <div className={styles.moodTag}>
+          {derived?.overallHealthScore >= 70
+            ? 'Glowing!'
+            : derived?.overallHealthScore >= 40
+            ? 'Steady'
+            : 'Needs Care'}
+        </div>
+        <div className={styles.avatarWrapper}>
+          <Image
+            src={neutralSprite}
+            alt="Sperm buddy"
+            width={220}
+            height={240}
+            priority
+            className={styles.avatarImage}
+          />
+        </div>
+      </section>
+
+      <section className={styles.dashboard}>
+        <div className={styles.metricsColumn}>
+          <section className={styles.derivedRow}>
+            <DerivedBadge
+              label="Health"
+              value={derived?.overallHealthScore ?? '--'}
+              accent="#ffafcc"
             />
-          </div>
-        </section>
-
-        <section className={styles.derivedRow}>
-          <DerivedBadge
-            label="Health"
-            value={derived?.overallHealthScore ?? '--'}
-            accent="#ffafcc"
-          />
-          <DerivedBadge
-            label="Consistency"
-            value={derived?.consistencyScore ?? '--'}
-            accent="#bde0fe"
-          />
-          <DerivedBadge
-            label="Performance"
-            value={derived?.performanceRating ?? '--'}
-            accent="#caffbf"
-          />
-        </section>
-
-        <section className={styles.statsSection}>
-          {STAT_CONFIG.map((stat) => (
-            <StatMeter
-              key={stat.key}
-              label={stat.label}
-              icon={stat.icon}
-              value={sperm?.stats?.[stat.key] ?? 0}
-              color={stat.color}
+            <DerivedBadge
+              label="Consistency"
+              value={derived?.consistencyScore ?? '--'}
+              accent="#bde0fe"
             />
-          ))}
-        </section>
+            <DerivedBadge
+              label="Performance"
+              value={derived?.performanceRating ?? '--'}
+              accent="#caffbf"
+            />
+          </section>
+
+          <section className={styles.statsSection}>
+            {STAT_CONFIG.map((stat) => (
+              <StatMeter
+                key={stat.key}
+                label={stat.label}
+                icon={stat.icon}
+                value={sperm?.stats?.[stat.key] ?? 0}
+                color={stat.color}
+              />
+            ))}
+          </section>
+        </div>
 
         <section className={styles.panel}>
           {loading ? <div className={styles.loading}>Loading...</div> : renderPanel()}
         </section>
+      </section>
 
-        {feedback && !error && <div className={styles.feedback}>{feedback}</div>}
-        {error && <div className={styles.errorBanner}>{error}</div>}
+      {feedback && !error && <div className={styles.feedback}>{feedback}</div>}
+      {error && <div className={styles.errorBanner}>{error}</div>}
 
-        <nav className={styles.navbar}>
-          {NAV_ITEMS.map((item) => (
-            <button
-              key={item.id}
-              className={`${styles.navButton} ${
-                activeTab === item.id ? styles.navButtonActive : ''
-              }`}
-              type="button"
-              onClick={() => setActiveTab(item.id)}
-            >
-              <span className={styles.navIcon}>{item.icon}</span>
-              <span>{item.label}</span>
-            </button>
-          ))}
-        </nav>
-      </div>
+      <nav className={styles.navbar}>
+        {NAV_ITEMS.map((item) => (
+          <button
+            key={item.id}
+            className={`${styles.navButton} ${
+              activeTab === item.id ? styles.navButtonActive : ''
+            }`}
+            type="button"
+            onClick={() => setActiveTab(item.id)}
+          >
+            <span className={styles.navIcon}>{item.icon}</span>
+            <span>{item.label}</span>
+          </button>
+        ))}
+      </nav>
     </main>
   );
 }
