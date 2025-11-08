@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
-import styles from './page.module.css';
 import neutralSprite from '@/public/neutral.png';
 import StatMeter from './components/StatMeter';
 import DerivedBadge from './components/DerivedBadge';
@@ -17,6 +16,12 @@ import {
   NAV_ITEMS,
   DEFAULT_HABIT_FORM,
 } from './data/constants';
+import {
+  fetchSpermState as fetchSpermStateApi,
+  fetchHistoryData,
+  createRemoteSperm as createRemoteSpermApi,
+  submitHabitCheckIn as submitHabitCheckInApi,
+} from './data/api';
 
 export default function Home() {
   const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
@@ -48,14 +53,7 @@ export default function Home() {
   }, []);
 
   const fetchSpermState = useCallback(async (id) => {
-    const res = await fetch(`/api/sperm/${id}/state`, { cache: 'no-store' });
-    if (!res.ok) {
-      if (res.status === 404) {
-        throw new Error('not-found');
-      }
-      throw new Error('state-failed');
-    }
-    const data = await res.json();
+    const data = await fetchSpermStateApi(id);
     setSperm(data.sperm);
     setDerived(data.derived);
     setLatestCheckIn(data.latestCheckIn ?? null);
@@ -64,14 +62,7 @@ export default function Home() {
   const fetchHistory = useCallback(async (id, limit = 14) => {
     setHistoryLoading(true);
     try {
-      const res = await fetch(
-        `/api/sperm/${id}/history?limit=${encodeURIComponent(limit)}`,
-        { cache: 'no-store' },
-      );
-      if (!res.ok) {
-        throw new Error('history-failed');
-      }
-      const data = await res.json();
+      const data = await fetchHistoryData(id, limit);
       setHistory(data.history ?? []);
     } catch (err) {
       console.error(err);
@@ -82,16 +73,7 @@ export default function Home() {
   }, []);
 
   const createRemoteSperm = useCallback(async (name) => {
-    const res = await fetch('/api/sperm', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name }),
-    });
-    const payload = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      throw new Error(payload?.error ?? 'Could not hatch buddy.');
-    }
-    return payload.sperm;
+    return createRemoteSpermApi(name);
   }, []);
 
   useEffect(() => {
@@ -225,15 +207,11 @@ export default function Home() {
     setSubmitting(true);
     setError(null);
     try {
-      const res = await fetch(`/api/sperm/${spermId}/checkins`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ date: today, habits: habitForm }),
+      await submitHabitCheckInApi({
+        spermId,
+        date: today,
+        habits: habitForm,
       });
-      if (!res.ok) {
-        const payload = await res.json().catch(() => ({}));
-        throw new Error(payload.error ?? 'Failed to submit habits.');
-      }
       await fetchSpermState(spermId);
       if (activeTab === 'history') {
         await fetchHistory(spermId);
@@ -311,15 +289,15 @@ export default function Home() {
       : 'Needs Care';
 
   return (
-    <main className={styles.app}>
-      <header className={styles.header}>
+    <main className="flex min-h-screen flex-col gap-6 px-4 pb-24 pt-6 md:px-12 md:pb-28 md:pt-10">
+      <header className="flex items-center justify-between rounded-3xl border border-white/70 bg-white/70 px-5 py-4 shadow-sm backdrop-blur">
         <div>
-          <h1>Sperm Buddy</h1>
-          <span className={styles.subtleText}>
+          <h1 className="text-2xl font-bold text-[#3f3d56] md:text-3xl">Sperm Buddy</h1>
+          <span className="text-sm font-semibold text-slate-500">
             {sperm?.name ?? 'Loading...'} · Day {sperm?.currentDayIndex ?? 1}
           </span>
         </div>
-        <div className={styles.badge}>
+        <div className="inline-flex items-center gap-2 rounded-full bg-linear-to-r from-pink-100/70 to-sky-100/70 px-4 py-1 text-sm font-semibold text-[#5a4b81]">
           <span role="img" aria-label="sparkles">
             ✨
           </span>
@@ -327,23 +305,25 @@ export default function Home() {
         </div>
       </header>
 
-      <section className={styles.stage}>
-        <div className={styles.moodTag}>{moodLabel}</div>
-        <div className={styles.avatarWrapper}>
+      <section className="flex flex-col items-center gap-4 rounded-3xl border border-indigo-100/80 bg-linear-to-b from-white/95 to-[#f4efff]/90 px-8 py-8 text-center shadow-sm">
+        <div className="rounded-full bg-pink-100/50 px-4 py-1 text-sm font-semibold text-pink-500">
+          {moodLabel}
+        </div>
+        <div className="relative flex h-64 w-64 items-center justify-center animate-float md:h-72 md:w-72">
           <Image
             src={neutralSprite}
             alt="Sperm buddy"
-            width={220}
+            width={240}
             height={240}
             priority
-            className={styles.avatarImage}
+            className="h-full w-full object-contain drop-shadow-[0_16px_32px_rgba(63,61,86,0.24)]"
           />
         </div>
       </section>
 
-      <section className={styles.dashboard}>
-        <div className={styles.metricsColumn}>
-          <section className={styles.derivedRow}>
+      <section className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_1.15fr]">
+        <div className="flex flex-col gap-6">
+          <section className="grid grid-cols-3 gap-3">
             <DerivedBadge
               label="Health"
               value={derived?.overallHealthScore ?? '--'}
@@ -361,7 +341,7 @@ export default function Home() {
             />
           </section>
 
-          <section className={styles.statsSection}>
+          <section className="grid grid-cols-1 gap-4 md:grid-cols-2">
             {STAT_CONFIG.map((stat) => (
               <StatMeter
                 key={stat.key}
@@ -374,19 +354,29 @@ export default function Home() {
           </section>
         </div>
 
-        <section className={styles.panel}>
-          {loading ? <div className={styles.loading}>Loading...</div> : renderPanel()}
+        <section className="flex flex-col rounded-3xl border border-indigo-100/70 bg-white/85 p-6 shadow-sm">
+          {loading ? (
+            <div className="flex flex-1 items-center justify-center text-sm font-semibold text-slate-500">
+              Loading…
+            </div>
+          ) : (
+            renderPanel()
+          )}
         </section>
       </section>
 
-      {feedback && !error && <div className={styles.feedback}>{feedback}</div>}
-      {error && <div className={styles.errorBanner}>{error}</div>}
+      {feedback && !error && (
+        <div className="fixed bottom-36 left-1/2 -translate-x-1/2 rounded-full bg-linear-to-r from-[#a1c4fd] to-[#c2e9fb] px-4 py-2 text-sm font-semibold text-[#3f3d56] shadow-[0_12px_30px_rgba(102,126,234,0.35)]">
+          {feedback}
+        </div>
+      )}
+      {error && (
+        <div className="fixed bottom-36 left-1/2 -translate-x-1/2 rounded-full bg-rose-500 px-4 py-2 text-sm font-semibold text-white shadow-[0_12px_30px_rgba(255,82,82,0.35)]">
+          {error}
+        </div>
+      )}
 
-      <NavigationBar
-        items={NAV_ITEMS}
-        activeTab={activeTab}
-        onSelect={setActiveTab}
-      />
+      <NavigationBar items={NAV_ITEMS} activeTab={activeTab} onSelect={setActiveTab} />
     </main>
   );
 }

@@ -1,20 +1,18 @@
 'use client';
 
-import styles from '../page.module.css';
-
 export default function StatMeter({ label, icon, value, color }) {
   return (
-    <div className={styles.statMeter}>
-      <div className={styles.statMeterHeader}>
-        <span>
-          <span className={styles.statIcon}>{icon}</span>
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center justify-between font-semibold text-slate-700">
+        <span className="flex items-center gap-2">
+          <span className="text-lg">{icon}</span>
           {label}
         </span>
-        <span className={styles.statValue}>{value}</span>
+        <span className="text-[#5a4b81]">{value}</span>
       </div>
-      <div className={styles.meterTrack}>
+      <div className="h-3 w-full overflow-hidden rounded-full bg-indigo-100/60">
         <div
-          className={styles.meterFill}
+          className="h-full rounded-full transition-all duration-300"
           style={{ width: `${value}%`, backgroundColor: color }}
         />
       </div>
