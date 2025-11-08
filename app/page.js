@@ -16,6 +16,7 @@ import {
   STAT_CONFIG,
   NAV_ITEMS,
   DEFAULT_HABIT_FORM,
+  WELLNESS_STATES,
 } from './data/constants';
 import {
   fetchSpermState as fetchSpermStateApi,
@@ -42,6 +43,7 @@ export default function Home() {
   const [createName, setCreateName] = useState('');
   const [createError, setCreateError] = useState(null);
   const [creating, setCreating] = useState(false);
+  const [debugWellness, setDebugWellness] = useState(null);
 
   const scheduleFeedbackClear = useCallback((message) => {
     setFeedback(message);
@@ -315,6 +317,22 @@ export default function Home() {
       ? 'Steady'
       : 'Needs Care';
 
+  const safeStat = (value) => (typeof value === 'number' ? value : 0);
+  const combinedScore =
+    safeStat(sperm?.stats?.motility) * 0.35 +
+    safeStat(sperm?.stats?.linearity) * 0.3 +
+    safeStat(sperm?.stats?.flow) * 0.2 +
+    safeStat(sperm?.stats?.signals) * 0.15;
+  const effectiveScore =
+    debugWellness !== null ? debugWellness : combinedScore;
+
+  const wellnessState = WELLNESS_STATES.reduce((current, candidate) => {
+    if (effectiveScore >= candidate.threshold) {
+      return candidate;
+    }
+    return current;
+  }, WELLNESS_STATES[0]);
+
   return (
     <main className="flex min-h-screen flex-col gap-6 px-4 pb-24 pt-6 md:px-12 md:pb-28 md:pt-10">
       <header className="flex items-center justify-between rounded-3xl border border-white/70 bg-white/70 px-5 py-4 shadow-sm backdrop-blur">
@@ -348,13 +366,49 @@ export default function Home() {
           <div className="relative z-10 flex h-full w-full items-center justify-center animate-float">
             <Image
               src={neutralSprite}
-              alt="Sperm buddy"
+              alt="Sperm buddy ghost"
               width={240}
               height={240}
               priority
               className="h-full w-full object-contain drop-shadow-[0_16px_32px_rgba(63,61,86,0.24)]"
             />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Image
+                src={wellnessState.asset}
+                alt={wellnessState.alt}
+                width={240}
+                height={240}
+                priority
+                className="h-[85%] w-[85%] object-contain opacity-80"
+              />
+            </div>
           </div>
+        </div>
+        <div className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+          Wellness Score: {Math.round(effectiveScore)}
+        </div>
+        <div className="flex w-full flex-col items-stretch gap-2 text-left">
+          <label className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">
+            Debug Wellness
+          </label>
+          <input
+            type="range"
+            min="0"
+            max="100"
+            step="1"
+            value={debugWellness ?? Math.round(combinedScore)}
+            onChange={(event) =>
+              setDebugWellness(Number(event.target.value))
+            }
+            className="accent-[#8f54ff]"
+          />
+          <button
+            type="button"
+            onClick={() => setDebugWellness(null)}
+            className="self-end text-xs font-semibold text-indigo-500 underline"
+          >
+            reset
+          </button>
         </div>
       </section>
 

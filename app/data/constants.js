@@ -52,3 +52,11 @@ export const DEFAULT_HABIT_FORM = Object.freeze({
   matchaOrPineapple: false,
 });
 
+export const WELLNESS_STATES = Object.freeze([
+  { threshold: 0, key: 'sadder', asset: '/states/sadder.png', alt: 'Sadder sperm buddy' },
+  { threshold: 35, key: 'sad', asset: '/states/sad.png', alt: 'Sad sperm buddy' },
+  { threshold: 55, key: 'neutral', asset: '/states/neutral.png', alt: 'Neutral sperm buddy' },
+  { threshold: 75, key: 'happy', asset: '/states/happy.png', alt: 'Happy sperm buddy' },
+  { threshold: 90, key: 'happiest', asset: '/states/happiest.png', alt: 'Happiest sperm buddy' },
+]);
+
