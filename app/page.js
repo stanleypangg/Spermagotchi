@@ -25,6 +25,8 @@ import {
 
 const WARDROBE_STATE_KEY = 'spermagotchi-wardrobe';
 const COIN_ICON_URL = 'https://cdn-icons-png.flaticon.com/512/7672/7672104.png';
+const TODO_PANEL_WIDTH = 360;
+const TODO_PANEL_GAP = 24;
 
 export default function Home() {
   const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
@@ -52,6 +54,7 @@ export default function Home() {
   const [equippedClothing, setEquippedClothing] = useState(null);
   const [previewClothing, setPreviewClothing] = useState(null);
   const [purchaseCandidate, setPurchaseCandidate] = useState(null);
+  const [showTodos, setShowTodos] = useState(false);
 
   const renderCoinValue = useCallback(
     (value, sizeClass = 'h-4 w-4') => (
@@ -97,9 +100,11 @@ export default function Home() {
     (tab) => {
       if (tab === 'home') {
         closeModal();
+        setShowTodos(false);
         return;
       }
       if (tab === 'shop') {
+        setShowTodos(false);
         setActiveTab('shop');
         setActiveModal(null);
         return;
@@ -424,18 +429,6 @@ export default function Home() {
     setShowLanding(true);
   };
 
-  if (showLanding) {
-    return (
-      <LandingScreen
-        name={createName}
-        onNameChange={handleLandingNameChange}
-        onSubmit={handleLandingSubmit}
-        creating={creating}
-        error={createError}
-      />
-    );
-  }
-
   const moodLabel =
     derived?.overallHealthScore >= 70
       ? 'Glowing!'
@@ -549,106 +542,152 @@ export default function Home() {
 
   const homeDisplayOutfit = equippedOutfitItem;
 
+  if (showLanding) {
+    return (
+      <LandingScreen
+        name={createName}
+        onNameChange={handleLandingNameChange}
+        onSubmit={handleLandingSubmit}
+        creating={creating}
+        error={createError}
+      />
+    );
+  }
+
   const renderHomeView = () => (
-    <main className="relative flex min-h-screen flex-col bg-white pb-32">
-      <header className="flex items-center justify-between px-6 pt-6">
-        {topStats.map((item) => (
-          <div key={item.id} className="flex flex-col items-center text-sm font-semibold text-slate-600">
-            <span className="text-xs uppercase tracking-[0.3em] text-slate-400">{item.label}</span>
-            {item.action ? (
-              <button
-                type="button"
-                onClick={item.action}
-                className="mt-1 rounded-full bg-slate-100 px-4 py-1 text-xs font-semibold text-slate-600"
-              >
-                Open
-              </button>
-            ) : (
-              <span className="mt-1 text-lg text-slate-700">{item.value}</span>
-            )}
-          </div>
-        ))}
+    <main className="relative flex min-h-screen flex-col bg-white pb-24">
+      <header className="flex flex-wrap items-center justify-between gap-4 px-6 pt-6">
+        <button
+          type="button"
+          onClick={() => setShowTodos((value) => !value)}
+          aria-pressed={showTodos}
+          className={`flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-semibold transition ${
+            showTodos
+              ? 'border-indigo-300 bg-indigo-50 text-indigo-600'
+              : 'border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:text-indigo-600'
+          }`}
+        >
+          <span className="text-lg">🗒️</span>
+          <span>{showTodos ? 'Hide Todos' : 'Daily Todos'}</span>
+        </button>
+        <div className="flex flex-1 flex-wrap items-center justify-center gap-6">
+          {topStats.map((item) => (
+            <div
+              key={item.id}
+              className="flex min-w-[120px] flex-col items-center text-sm font-semibold text-slate-600"
+            >
+              <span className="text-xs uppercase tracking-[0.3em] text-slate-400">{item.label}</span>
+              {item.action ? (
+                <button
+                  type="button"
+                  onClick={item.action}
+                  className="mt-1 rounded-full bg-slate-100 px-4 py-1 text-xs font-semibold text-slate-600"
+                >
+                  Open
+                </button>
+              ) : (
+                <span className="mt-1 text-lg text-slate-700">{item.value}</span>
+              )}
+            </div>
+          ))}
+        </div>
       </header>
 
-      <section className="flex flex-1 flex-col items-center justify-center px-6">
-        <div className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
-          {sperm?.name ?? 'Buddy'} · Day {sperm?.currentDayIndex ?? 1}
-        </div>
-        <div className="rounded-full bg-pink-100/60 px-4 py-1 text-xs font-semibold text-pink-500">
-          {buddyOverride ? buddyOverride.label : moodLabel}
-        </div>
-        <div className="relative mt-6 flex h-56 w-56 items-center justify-center">
-          <Image
-            src={petriDish}
-            alt="Petri dish backdrop"
-            width={240}
-            height={240}
-            className="absolute h-[220px] w-[220px] translate-y-12 object-contain opacity-90"
-            priority
-          />
-          <div className="relative z-10 flex h-full w-full items-center justify-center">
-            {homeDisplayOutfit ? (
-              <Image
-                src={homeDisplayOutfit.imagePath}
-                alt={homeDisplayOutfit.name}
-                width={220}
-                height={220}
-                priority
-                className="h-full w-full animate-float object-contain drop-shadow-[0_16px_32px_rgba(63,61,86,0.24)]"
-              />
-            ) : (
-              <Image
-                src={activeBuddyState.asset}
-                alt={activeBuddyState.alt}
-                width={220}
-                height={220}
-                priority
-                className="h-full w-full animate-float object-contain drop-shadow-[0_16px_32px_rgba(63,61,86,0.24)]"
-              />
-            )}
-          </div>
-        </div>
-        <div className="mt-2 text-[0.65rem] font-semibold uppercase tracking-[0.3em] text-slate-400">
-          {activeBuddyState.label ?? activeBuddyState.alt}
-        </div>
-        <div className="mt-2 text-[0.7rem] font-semibold uppercase tracking-[0.35em] text-slate-500">
-          Wellness {Number.isFinite(effectiveScore) ? Math.round(effectiveScore) : '--'}
-        </div>
-        <div className="mt-4 flex w-full max-w-sm flex-col items-stretch gap-2 text-left">
-          <label className="text-[0.65rem] font-semibold uppercase tracking-[0.3em] text-slate-500">
-            Debug Wellness
-          </label>
-          <input
-            type="range"
-            min="0"
-            max="100"
-            step="1"
-            value={debugWellness ?? Math.round(combinedScore)}
-            onChange={(event) => setDebugWellness(Number(event.target.value))}
-            className="accent-[#8f54ff]"
-          />
-          <button
-            type="button"
-            onClick={() => setDebugWellness(null)}
-            className="self-end text-xs font-semibold text-indigo-500 underline"
-          >
-            reset
-          </button>
-        </div>
-      </section>
-
-      <section className="px-6">
-        <div className="mb-2 flex items-center justify-between text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
-          <span>Daily Todos</span>
-          <span>{today}</span>
-        </div>
-        <div
-          id="habits-panel"
-          className="max-h-56 overflow-y-auto rounded-3xl bg-slate-50 px-3 py-3 ring-1 ring-transparent transition focus-within:ring-indigo-200"
+      <div className="relative flex flex-1 items-stretch overflow-hidden px-6 pb-12 pt-8">
+        <aside
+          className="absolute inset-y-0 left-0 z-10 flex h-full flex-col rounded-3xl border border-slate-200 bg-white px-5 py-6 shadow-lg transition-all duration-500 ease-out"
+          style={{
+            width: TODO_PANEL_WIDTH,
+            transform: `translateX(${showTodos ? 0 : -(TODO_PANEL_WIDTH + TODO_PANEL_GAP)}px)`,
+            opacity: showTodos ? 1 : 0,
+            pointerEvents: showTodos ? 'auto' : 'none',
+          }}
         >
-          <HabitPanel habitForm={habitForm} onToggle={handleHabitToggle} submitting={submitting} />
+          <div className="space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+              Do Your Quick Daily Check-ins
+            </p>
+            <p className="text-xs text-slate-400">
+              Toggle today’s habits to keep your swimmer in peak form.
+          </p>
         </div>
-      </section>
+          <div className="mt-4 flex-1 overflow-y-auto pr-1">
+            <HabitPanel habitForm={habitForm} onToggle={handleHabitToggle} submitting={submitting} />
+          </div>
+        </aside>
+
+        <section
+          className="relative z-0 flex w-full flex-col items-center justify-center transition-transform duration-500 ease-out"
+          style={{
+            transform: `translateX(${showTodos ? TODO_PANEL_WIDTH + TODO_PANEL_GAP : 0}px)`,
+          }}
+        >
+          <div className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
+            {sperm?.name ?? 'Buddy'} · Day {sperm?.currentDayIndex ?? 1}
+          </div>
+          <div className="rounded-full bg-pink-100/60 px-4 py-1 text-xs font-semibold text-pink-500">
+            {buddyOverride ? buddyOverride.label : moodLabel}
+          </div>
+          <div className="relative mt-6 flex h-56 w-56 items-center justify-center">
+            <Image
+              src={petriDish}
+              alt="Petri dish backdrop"
+              width={240}
+              height={240}
+              className="absolute h-[220px] w-[220px] translate-y-12 object-contain opacity-90"
+              priority
+            />
+            <div className="relative z-10 flex h-full w-full items-center justify-center">
+              {homeDisplayOutfit ? (
+                <Image
+                  src={homeDisplayOutfit.imagePath}
+                  alt={homeDisplayOutfit.name}
+                  width={220}
+                  height={220}
+                  priority
+                  className="h-full w-full animate-float object-contain drop-shadow-[0_16px_32px_rgba(63,61,86,0.24)]"
+                />
+              ) : (
+                <Image
+                  src={activeBuddyState.asset}
+                  alt={activeBuddyState.alt}
+                  width={220}
+                  height={220}
+                  priority
+                  className="h-full w-full animate-float object-contain drop-shadow-[0_16px_32px_rgba(63,61,86,0.24)]"
+                />
+              )}
+            </div>
+          </div>
+          <div className="mt-2 text-[0.65rem] font-semibold uppercase tracking-[0.3em] text-slate-400">
+            {homeDisplayOutfit ? homeDisplayOutfit.name : activeBuddyState.label ?? activeBuddyState.alt}
+          </div>
+          <div className="mt-2 text-[0.7rem] font-semibold uppercase tracking-[0.35em] text-slate-500">
+            Wellness {Number.isFinite(effectiveScore) ? Math.round(effectiveScore) : '--'}
+          </div>
+          <div className="mt-4 flex w-full max-w-sm flex-col items-stretch gap-2 text-left">
+            <label className="text-[0.65rem] font-semibold uppercase tracking-[0.3em] text-slate-500">
+              Debug Wellness
+            </label>
+            <input
+              type="range"
+              min="0"
+              max="100"
+              step="1"
+              value={debugWellness ?? Math.round(combinedScore)}
+              onChange={(event) => setDebugWellness(Number(event.target.value))}
+              className="accent-[#8f54ff]"
+            />
+            <button
+              type="button"
+              onClick={() => setDebugWellness(null)}
+              className="self-end text-xs font-semibold text-indigo-500 underline"
+            >
+              reset
+            </button>
+          </div>
+        </section>
+      </div>
     </main>
   );
 
@@ -719,7 +758,7 @@ export default function Home() {
                       ) : isOwned ? (
                         <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.3em] text-slate-500">
                           Owned
-                        </span>
+            </span>
                       ) : null}
                     </button>
                     {isOwned ? (
