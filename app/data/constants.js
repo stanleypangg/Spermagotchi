@@ -2,7 +2,7 @@ export const STAT_CONFIG = Object.freeze([
   {
     key: 'motility',
     label: 'Motility',
-    abbr: 'MOT',
+    abbr: 'M',
     description: 'Swim speed. Feeds base speed in every zone.',
     tooltip: 'Swim speed (akin to CASA VCL).',
     color: '#7dd3fc',
@@ -10,7 +10,7 @@ export const STAT_CONFIG = Object.freeze([
   {
     key: 'linearity',
     label: 'Linearity',
-    abbr: 'LIN',
+    abbr: 'L',
     description: 'How straight you swim. Converts speed into forward progress.',
     tooltip: 'Swim straighter for real progress (VSL/VCL).',
     color: '#a5b4fc',
@@ -18,7 +18,7 @@ export const STAT_CONFIG = Object.freeze([
   {
     key: 'flow',
     label: 'Flow',
-    abbr: 'FLOW',
+    abbr: 'F',
     description: 'Handling in currents and thicker mucus.',
     tooltip: 'Handle currents and thickness (rheotaxis/viscosity).',
     color: '#bef264',
@@ -26,7 +26,7 @@ export const STAT_CONFIG = Object.freeze([
   {
     key: 'signals',
     label: 'Signals',
-    abbr: 'SIG',
+    abbr: 'S',
     description: 'How well you follow cues and trigger bursts.',
     tooltip: 'Follow cues and time bursts (chemotaxis/hyperactivation).',
     color: '#f9a8d4',
