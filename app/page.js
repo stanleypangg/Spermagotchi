@@ -11,6 +11,7 @@ import HistoryPanel from './components/HistoryPanel';
 import SettingsPanel from './components/SettingsPanel';
 import HomePanel from './components/HomePanel';
 import NavigationBar from './components/NavigationBar';
+import Modal from './components/Modal';
 import {
   STAT_CONFIG,
   NAV_ITEMS,
@@ -43,6 +44,7 @@ export default function Home() {
   const [createError, setCreateError] = useState(null);
   const [creating, setCreating] = useState(false);
   const [debugWellness, setDebugWellness] = useState(null);
+  const [activeModal, setActiveModal] = useState(null);
 
   const scheduleFeedbackClear = useCallback((message) => {
     setFeedback(message);
@@ -53,6 +55,23 @@ export default function Home() {
       setFeedback(null);
     }, 2600);
   }, []);
+
+  const closeModal = useCallback(() => {
+    setActiveModal(null);
+    setActiveTab('home');
+  }, []);
+
+  const handleNavSelect = useCallback(
+    (tab) => {
+      if (tab === 'home') {
+        closeModal();
+        return;
+      }
+      setActiveTab(tab);
+      setActiveModal(tab);
+    },
+    [closeModal],
+  );
 
   const fetchSpermState = useCallback(async (id) => {
     const data = await fetchSpermStateApi(id);
@@ -242,7 +261,7 @@ export default function Home() {
       }
       setHabitForm({ ...DEFAULT_HABIT_FORM });
       scheduleFeedbackClear('Daily care recorded!');
-      setActiveTab('home');
+      closeModal();
     } catch (err) {
       console.error(err);
       const message =
@@ -266,7 +285,7 @@ export default function Home() {
     setLatestCheckIn(null);
     setHistory([]);
     setHabitForm({ ...DEFAULT_HABIT_FORM });
-    setActiveTab('home');
+    closeModal();
     setFeedback(null);
     setError(null);
     setCreateName('');
@@ -276,26 +295,7 @@ export default function Home() {
     setShowLanding(true);
   };
 
-  const renderPanel = () => {
-    switch (activeTab) {
-      case 'habits':
-        return (
-          <HabitPanel
-            today={today}
-            habitForm={habitForm}
-            onHabitChange={handleHabitChange}
-            onSubmit={handleHabitSubmit}
-            submitting={submitting}
-          />
-        );
-      case 'history':
-        return <HistoryPanel history={history} loading={historyLoading} />;
-      case 'settings':
-        return <SettingsPanel loading={loading} onReset={handleReset} />;
-      default:
-        return <HomePanel latestCheckIn={latestCheckIn} />;
-    }
-  };
+  const renderPanel = () => <HomePanel latestCheckIn={latestCheckIn} />;
 
   if (showLanding) {
     return (
@@ -333,132 +333,143 @@ export default function Home() {
   }, WELLNESS_STATES[0]);
 
   return (
-    <main className="flex min-h-screen flex-col gap-6 px-4 pb-24 pt-6 md:px-12 md:pb-28 md:pt-10">
-      <header className="flex items-center justify-between rounded-3xl border border-white/70 bg-white/70 px-5 py-4 shadow-sm backdrop-blur">
-        <div>
-          <h1 className="text-2xl font-bold text-[#3f3d56] md:text-3xl">Sperm Buddy</h1>
-          <span className="text-sm font-semibold text-slate-500">
-            {sperm?.name ?? 'Loading...'} · Day {sperm?.currentDayIndex ?? 1}
-          </span>
-        </div>
-        <div className="inline-flex items-center gap-2 rounded-full bg-linear-to-r from-pink-100/70 to-sky-100/70 px-4 py-1 text-sm font-semibold text-[#5a4b81]">
-          <span role="img" aria-label="sparkles">
-            ✨
-          </span>
-          Caring Mode
-        </div>
-      </header>
+    <>
+      <main className="flex min-h-screen items-center justify-center bg-linear-to-b from-[#fdf2ff] to-[#dff3ff] px-4 py-10">
+        <div className="w-full max-w-4xl rounded-[28px] border border-white/60 bg-white/80 p-8 shadow-[0_32px_120px_rgba(115,88,210,0.18)] backdrop-blur">
+          <div className="grid gap-6 md:grid-cols-[240px_1fr] md:items-start">
+            <section className="flex flex-col items-center gap-4 text-center">
+              <div className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
+                {sperm?.name ?? 'Buddy'} · Day {sperm?.currentDayIndex ?? 1}
+              </div>
+              <div className="rounded-full bg-pink-100/60 px-4 py-1 text-xs font-semibold text-pink-500">
+                {moodLabel}
+              </div>
+              <div className="relative flex h-48 w-48 items-center justify-center md:h-56 md:w-56">
+                <Image
+                  src={petriDish}
+                  alt="Petri dish backdrop"
+                  width={240}
+                  height={240}
+                  className="absolute h-[220px] w-[220px] translate-y-12 object-contain opacity-90"
+                  priority
+                />
+                <div className="relative z-10 flex h-full w-full items-center justify-center animate-float">
+                  <Image
+                    src={wellnessState.asset}
+                    alt={wellnessState.alt}
+                    width={220}
+                    height={220}
+                    priority
+                    className="h-full w-full object-contain drop-shadow-[0_16px_32px_rgba(63,61,86,0.24)]"
+                  />
+                </div>
+              </div>
+              <div className="rounded-full bg-white px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.35em] text-indigo-500">
+                {wellnessState.alt}
+              </div>
+              <div className="text-[0.7rem] font-semibold uppercase tracking-[0.35em] text-slate-500">
+                Wellness {Math.round(effectiveScore)}
+              </div>
+              <div className="flex w-full flex-col items-stretch gap-2 text-left">
+                <label className="text-[0.65rem] font-semibold uppercase tracking-[0.3em] text-slate-500">
+                  Debug Wellness
+                </label>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="1"
+                  value={debugWellness ?? Math.round(combinedScore)}
+                  onChange={(event) => setDebugWellness(Number(event.target.value))}
+                  className="accent-[#8f54ff]"
+                />
+                <button
+                  type="button"
+                  onClick={() => setDebugWellness(null)}
+                  className="self-end text-xs font-semibold text-indigo-500 underline"
+                >
+                  reset
+                </button>
+              </div>
+            </section>
 
-      <section className="flex flex-col items-center gap-4 rounded-3xl border border-indigo-100/80 bg-linear-to-b from-white/95 to-[#f4efff]/90 px-8 py-8 text-center shadow-sm">
-        <div className="rounded-full bg-pink-100/50 px-4 py-1 text-sm font-semibold text-pink-500">
-          {moodLabel}
-        </div>
-        <div className="relative flex h-64 w-64 items-center justify-center md:h-72 md:w-72">
-          <Image
-            src={petriDish}
-            alt="Petri dish backdrop"
-            width={280}
-            height={280}
-            className="absolute translate-y-20 h-[280px] w-[280px] object-contain md:bottom-[-22px] md:h-[320px] md:w-[320px]"
-            priority
-          />
-          <div className="relative z-10 flex h-full w-full items-center justify-center animate-float">
-            <Image
-              src={wellnessState.asset}
-              alt={wellnessState.alt}
-              width={240}
-              height={240}
-              priority
-              className="h-full w-full object-contain drop-shadow-[0_16px_32px_rgba(63,61,86,0.24)]"
-            />
+            <section className="flex flex-col gap-5">
+              <section className="grid grid-cols-3 gap-3">
+                <DerivedBadge
+                  label="Health"
+                  value={derived?.overallHealthScore ?? '--'}
+                  accent="#ffafcc"
+                />
+                <DerivedBadge
+                  label="Consistency"
+                  value={derived?.consistencyScore ?? '--'}
+                  accent="#bde0fe"
+                />
+                <DerivedBadge
+                  label="Performance"
+                  value={derived?.performanceRating ?? '--'}
+                  accent="#caffbf"
+                />
+              </section>
+
+              <section className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                {STAT_CONFIG.map((stat) => (
+                  <StatMeter
+                    key={stat.key}
+                    label={stat.label}
+                    abbr={stat.abbr}
+                    tooltip={stat.tooltip}
+                    description={stat.description}
+                    value={Math.round(sperm?.stats?.[stat.key] ?? 0)}
+                    color={stat.color}
+                  />
+                ))}
+              </section>
+
+              <section className="rounded-3xl border border-indigo-100/70 bg-white/90 px-5 py-4 shadow-sm">
+                {loading ? (
+                  <div className="flex min-h-[120px] items-center justify-center text-sm font-semibold text-slate-500">
+                    Loading…
+                  </div>
+                ) : (
+                  renderPanel()
+                )}
+              </section>
+            </section>
           </div>
         </div>
-        <div className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
-          Wellness Score: {Math.round(effectiveScore)}
-        </div>
-        <div className="flex w-full flex-col items-stretch gap-2 text-left">
-          <label className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">
-            Debug Wellness
-          </label>
-          <input
-            type="range"
-            min="0"
-            max="100"
-            step="1"
-            value={debugWellness ?? Math.round(combinedScore)}
-            onChange={(event) =>
-              setDebugWellness(Number(event.target.value))
-            }
-            className="accent-[#8f54ff]"
-          />
-          <button
-            type="button"
-            onClick={() => setDebugWellness(null)}
-            className="self-end text-xs font-semibold text-indigo-500 underline"
-          >
-            reset
-          </button>
-        </div>
-      </section>
-
-      <section className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_1.15fr]">
-        <div className="flex flex-col gap-6">
-          <section className="grid grid-cols-3 gap-3">
-            <DerivedBadge
-              label="Health"
-              value={derived?.overallHealthScore ?? '--'}
-              accent="#ffafcc"
-            />
-            <DerivedBadge
-              label="Consistency"
-              value={derived?.consistencyScore ?? '--'}
-              accent="#bde0fe"
-            />
-            <DerivedBadge
-              label="Performance"
-              value={derived?.performanceRating ?? '--'}
-              accent="#caffbf"
-            />
-          </section>
-
-          <section className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            {STAT_CONFIG.map((stat) => (
-              <StatMeter
-                key={stat.key}
-                label={stat.label}
-                abbr={stat.abbr}
-                tooltip={stat.tooltip}
-                description={stat.description}
-                value={Math.round(sperm?.stats?.[stat.key] ?? 0)}
-                color={stat.color}
-              />
-            ))}
-          </section>
-        </div>
-
-        <section className="flex flex-col rounded-3xl border border-indigo-100/70 bg-white/85 p-6 shadow-sm">
-          {loading ? (
-            <div className="flex flex-1 items-center justify-center text-sm font-semibold text-slate-500">
-              Loading…
-            </div>
-          ) : (
-            renderPanel()
-          )}
-        </section>
-      </section>
+      </main>
 
       {feedback && !error && (
-        <div className="fixed bottom-36 left-1/2 -translate-x-1/2 rounded-full bg-linear-to-r from-[#a1c4fd] to-[#c2e9fb] px-4 py-2 text-sm font-semibold text-[#3f3d56] shadow-[0_12px_30px_rgba(102,126,234,0.35)]">
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 rounded-full bg-linear-to-r from-[#a1c4fd] to-[#c2e9fb] px-4 py-2 text-sm font-semibold text-[#3f3d56] shadow-[0_12px_30px_rgba(102,126,234,0.35)]">
           {feedback}
         </div>
       )}
       {error && (
-        <div className="fixed bottom-36 left-1/2 -translate-x-1/2 rounded-full bg-rose-500 px-4 py-2 text-sm font-semibold text-white shadow-[0_12px_30px_rgba(255,82,82,0.35)]">
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 rounded-full bg-rose-500 px-4 py-2 text-sm font-semibold text-white shadow-[0_12px_30px_rgba(255,82,82,0.35)]">
           {error}
         </div>
       )}
 
-      <NavigationBar items={NAV_ITEMS} activeTab={activeTab} onSelect={setActiveTab} />
-    </main>
+      <NavigationBar items={NAV_ITEMS} activeTab={activeTab} onSelect={handleNavSelect} />
+
+      <Modal title="Daily Check-In" open={activeModal === 'habits'} onClose={closeModal}>
+        <HabitPanel
+          today={today}
+          habitForm={habitForm}
+          onHabitChange={handleHabitChange}
+          onSubmit={handleHabitSubmit}
+          submitting={submitting}
+        />
+      </Modal>
+
+      <Modal title="Progress History" open={activeModal === 'history'} onClose={closeModal}>
+        <HistoryPanel history={history} loading={historyLoading} />
+      </Modal>
+
+      <Modal title="Settings & Debug" open={activeModal === 'settings'} onClose={closeModal}>
+        <SettingsPanel loading={loading} onReset={handleReset} />
+      </Modal>
+    </>
   );
 }
