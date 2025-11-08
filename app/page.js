@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
-import neutralSprite from '@/public/neutral.png';
 import petriDish from '@/public/petri.png';
 import StatMeter from './components/StatMeter';
 import DerivedBadge from './components/DerivedBadge';
@@ -365,23 +364,13 @@ export default function Home() {
           />
           <div className="relative z-10 flex h-full w-full items-center justify-center animate-float">
             <Image
-              src={neutralSprite}
-              alt="Sperm buddy ghost"
+              src={wellnessState.asset}
+              alt={wellnessState.alt}
               width={240}
               height={240}
               priority
               className="h-full w-full object-contain drop-shadow-[0_16px_32px_rgba(63,61,86,0.24)]"
             />
-            <div className="absolute inset-0 flex items-center justify-center">
-              <Image
-                src={wellnessState.asset}
-                alt={wellnessState.alt}
-                width={240}
-                height={240}
-                priority
-                className="h-[85%] w-[85%] object-contain opacity-80"
-              />
-            </div>
           </div>
         </div>
         <div className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">

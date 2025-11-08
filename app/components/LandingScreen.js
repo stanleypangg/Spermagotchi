@@ -1,5 +1,4 @@
 import Image from 'next/image';
-import neutralSprite from '@/public/neutral.png';
 
 export default function LandingScreen({
   name,
