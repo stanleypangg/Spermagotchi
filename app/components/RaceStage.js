@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useEffect, useState, useRef } from 'react';
 import {
   svgPathFromGeometry,
   offsetPolylinePoints,
@@ -23,7 +23,9 @@ function polylineToPath(points) {
     .join(' ');
 }
 
-function computeIndicators(lanes, bounds, leadDistance) {
+const clampValue = (value, min, max) => Math.min(max, Math.max(min, value));
+
+function computeIndicators(lanes, bounds, leader, totalLength) {
   const indicators = [];
   const visible = [];
   const cx = (bounds.minX + bounds.maxX) / 2;
@@ -31,6 +33,7 @@ function computeIndicators(lanes, bounds, leadDistance) {
   const halfW = (bounds.maxX - bounds.minX) / 2;
   const halfH = (bounds.maxY - bounds.minY) / 2;
   const eps = 1e-3;
+  const leaderProgress = leader?.progress ?? 0;
 
   lanes?.forEach((lane) => {
     const inside =
@@ -53,7 +56,7 @@ function computeIndicators(lanes, bounds, leadDistance) {
     const edgeX = cx + dx / scale;
     const edgeY = cy + dy / scale;
 
-    const gap = leadDistance - lane.distance;
+    const gap = (lane.progress - leaderProgress) * totalLength;
     indicators.push({
       ...lane,
       edgeX,
@@ -78,52 +81,95 @@ export default function RaceStage({
   );
   const trackStroke = geometry.width ?? 80;
 
-  const leadDistance =
-    frame?.lanes?.reduce(
-      (acc, lane) => (lane.distance > acc ? lane.distance : acc),
-      0,
-    ) ?? 0;
+  const leader = frame?.lanes?.reduce(
+    (best, lane) => (lane.progress > (best?.progress ?? -Infinity) ? lane : best),
+    frame?.lanes?.[0],
+  );
 
-  const leader = frame?.lanes
-    ?.slice()
-    .sort((a, b) => b.distance - a.distance)[0];
+  const cameraRef = useRef({
+    x: leader?.x ?? 0,
+    y: leader?.y ?? 0,
+    t: frame?.t ?? 0,
+    initialized: false,
+  });
+  const [cameraCenter, setCameraCenter] = useState({
+    x: leader?.x ?? 0,
+    y: leader?.y ?? 0,
+  });
 
-  const leadSample = useMemo(() => {
-    if (!geometry) {
-      return { x: 0, y: 0 };
+  useEffect(() => {
+    if (!frame || !leader) {
+      return;
     }
-    return sampleTrackAt(geometry, leadDistance);
-  }, [geometry, leadDistance]);
-
-  const isBursting = leader?.hyperburst ?? false;
-
-  const aspect = height / width;
-  const dynamicSpan = cameraSpan * (isBursting ? 0.85 : 1);
-  const halfW = dynamicSpan;
-  const halfH = dynamicSpan * aspect;
-
-  const bounds = useMemo(() => {
-    const cx = leadSample.x;
-    const cy = leadSample.y;
-    return {
-      minX: cx - halfW,
-      maxX: cx + halfW,
-      minY: cy - halfH,
-      maxY: cy + halfH,
+    const prev = cameraRef.current;
+    const tangent = leader.tangent ?? { x: 1, y: 0 };
+    const speed = leader.velocity ?? 0;
+    const lookahead = Math.min(120, speed * 1.6);
+    const targetX = leader.x + tangent.x * lookahead;
+    const targetY = leader.y + tangent.y * lookahead;
+    const dt = Math.max(1 / 120, frame.t - (prev.t ?? frame.t));
+    const smoothing = 1 - Math.exp(-dt * 3.5);
+    const baseX = prev.initialized ? prev.x : targetX;
+    const baseY = prev.initialized ? prev.y : targetY;
+    const nextX = baseX + (targetX - baseX) * smoothing;
+    const nextY = baseY + (targetY - baseY) * smoothing;
+    cameraRef.current = {
+      x: nextX,
+      y: nextY,
+      t: frame.t,
+      initialized: true,
     };
-  }, [halfW, halfH, leadSample]);
+    setCameraCenter({ x: nextX, y: nextY });
+  }, [frame, leader]);
 
   const overallBounds = useMemo(
     () => (geometry ? trackBounds(geometry) : null),
     [geometry],
   );
 
+  const aspect = height / width;
+  const halfW = cameraSpan;
+  const halfH = cameraSpan * aspect;
+
+  const bounds = useMemo(() => {
+    const pad = (geometry?.width ?? 80) * 1.5;
+    let minX = cameraCenter.x - halfW;
+    let maxX = cameraCenter.x + halfW;
+    let minY = cameraCenter.y - halfH;
+    let maxY = cameraCenter.y + halfH;
+
+    if (overallBounds) {
+      const minLimitX = overallBounds.minX - pad;
+      const maxLimitX = overallBounds.maxX + pad;
+      const minLimitY = overallBounds.minY - pad;
+      const maxLimitY = overallBounds.maxY + pad;
+      const viewWidth = halfW * 2;
+      const viewHeight = halfH * 2;
+      minX = clampValue(minX, minLimitX, maxLimitX - viewWidth);
+      maxX = minX + viewWidth;
+      minY = clampValue(minY, minLimitY, maxLimitY - viewHeight);
+      maxY = minY + viewHeight;
+    }
+
+    return { minX, maxX, minY, maxY };
+  }, [cameraCenter, halfW, halfH, overallBounds, geometry?.width]);
+
+  const leaderboard = useMemo(() => {
+    if (!frame?.lanes) return [];
+    return [...frame.lanes].sort((a, b) => b.progress - a.progress);
+  }, [frame?.lanes]);
+
   const { visible, indicators } = useMemo(() => {
     if (!frame?.lanes) {
       return { visible: [], indicators: [] };
     }
-    return computeIndicators(frame.lanes, bounds, leadDistance);
-  }, [frame?.lanes, bounds, leadDistance]);
+    return computeIndicators(
+      frame.lanes,
+      bounds,
+      leader,
+      frame?.totalLength ?? geometry?.totalLength ?? 1,
+    );
+  }, [frame?.lanes, bounds, leader, geometry, frame?.totalLength]);
 
   const viewBoxWidth = bounds.maxX - bounds.minX || halfW * 2 || 400;
   const viewBoxHeight = bounds.maxY - bounds.minY || halfH * 2 || 300;
@@ -218,7 +264,7 @@ export default function RaceStage({
         {visible.map((lane) => (
           <g
             key={lane.id}
-            transform={`translate(${lane.x}, ${lane.y}) rotate(${(lane.heading * 180) / Math.PI})`}
+            transform={`translate(${lane.x}, ${lane.y}) rotate(${((lane.heading ?? 0) * 180) / Math.PI})`}
           >
             <rect
               x={-4.6}
@@ -276,15 +322,15 @@ export default function RaceStage({
             </text>
             <text x={0} y={23} textAnchor="middle" fontSize="8" fill="#1e293b">
               {lane.gap >= 0
-                ? `-${Math.round(lane.gap)}u`
-                : `+${Math.round(Math.abs(lane.gap))}u`}
+                ? `+${(lane.gap / 100).toFixed(1)}m`
+                : `${(lane.gap / 100).toFixed(1)}m`}
             </text>
           </g>
         ))}
       </svg>
 
       <div className="pointer-events-none absolute left-6 top-6 flex flex-col gap-2 text-xs font-semibold text-slate-100 drop-shadow">
-        {frame?.lanes?.slice(0, 3).map((lane) => (
+        {leaderboard.slice(0, 3).map((lane) => (
           <div
             key={`hud-${lane.id}`}
             className="flex items-center gap-3 rounded-full bg-slate-900/65 px-4 py-2 backdrop-blur"
@@ -295,7 +341,7 @@ export default function RaceStage({
             />
             <span>{lane.name}</span>
             <span className="text-slate-300">
-              {Math.round((lane.velocity ?? 0) * 10)} cm/s
+              {((lane.velocity ?? 0) / 100).toFixed(1)} m/s
             </span>
             {lane.hyperburst && <span className="text-amber-300">BURST!</span>}
           </div>
@@ -325,7 +371,7 @@ export default function RaceStage({
         <div className="flex flex-col text-[10px] leading-tight">
           <span>Speed</span>
           <span className="text-base font-bold text-white">
-            {Math.round((leader?.velocity ?? 0) * 10)} cm/s
+            {((leader?.velocity ?? 0) / 100).toFixed(1)} m/s
           </span>
           <span className="text-slate-400">
             Zone {leader?.zone ?? '--'}
