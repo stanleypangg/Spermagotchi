@@ -1,8 +1,36 @@
 export const STAT_CONFIG = Object.freeze([
-  { key: 'happiness', label: 'Happiness', icon: '😊', color: '#ff99c8' },
-  { key: 'vitality', label: 'Vitality', icon: '⚡', color: '#90dbf4' },
-  { key: 'motility', label: 'Motility', icon: '🏊', color: '#9bf6ff' },
-  { key: 'morphology', label: 'Morphology', icon: '🧬', color: '#caffbf' },
+  {
+    key: 'motility',
+    label: 'Motility',
+    abbr: 'MOT',
+    description: 'Swim speed. Feeds base speed in every zone.',
+    tooltip: 'Swim speed (akin to CASA VCL).',
+    color: '#7dd3fc',
+  },
+  {
+    key: 'linearity',
+    label: 'Linearity',
+    abbr: 'LIN',
+    description: 'How straight you swim. Converts speed into forward progress.',
+    tooltip: 'Swim straighter for real progress (VSL/VCL).',
+    color: '#a5b4fc',
+  },
+  {
+    key: 'flow',
+    label: 'Flow',
+    abbr: 'FLOW',
+    description: 'Handling in currents and thicker mucus.',
+    tooltip: 'Handle currents and thickness (rheotaxis/viscosity).',
+    color: '#bef264',
+  },
+  {
+    key: 'signals',
+    label: 'Signals',
+    abbr: 'SIG',
+    description: 'How well you follow cues and trigger bursts.',
+    tooltip: 'Follow cues and time bursts (chemotaxis/hyperactivation).',
+    color: '#f9a8d4',
+  },
 ]);
 
 export const NAV_ITEMS = Object.freeze([
@@ -13,13 +41,14 @@ export const NAV_ITEMS = Object.freeze([
 ]);
 
 export const DEFAULT_HABIT_FORM = Object.freeze({
-  tookSupplements: false,
-  exerciseMinutes: 0,
-  drankWaterLiters: 0,
-  sleepHours: 8,
-  atePineapple: false,
-  drankMatchaOrTea: false,
-  alcoholUnits: 0,
-  smokedCigarettes: 0,
+  exercise: false,
+  sleep: false,
+  hydration: false,
+  noAlcohol: false,
+  noNicotine: false,
+  lCarnitine: false,
+  coq10: false,
+  micronutrients: false,
+  matchaOrPineapple: false,
 });
 

@@ -346,8 +346,10 @@ export default function Home() {
               <StatMeter
                 key={stat.key}
                 label={stat.label}
-                icon={stat.icon}
-                value={sperm?.stats?.[stat.key] ?? 0}
+                abbr={stat.abbr}
+                tooltip={stat.tooltip}
+                description={stat.description}
+                value={Math.round(sperm?.stats?.[stat.key] ?? 0)}
                 color={stat.color}
               />
             ))}
