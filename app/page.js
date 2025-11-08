@@ -14,6 +14,7 @@ import {
   DEFAULT_HABIT_FORM,
   WELLNESS_STATES,
   HABIT_IMAGE_OVERRIDES,
+  SHOP_CLOTHING_ITEMS,
 } from './data/constants';
 import {
   fetchSpermState as fetchSpermStateApi,
@@ -21,6 +22,9 @@ import {
   createRemoteSperm as createRemoteSpermApi,
   submitHabitCheckIn as submitHabitCheckInApi,
 } from './data/api';
+
+const WARDROBE_STATE_KEY = 'spermagotchi-wardrobe';
+const COIN_ICON_URL = 'https://cdn-icons-png.flaticon.com/512/7672/7672104.png';
 
 export default function Home() {
   const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
@@ -43,6 +47,21 @@ export default function Home() {
   const [debugWellness, setDebugWellness] = useState(null);
   const [activeModal, setActiveModal] = useState(null);
   const [buddyOverride, setBuddyOverride] = useState(null);
+  const [coins, setCoins] = useState(null);
+  const [ownedClothing, setOwnedClothing] = useState([]);
+  const [equippedClothing, setEquippedClothing] = useState(null);
+  const [previewClothing, setPreviewClothing] = useState(null);
+  const [purchaseCandidate, setPurchaseCandidate] = useState(null);
+
+  const renderCoinValue = useCallback(
+    (value, sizeClass = 'h-4 w-4') => (
+      <span className="inline-flex items-center gap-1 align-middle">
+        <img src={COIN_ICON_URL} alt="Coin icon" className={sizeClass} />
+        <span>{value}</span>
+      </span>
+    ),
+    [],
+  );
 
   const selectOverrideFromHabits = useCallback((habits) => {
     if (!habits) {
@@ -80,13 +99,9 @@ export default function Home() {
         closeModal();
         return;
       }
-      if (tab === 'boosts') {
-        setActiveTab('boosts');
+      if (tab === 'shop') {
+        setActiveTab('shop');
         setActiveModal(null);
-        const panel = document.getElementById('habits-panel');
-        if (panel) {
-          panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
         return;
       }
       setActiveTab(tab);
@@ -122,6 +137,64 @@ export default function Home() {
   const createRemoteSperm = useCallback(async (name) => {
     return createRemoteSpermApi(name);
   }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    try {
+      const stored = window.localStorage.getItem(WARDROBE_STATE_KEY);
+      if (!stored) {
+        return;
+      }
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed?.ownedIds)) {
+        setOwnedClothing(
+          parsed.ownedIds.filter((value) => typeof value === 'string'),
+        );
+      }
+      if (typeof parsed?.equippedId === 'string') {
+        setEquippedClothing(parsed.equippedId);
+      } else if (parsed?.equippedId === null) {
+        setEquippedClothing(null);
+      }
+      if (typeof parsed?.coins === 'number' && Number.isFinite(parsed.coins)) {
+        setCoins(parsed.coins);
+      }
+    } catch (storageError) {
+      console.error('Failed to load wardrobe state', storageError);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    try {
+      const payload = JSON.stringify({
+        coins,
+        ownedIds: ownedClothing,
+        equippedId: equippedClothing,
+      });
+      window.localStorage.setItem(WARDROBE_STATE_KEY, payload);
+    } catch (storageError) {
+      console.error('Failed to persist wardrobe state', storageError);
+    }
+  }, [coins, ownedClothing, equippedClothing]);
+
+  useEffect(() => {
+    if (ownedClothing.includes('sixty-seven') || equippedClothing === 'sixty-seven') {
+      setOwnedClothing((prev) =>
+        prev.map((id) => (id === 'sixty-seven' ? '67' : id)),
+      );
+      if (equippedClothing === 'sixty-seven') {
+        setEquippedClothing('67');
+      }
+      if (previewClothing === 'sixty-seven') {
+        setPreviewClothing('67');
+      }
+    }
+  }, [ownedClothing, equippedClothing, previewClothing]);
 
   useEffect(() => {
     let isCancelled = false;
@@ -196,10 +269,22 @@ export default function Home() {
   }, [fetchSpermState]);
 
   useEffect(() => {
+    if (coins === null && typeof derived?.overallHealthScore === 'number') {
+      setCoins(Math.max(0, Math.round(derived.overallHealthScore ?? 0)));
+    }
+  }, [coins, derived]);
+
+  useEffect(() => {
     if ((activeTab === 'history' || activeModal === 'history') && spermId) {
       fetchHistory(spermId);
     }
   }, [activeModal, activeTab, fetchHistory, spermId]);
+
+  useEffect(() => {
+    if (activeTab !== 'shop' && previewClothing) {
+      setPreviewClothing(null);
+    }
+  }, [activeTab, previewClothing]);
 
   const handleLandingNameChange = useCallback(
     (value) => {
@@ -388,98 +473,361 @@ export default function Home() {
   ];
 
   const activeBuddyState = buddyOverride ?? wellnessState;
+  const coinsDisplay =
+    coins !== null
+      ? coins
+      : Number.isFinite(pointsValue)
+      ? Number(pointsValue)
+      : 0;
+  const equippedOutfitItem =
+    SHOP_CLOTHING_ITEMS.find((item) => item.id === equippedClothing) ?? null;
+  const previewOutfitItem = previewClothing
+    ? SHOP_CLOTHING_ITEMS.find((item) => item.id === previewClothing) ?? null
+    : null;
 
-  return (
-    <>
-      <main className="relative flex min-h-screen flex-col bg-white pb-32">
-        <header className="flex items-center justify-between px-6 pt-6">
-          {topStats.map((item) => (
-            <div key={item.id} className="flex flex-col items-center text-sm font-semibold text-slate-600">
-              <span className="text-xs uppercase tracking-[0.3em] text-slate-400">{item.label}</span>
-              {item.action ? (
-                <button
-                  type="button"
-                  onClick={item.action}
-                  className="mt-1 rounded-full bg-slate-100 px-4 py-1 text-xs font-semibold text-slate-600"
-                >
-                  Open
-                </button>
-              ) : (
-                <span className="mt-1 text-lg text-slate-700">{item.value}</span>
-              )}
-            </div>
-          ))}
-        </header>
+  const handleSelectOutfit = useCallback(
+    (item) => {
+      setError(null);
+      setPreviewClothing(item.id);
+      if (ownedClothing.includes(item.id)) {
+        setEquippedClothing(item.id);
+      }
+    },
+    [ownedClothing],
+  );
 
-        <section className="flex flex-1 flex-col items-center justify-center px-6">
-          <div className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
-            {sperm?.name ?? 'Buddy'} · Day {sperm?.currentDayIndex ?? 1}
+  const handleEquipOwned = useCallback(
+    (item) => {
+      setError(null);
+      setEquippedClothing(item.id);
+      setPreviewClothing(item.id);
+      scheduleFeedbackClear(`${item.name} equipped!`);
+    },
+    [scheduleFeedbackClear],
+  );
+
+  const handleOpenPurchaseModal = useCallback((item) => {
+    setPreviewClothing(item.id);
+    setPurchaseCandidate(item);
+    setError(null);
+  }, []);
+
+  const handleClosePurchaseModal = useCallback(() => {
+    setPurchaseCandidate(null);
+  }, []);
+
+  const handleConfirmPurchase = useCallback(() => {
+    if (!purchaseCandidate) {
+      return;
+    }
+    const { id, price, name } = purchaseCandidate;
+    const currentCoins = coins !== null ? coins : coinsDisplay;
+    if (currentCoins < price) {
+      setError(`Need ${Math.max(0, price - currentCoins)} more coins to buy ${name}.`);
+      return;
+    }
+
+    setCoins((prevCoins) => {
+      const baseline = prevCoins ?? coinsDisplay;
+      const updated = baseline - price;
+      return updated < 0 ? 0 : updated;
+    });
+
+    setOwnedClothing((prev) => {
+      if (prev.includes(id)) {
+        return prev;
+      }
+      return [...prev, id];
+    });
+
+    setEquippedClothing(id);
+    setPreviewClothing(id);
+    setPurchaseCandidate(null);
+    setError(null);
+    scheduleFeedbackClear(`Fresh drip! ${name} unlocked.`);
+  }, [coins, coinsDisplay, purchaseCandidate, scheduleFeedbackClear]);
+
+  const homeDisplayOutfit = equippedOutfitItem;
+
+  const renderHomeView = () => (
+    <main className="relative flex min-h-screen flex-col bg-white pb-32">
+      <header className="flex items-center justify-between px-6 pt-6">
+        {topStats.map((item) => (
+          <div key={item.id} className="flex flex-col items-center text-sm font-semibold text-slate-600">
+            <span className="text-xs uppercase tracking-[0.3em] text-slate-400">{item.label}</span>
+            {item.action ? (
+              <button
+                type="button"
+                onClick={item.action}
+                className="mt-1 rounded-full bg-slate-100 px-4 py-1 text-xs font-semibold text-slate-600"
+              >
+                Open
+              </button>
+            ) : (
+              <span className="mt-1 text-lg text-slate-700">{item.value}</span>
+            )}
           </div>
-          <div className="rounded-full bg-pink-100/60 px-4 py-1 text-xs font-semibold text-pink-500">
-            {buddyOverride ? buddyOverride.label : moodLabel}
-          </div>
-          <div className="relative mt-6 flex h-56 w-56 items-center justify-center">
-            <Image
-              src={petriDish}
-              alt="Petri dish backdrop"
-              width={240}
-              height={240}
-              className="absolute h-[220px] w-[220px] translate-y-12 object-contain opacity-90"
-              priority
-            />
-            <div className="relative z-10 flex h-full w-full items-center justify-center animate-float">
+        ))}
+      </header>
+
+      <section className="flex flex-1 flex-col items-center justify-center px-6">
+        <div className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
+          {sperm?.name ?? 'Buddy'} · Day {sperm?.currentDayIndex ?? 1}
+        </div>
+        <div className="rounded-full bg-pink-100/60 px-4 py-1 text-xs font-semibold text-pink-500">
+          {buddyOverride ? buddyOverride.label : moodLabel}
+        </div>
+        <div className="relative mt-6 flex h-56 w-56 items-center justify-center">
+          <Image
+            src={petriDish}
+            alt="Petri dish backdrop"
+            width={240}
+            height={240}
+            className="absolute h-[220px] w-[220px] translate-y-12 object-contain opacity-90"
+            priority
+          />
+          <div className="relative z-10 flex h-full w-full items-center justify-center">
+            {homeDisplayOutfit ? (
+              <Image
+                src={homeDisplayOutfit.imagePath}
+                alt={homeDisplayOutfit.name}
+                width={220}
+                height={220}
+                priority
+                className="h-full w-full animate-float object-contain drop-shadow-[0_16px_32px_rgba(63,61,86,0.24)]"
+              />
+            ) : (
               <Image
                 src={activeBuddyState.asset}
                 alt={activeBuddyState.alt}
                 width={220}
                 height={220}
                 priority
-                className="h-full w-full object-contain drop-shadow-[0_16px_32px_rgba(63,61,86,0.24)]"
+                className="h-full w-full animate-float object-contain drop-shadow-[0_16px_32px_rgba(63,61,86,0.24)]"
               />
+            )}
+          </div>
+        </div>
+        <div className="mt-2 text-[0.65rem] font-semibold uppercase tracking-[0.3em] text-slate-400">
+          {activeBuddyState.label ?? activeBuddyState.alt}
+        </div>
+        <div className="mt-2 text-[0.7rem] font-semibold uppercase tracking-[0.35em] text-slate-500">
+          Wellness {Number.isFinite(effectiveScore) ? Math.round(effectiveScore) : '--'}
+        </div>
+        <div className="mt-4 flex w-full max-w-sm flex-col items-stretch gap-2 text-left">
+          <label className="text-[0.65rem] font-semibold uppercase tracking-[0.3em] text-slate-500">
+            Debug Wellness
+          </label>
+          <input
+            type="range"
+            min="0"
+            max="100"
+            step="1"
+            value={debugWellness ?? Math.round(combinedScore)}
+            onChange={(event) => setDebugWellness(Number(event.target.value))}
+            className="accent-[#8f54ff]"
+          />
+          <button
+            type="button"
+            onClick={() => setDebugWellness(null)}
+            className="self-end text-xs font-semibold text-indigo-500 underline"
+          >
+            reset
+          </button>
+        </div>
+      </section>
+
+      <section className="px-6">
+        <div className="mb-2 flex items-center justify-between text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
+          <span>Daily Todos</span>
+          <span>{today}</span>
+        </div>
+        <div
+          id="habits-panel"
+          className="max-h-56 overflow-y-auto rounded-3xl bg-slate-50 px-3 py-3 ring-1 ring-transparent transition focus-within:ring-indigo-200"
+        >
+          <HabitPanel habitForm={habitForm} onToggle={handleHabitToggle} submitting={submitting} />
+        </div>
+      </section>
+    </main>
+  );
+
+  const renderShopView = () => {
+    const selectedId = previewClothing ?? equippedClothing ?? null;
+    const selectedItem =
+      SHOP_CLOTHING_ITEMS.find((item) => item.id === selectedId) ?? null;
+    const overlayItem = previewOutfitItem ?? selectedItem ?? null;
+    const selectedOwned = selectedItem ? ownedClothing.includes(selectedItem.id) : false;
+    const selectedEquipped = selectedItem ? equippedClothing === selectedItem.id : false;
+
+  return (
+      <main className="grid h-screen grid-rows-1 gap-6 overflow-hidden bg-white px-4 py-8 md:grid-cols-[320px_1fr] md:px-12">
+        <aside className="flex flex-col gap-4 overflow-hidden">
+          <div className="rounded-3xl border border-slate-200 bg-white px-6 py-5 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
+                  <img src={COIN_ICON_URL} alt="Coin icon" className="h-4 w-4" />
+                  <span>Coins</span>
+                </div>
+                <p className="mt-2 text-2xl font-bold text-slate-800">
+                  {renderCoinValue(coinsDisplay, 'h-6 w-6')}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => handleNavSelect('home')}
+                className="rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-500 transition hover:border-slate-300 hover:text-slate-700"
+              >
+                Back
+              </button>
+            </div>
+            <p className="mt-3 text-xs text-slate-400">Coins mirror your Points from the main loop.</p>
+          </div>
+
+          <div className="flex flex-1 flex-col gap-3 overflow-hidden rounded-3xl border border-slate-200 bg-white px-4 py-5 shadow-sm">
+            <header className="px-2">
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+                Wardrobe Shop
+              </p>
+              <p className="text-[0.7rem] text-slate-400">Tap to preview · Buy to own · Equip instantly</p>
+            </header>
+            <div className="flex flex-1 flex-col gap-3 overflow-y-auto pr-1">
+              {SHOP_CLOTHING_ITEMS.map((item) => {
+                const isOwned = ownedClothing.includes(item.id);
+                const isEquipped = equippedClothing === item.id;
+                const isSelected = selectedId === item.id;
+                const affordable = coinsDisplay >= item.price;
+
+                return (
+                  <div
+                    key={item.id}
+                    className={`flex items-center gap-3 rounded-2xl border px-3 py-3 transition ${
+                      isSelected ? 'border-indigo-200 bg-indigo-50' : 'border-slate-200 bg-white hover:border-slate-300'
+                    }`}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => handleSelectOutfit(item)}
+                      className="flex flex-1 items-center gap-2 text-left"
+                    >
+                      <span className="text-sm font-semibold text-slate-700">{item.name}</span>
+                      {isEquipped ? (
+                        <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.3em] text-indigo-600">
+                          Equipped
+                        </span>
+                      ) : isOwned ? (
+                        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.3em] text-slate-500">
+                          Owned
+                        </span>
+                      ) : null}
+                    </button>
+                    {isOwned ? (
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          handleEquipOwned(item);
+                        }}
+                        className={`whitespace-nowrap rounded-full px-3 py-1 text-xs font-semibold ${
+                          isEquipped
+                            ? 'bg-indigo-500 text-white'
+                            : 'border border-indigo-200 text-indigo-600 hover:bg-indigo-50'
+                        }`}
+                      >
+                        {isEquipped ? 'Equipped' : 'Equip'}
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          handleOpenPurchaseModal(item);
+                        }}
+                        className={`flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold transition ${
+                          affordable
+                            ? 'bg-emerald-500 text-white hover:bg-emerald-600'
+                            : 'bg-slate-100 text-slate-400 hover:bg-slate-200'
+                        }`}
+                      >
+                        {renderCoinValue(item.price, 'h-4 w-4')}
+                        <span>Buy</span>
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
-          <div className="mt-2 text-[0.65rem] font-semibold uppercase tracking-[0.3em] text-slate-400">
-            {activeBuddyState.label ?? activeBuddyState.alt}
-          </div>
-          <div className="mt-2 text-[0.7rem] font-semibold uppercase tracking-[0.35em] text-slate-500">
-            Wellness {Number.isFinite(effectiveScore) ? Math.round(effectiveScore) : '--'}
-          </div>
-          <div className="mt-4 flex w-full max-w-sm flex-col items-stretch gap-2 text-left">
-            <label className="text-[0.65rem] font-semibold uppercase tracking-[0.3em] text-slate-500">
-              Debug Wellness
-            </label>
-            <input
-              type="range"
-              min="0"
-              max="100"
-              step="1"
-              value={debugWellness ?? Math.round(combinedScore)}
-              onChange={(event) => setDebugWellness(Number(event.target.value))}
-              className="accent-[#8f54ff]"
-            />
-            <button
-              type="button"
-              onClick={() => setDebugWellness(null)}
-              className="self-end text-xs font-semibold text-indigo-500 underline"
-            >
-              reset
-            </button>
-          </div>
-        </section>
+        </aside>
 
-        <section className="px-6">
-          <div className="mb-2 flex items-center justify-between text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
-            <span>Daily Todos</span>
-            <span>{today}</span>
-          </div>
-          <div
-            id="habits-panel"
-            className="max-h-56 overflow-y-auto rounded-3xl bg-slate-50 px-3 py-3 ring-1 ring-transparent transition focus-within:ring-indigo-200"
-          >
-            <HabitPanel habitForm={habitForm} onToggle={handleHabitToggle} submitting={submitting} />
+        <section className="flex flex-col justify-between gap-6 overflow-hidden rounded-3xl border border-slate-200 bg-white px-8 py-10 shadow-xl">
+          <div className="flex items-start justify-between gap-6">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
+                Featured Fit
+              </p>
+              <h2 className="mt-1 text-2xl font-bold text-slate-800">
+                {selectedItem ? selectedItem.name : 'Pick an outfit'}
+              </h2>
+              <p className="mt-2 text-sm text-slate-500">
+                {selectedItem
+                  ? selectedItem.description
+                  : 'Choose an outfit from the sidebar to see it on your swimmer.'}
+              </p>
+            </div>
+            {selectedItem ? (
+              <div className="text-right">
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
+                  Status
+                </p>
+                <p className="text-sm font-semibold text-slate-600">
+                  {selectedEquipped
+                    ? 'Equipped'
+                    : selectedOwned
+                    ? 'Owned'
+                    : `${selectedItem.price} Coins`}
+                </p>
+                {!selectedOwned ? (
+                  <p className="mt-1 text-xs text-amber-600">
+                    {coinsDisplay >= selectedItem.price
+                      ? 'Buy from the sidebar to unlock.'
+                      : `Need ${Math.max(0, selectedItem.price - coinsDisplay)} more coins.`}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+        </div>
+
+          <div className="relative mx-auto flex h-[520px] w-full max-w-[520px] items-center justify-center">
+            {overlayItem ? (
+              <Image
+                src={overlayItem.imagePath}
+                alt={`${overlayItem.name} preview`}
+                width={520}
+                height={520}
+                priority
+                className="h-full w-full animate-float object-contain drop-shadow-[0_25px_70px_rgba(63,61,86,0.25)]"
+              />
+            ) : (
+              <Image
+                src={activeBuddyState.asset}
+                alt={activeBuddyState.alt}
+                width={520}
+                height={520}
+                priority
+                className="h-full w-full animate-float object-contain drop-shadow-[0_25px_70px_rgba(63,61,86,0.25)]"
+              />
+            )}
           </div>
         </section>
       </main>
+    );
+  };
+
+  return (
+    <>
+      {activeTab === 'shop' ? renderShopView() : renderHomeView()}
 
       {feedback && !error && (
         <div className="fixed bottom-32 left-1/2 -translate-x-1/2 rounded-full bg-linear-to-r from-[#a1c4fd] to-[#c2e9fb] px-4 py-2 text-sm font-semibold text-[#3f3d56] shadow-[0_12px_30px_rgba(102,126,234,0.35)]">
@@ -493,6 +841,74 @@ export default function Home() {
       )}
 
       <NavigationBar items={NAV_ITEMS} activeTab={activeTab} onSelect={handleNavSelect} />
+
+      <Modal
+        title={purchaseCandidate ? `Purchase ${purchaseCandidate.name}?` : ''}
+        open={Boolean(purchaseCandidate)}
+        onClose={handleClosePurchaseModal}
+      >
+        {purchaseCandidate ? (
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-slate-100">
+                <Image
+                  src={purchaseCandidate.imagePath}
+                  alt={purchaseCandidate.name}
+                  width={56}
+                  height={56}
+                  className="h-full w-full object-contain"
+                />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-slate-700">{purchaseCandidate.name}</p>
+                <p className="text-xs text-slate-500">{purchaseCandidate.description}</p>
+              </div>
+            </div>
+            <div className="rounded-2xl bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-600">
+              <span className="inline-flex items-center gap-2">
+                <span>Cost:</span>
+                {renderCoinValue(purchaseCandidate.price)}
+              </span>
+              <span className="mx-2 text-slate-400">·</span>
+              <span className="inline-flex items-center gap-2">
+                <span>Balance:</span>
+                {renderCoinValue(coinsDisplay)}
+              </span>
+            </div>
+            {coinsDisplay < purchaseCandidate.price ? (
+              <p className="text-xs font-semibold text-rose-500">
+                Need {purchaseCandidate.price - coinsDisplay} more coins to purchase this item.
+              </p>
+            ) : (
+              <p className="text-xs text-emerald-600">You have enough coins to unlock this outfit.</p>
+            )}
+            <div className="flex justify-end gap-3">
+            <button
+              type="button"
+                onClick={handleClosePurchaseModal}
+                className="rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-500 transition hover:border-slate-300 hover:text-slate-700"
+            >
+                Cancel
+            </button>
+            <button
+              type="button"
+                onClick={handleConfirmPurchase}
+                disabled={coinsDisplay < purchaseCandidate.price}
+                className={`rounded-full px-4 py-2 text-xs font-semibold transition ${
+                  coinsDisplay < purchaseCandidate.price
+                    ? 'cursor-not-allowed bg-slate-100 text-slate-400'
+                    : 'bg-emerald-500 text-white hover:bg-emerald-600'
+                }`}
+              >
+                <span className="inline-flex items-center gap-2">
+                  <span>Buy for</span>
+                  {renderCoinValue(purchaseCandidate.price)}
+                </span>
+            </button>
+            </div>
+          </div>
+        ) : null}
+      </Modal>
 
       <Modal title="Progress History" open={activeModal === 'history'} onClose={closeModal}>
         <HistoryPanel history={history} loading={historyLoading} />
