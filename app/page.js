@@ -4,6 +4,14 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import styles from './page.module.css';
 import neutralSprite from '@/public/neutral.png';
+import StatMeter from './components/StatMeter';
+import DerivedBadge from './components/DerivedBadge';
+import LandingScreen from './components/LandingScreen';
+import HabitPanel from './components/HabitPanel';
+import HistoryPanel from './components/HistoryPanel';
+import SettingsPanel from './components/SettingsPanel';
+import HomePanel from './components/HomePanel';
+import NavigationBar from './components/NavigationBar';
 
 const STAT_CONFIG = [
   { key: 'happiness', label: 'Happiness', icon: '😊', color: '#ff99c8' },
@@ -29,93 +37,6 @@ const DEFAULT_HABIT_FORM = Object.freeze({
   alcoholUnits: 0,
   smokedCigarettes: 0,
 });
-
-function StatMeter({ label, icon, value, color }) {
-  return (
-    <div className={styles.statMeter}>
-      <div className={styles.statMeterHeader}>
-        <span>
-          <span className={styles.statIcon}>{icon}</span>
-          {label}
-        </span>
-        <span className={styles.statValue}>{value}</span>
-      </div>
-      <div className={styles.meterTrack}>
-        <div
-          className={styles.meterFill}
-          style={{ width: `${value}%`, backgroundColor: color }}
-        />
-      </div>
-    </div>
-  );
-}
-
-function DerivedBadge({ label, value, accent }) {
-  return (
-    <div className={styles.derivedBadge} style={{ borderColor: accent }}>
-      <div className={styles.derivedLabel}>{label}</div>
-      <div className={styles.derivedValue}>{value}</div>
-    </div>
-  );
-}
-
-function LandingScreen({ name, onNameChange, onSubmit, creating, error }) {
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    onSubmit();
-  };
-
-  return (
-    <main className={styles.landingContainer}>
-      <div className={styles.landingShell}>
-        <div className={styles.landingHeader}>
-          <span className={styles.landingBadge}>Welcome to Sperm Buddy</span>
-          <h1>Hatch Your New Pal</h1>
-          <p>
-            Start the adventure by naming your sperm buddy. Check in daily to keep them happy,
-            healthy, and ready for the big race.
-          </p>
-        </div>
-
-        <div className={styles.landingHero}>
-          <div className={styles.landingHalo} />
-          <Image
-            src={neutralSprite}
-            alt="New sperm buddy illustration"
-            width={240}
-            height={240}
-            priority
-            className={styles.landingImage}
-          />
-        </div>
-
-        <form className={styles.landingForm} onSubmit={handleSubmit}>
-          <div className={styles.landingInputGroup}>
-            <label htmlFor="sperm-name">Name Your Buddy</label>
-            <input
-              id="sperm-name"
-              type="text"
-              value={name}
-              onChange={(event) => onNameChange(event.target.value)}
-              placeholder="e.g. Splash, Bolt, Luna"
-              maxLength={24}
-              autoComplete="off"
-            />
-          </div>
-          {error && <p className={styles.landingError}>{error}</p>}
-          <button className={styles.startButton} type="submit" disabled={creating}>
-            {creating ? 'Hatching...' : 'Start the Adventure'}
-          </button>
-        </form>
-
-        <div className={styles.landingTips}>
-          <strong>Pro tip:</strong>
-          <span>Daily check-ins boost stats and unlock special milestones.</span>
-        </div>
-      </div>
-    </main>
-  );
-}
 
 export default function Home() {
   const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
@@ -370,204 +291,24 @@ export default function Home() {
   };
 
   const renderPanel = () => {
-    if (activeTab === 'habits') {
-      return (
-        <form className={styles.habitForm} onSubmit={handleHabitSubmit}>
-          <div className={styles.formHeader}>
-            <h3>Daily Care</h3>
-            <span>{today}</span>
-          </div>
-          <div className={styles.formGrid}>
-            <label className={styles.toggleRow}>
-              <span>Supplements</span>
-              <input
-                type="checkbox"
-                checked={habitForm.tookSupplements}
-                onChange={(event) =>
-                  handleHabitChange('tookSupplements', event.target.checked)
-                }
-              />
-            </label>
-
-            <label className={styles.sliderRow}>
-              <div>
-                Exercise <span>{habitForm.exerciseMinutes} min</span>
-              </div>
-              <input
-                type="range"
-                min="0"
-                max="120"
-                step="5"
-                value={habitForm.exerciseMinutes}
-                onChange={(event) =>
-                  handleHabitChange('exerciseMinutes', Number(event.target.value))
-                }
-              />
-            </label>
-
-            <label className={styles.sliderRow}>
-              <div>
-                Hydration <span>{habitForm.drankWaterLiters} L</span>
-              </div>
-              <input
-                type="range"
-                min="0"
-                max="5"
-                step="0.5"
-                value={habitForm.drankWaterLiters}
-                onChange={(event) =>
-                  handleHabitChange('drankWaterLiters', Number(event.target.value))
-                }
-              />
-            </label>
-
-            <label className={styles.sliderRow}>
-              <div>
-                Sleep <span>{habitForm.sleepHours} hrs</span>
-              </div>
-              <input
-                type="range"
-                min="0"
-                max="12"
-                step="0.5"
-                value={habitForm.sleepHours}
-                onChange={(event) =>
-                  handleHabitChange('sleepHours', Number(event.target.value))
-                }
-              />
-            </label>
-
-            <label className={styles.toggleRow}>
-              <span>Pineapple Snack</span>
-              <input
-                type="checkbox"
-                checked={habitForm.atePineapple}
-                onChange={(event) =>
-                  handleHabitChange('atePineapple', event.target.checked)
-                }
-              />
-            </label>
-
-            <label className={styles.toggleRow}>
-              <span>Matcha / Tea</span>
-              <input
-                type="checkbox"
-                checked={habitForm.drankMatchaOrTea}
-                onChange={(event) =>
-                  handleHabitChange('drankMatchaOrTea', event.target.checked)
-                }
-              />
-            </label>
-
-            <label className={styles.sliderRow}>
-              <div>
-                Alcohol <span>{habitForm.alcoholUnits} drinks</span>
-              </div>
-              <input
-                type="range"
-                min="0"
-                max="8"
-                step="1"
-                value={habitForm.alcoholUnits}
-                onChange={(event) =>
-                  handleHabitChange('alcoholUnits', Number(event.target.value))
-                }
-              />
-            </label>
-
-            <label className={styles.sliderRow}>
-              <div>
-                Cigarettes <span>{habitForm.smokedCigarettes}</span>
-              </div>
-              <input
-                type="range"
-                min="0"
-                max="20"
-                step="1"
-                value={habitForm.smokedCigarettes}
-                onChange={(event) =>
-                  handleHabitChange('smokedCigarettes', Number(event.target.value))
-                }
-              />
-            </label>
-          </div>
-          <button className={styles.submitButton} type="submit" disabled={submitting}>
-            {submitting ? 'Saving...' : 'Save Check-In'}
-          </button>
-        </form>
-      );
+    switch (activeTab) {
+      case 'habits':
+        return (
+          <HabitPanel
+            today={today}
+            habitForm={habitForm}
+            onHabitChange={handleHabitChange}
+            onSubmit={handleHabitSubmit}
+            submitting={submitting}
+          />
+        );
+      case 'history':
+        return <HistoryPanel history={history} loading={historyLoading} />;
+      case 'settings':
+        return <SettingsPanel loading={loading} onReset={handleReset} />;
+      default:
+        return <HomePanel latestCheckIn={latestCheckIn} />;
     }
-
-    if (activeTab === 'history') {
-      return (
-        <div className={styles.historyPanel}>
-          <div className={styles.panelHeader}>
-            <h3>Recent Days</h3>
-            {historyLoading && <span className={styles.subtleText}>Loading...</span>}
-          </div>
-          {history.length === 0 ? (
-            <p className={styles.subtleText}>
-              No history yet. Log a check-in to see progress here.
-            </p>
-          ) : (
-            <ul className={styles.historyList}>
-              {history
-                .slice()
-                .reverse()
-                .map((entry) => (
-                  <li key={entry.date} className={styles.historyItem}>
-                    <div className={styles.historyDate}>{entry.date}</div>
-                    <div className={styles.historyStats}>
-                      <span>😊 {entry.stats.happiness}</span>
-                      <span>⚡ {entry.stats.vitality}</span>
-                      <span>🏊 {entry.stats.motility}</span>
-                      <span>🧬 {entry.stats.morphology}</span>
-                    </div>
-                    <div className={styles.historyDerived}>
-                      <span>Health {entry.overallHealthScore}</span>
-                      <span>Perf {entry.performanceRating}</span>
-                    </div>
-                  </li>
-                ))}
-            </ul>
-          )}
-        </div>
-      );
-    }
-
-    if (activeTab === 'settings') {
-      return (
-        <div className={styles.settingsPanel}>
-          <h3>Buddy Settings</h3>
-          <p className={styles.subtleText}>
-            Want a fresh start? Hatch a new buddy and begin again.
-          </p>
-          <button className={styles.resetButton} onClick={handleReset} disabled={loading}>
-            {loading ? 'Working...' : 'Hatch New Buddy'}
-          </button>
-        </div>
-      );
-    }
-
-    return (
-      <div className={styles.homePanel}>
-        <h3>Hello, Caretaker!</h3>
-        <p className={styles.subtleText}>
-          Keep up daily habits to boost stats and prepare your buddy for future adventures.
-        </p>
-        {latestCheckIn ? (
-          <div className={styles.infoCard}>
-            <span>Last cared for:</span>
-            <strong>{latestCheckIn.date}</strong>
-          </div>
-        ) : (
-          <div className={styles.infoCard}>
-            <span>No care yet today.</span>
-            <strong>Jump into Habits to get started!</strong>
-          </div>
-        )}
-      </div>
-    );
   };
 
   if (showLanding) {
@@ -582,6 +323,13 @@ export default function Home() {
     );
   }
 
+  const moodLabel =
+    derived?.overallHealthScore >= 70
+      ? 'Glowing!'
+      : derived?.overallHealthScore >= 40
+      ? 'Steady'
+      : 'Needs Care';
+
   return (
     <main className={styles.app}>
       <header className={styles.header}>
@@ -591,16 +339,16 @@ export default function Home() {
             {sperm?.name ?? 'Loading...'} · Day {sperm?.currentDayIndex ?? 1}
           </span>
         </div>
+        <div className={styles.badge}>
+          <span role="img" aria-label="sparkles">
+            ✨
+          </span>
+          Caring Mode
+        </div>
       </header>
 
       <section className={styles.stage}>
-        <div className={styles.moodTag}>
-          {derived?.overallHealthScore >= 70
-            ? 'Glowing!'
-            : derived?.overallHealthScore >= 40
-            ? 'Steady'
-            : 'Needs Care'}
-        </div>
+        <div className={styles.moodTag}>{moodLabel}</div>
         <div className={styles.avatarWrapper}>
           <Image
             src={neutralSprite}
@@ -654,21 +402,11 @@ export default function Home() {
       {feedback && !error && <div className={styles.feedback}>{feedback}</div>}
       {error && <div className={styles.errorBanner}>{error}</div>}
 
-      <nav className={styles.navbar}>
-        {NAV_ITEMS.map((item) => (
-          <button
-            key={item.id}
-            className={`${styles.navButton} ${
-              activeTab === item.id ? styles.navButtonActive : ''
-            }`}
-            type="button"
-            onClick={() => setActiveTab(item.id)}
-          >
-            <span className={styles.navIcon}>{item.icon}</span>
-            <span>{item.label}</span>
-          </button>
-        ))}
-      </nav>
+      <NavigationBar
+        items={NAV_ITEMS}
+        activeTab={activeTab}
+        onSelect={setActiveTab}
+      />
     </main>
   );
 }
