@@ -81,10 +81,24 @@ export default function RaceStage({
   );
   const trackStroke = geometry.width ?? 80;
 
-  const leader = frame?.lanes?.reduce(
-    (best, lane) => (lane.progress > (best?.progress ?? -Infinity) ? lane : best),
-    frame?.lanes?.[0],
+  const unfinishedLeaderboard = useMemo(() => {
+    if (!frame?.lanes) return [];
+    return frame.lanes
+      .filter((lane) => !lane.finished)
+      .sort((a, b) => b.progress - a.progress);
+  }, [frame?.lanes]);
+
+  const playerLane = useMemo(
+    () => frame?.lanes?.find((lane) => lane.id === 'player'),
+    [frame?.lanes],
   );
+
+  const leader =
+    (playerLane && !playerLane.finished ? playerLane : unfinishedLeaderboard[0]) ??
+    frame?.lanes?.reduce(
+      (best, lane) => (lane.progress > (best?.progress ?? -Infinity) ? lane : best),
+      frame?.lanes?.[0],
+    );
 
   const cameraRef = useRef({
     x: leader?.x ?? 0,
