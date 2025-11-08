@@ -3,20 +3,17 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import petriDish from '@/public/petri.png';
-import StatMeter from './components/StatMeter';
-import DerivedBadge from './components/DerivedBadge';
 import LandingScreen from './components/LandingScreen';
 import HabitPanel from './components/HabitPanel';
 import HistoryPanel from './components/HistoryPanel';
 import SettingsPanel from './components/SettingsPanel';
-import HomePanel from './components/HomePanel';
 import NavigationBar from './components/NavigationBar';
 import Modal from './components/Modal';
 import {
-  STAT_CONFIG,
   NAV_ITEMS,
   DEFAULT_HABIT_FORM,
   WELLNESS_STATES,
+  HABIT_IMAGE_OVERRIDES,
 } from './data/constants';
 import {
   fetchSpermState as fetchSpermStateApi,
@@ -45,6 +42,22 @@ export default function Home() {
   const [creating, setCreating] = useState(false);
   const [debugWellness, setDebugWellness] = useState(null);
   const [activeModal, setActiveModal] = useState(null);
+  const [buddyOverride, setBuddyOverride] = useState(null);
+
+  const selectOverrideFromHabits = useCallback((habits) => {
+    if (!habits) {
+      return null;
+    }
+    const keys = Object.keys(habits);
+    for (let index = keys.length - 1; index >= 0; index -= 1) {
+      const habitKey = keys[index];
+      if (habits[habitKey] && HABIT_IMAGE_OVERRIDES[habitKey]) {
+        const override = HABIT_IMAGE_OVERRIDES[habitKey];
+        return { key: habitKey, ...override };
+      }
+    }
+    return null;
+  }, []);
 
   const scheduleFeedbackClear = useCallback((message) => {
     setFeedback(message);
@@ -67,8 +80,8 @@ export default function Home() {
         closeModal();
         return;
       }
-      if (tab === 'habits') {
-        setActiveTab('habits');
+      if (tab === 'boosts') {
+        setActiveTab('boosts');
         setActiveModal(null);
         const panel = document.getElementById('habits-panel');
         if (panel) {
@@ -217,6 +230,7 @@ export default function Home() {
       }
       setSpermId(newSperm.id);
       setHabitForm({ ...DEFAULT_HABIT_FORM });
+      setBuddyOverride(null);
       setHistory([]);
       setActiveTab('home');
       const data = await fetchSpermState(newSperm.id);
@@ -261,7 +275,6 @@ export default function Home() {
         if (activeTab === 'history' || activeModal === 'history') {
           await fetchHistory(spermId);
         }
-        scheduleFeedbackClear('Daily care recorded!');
       } catch (err) {
         console.error(err);
         const message =
@@ -271,6 +284,7 @@ export default function Home() {
         setError(message);
         if (previousHabits) {
           setHabitForm(previousHabits);
+          setBuddyOverride(selectOverrideFromHabits(previousHabits));
         }
       } finally {
         setSubmitting(false);
@@ -284,18 +298,23 @@ export default function Home() {
       scheduleFeedbackClear,
       spermId,
       today,
+      selectOverrideFromHabits,
     ],
   );
 
   const handleHabitToggle = useCallback(
     (key, value) => {
-      setHabitForm((prev) => {
-        const next = { ...prev, [key]: value };
-        syncHabitForm(next, prev);
-        return next;
-      });
+      const nextHabits = { ...habitForm, [key]: value };
+      syncHabitForm(nextHabits, habitForm);
+      setHabitForm(nextHabits);
+      const override = HABIT_IMAGE_OVERRIDES[key];
+      if (value && override) {
+        setBuddyOverride({ key, ...override });
+      } else if (!value && buddyOverride?.key === key) {
+        setBuddyOverride(selectOverrideFromHabits(nextHabits));
+      }
     },
-    [syncHabitForm],
+    [habitForm, buddyOverride, selectOverrideFromHabits, syncHabitForm],
   );
 
   const handleReset = () => {
@@ -309,6 +328,7 @@ export default function Home() {
     setLatestCheckIn(null);
     setHistory([]);
     setHabitForm({ ...DEFAULT_HABIT_FORM });
+    setBuddyOverride(null);
     closeModal();
     setFeedback(null);
     setError(null);
@@ -318,8 +338,6 @@ export default function Home() {
     setHistoryLoading(false);
     setShowLanding(true);
   };
-
-  const renderPanel = () => <HomePanel latestCheckIn={latestCheckIn} />;
 
   if (showLanding) {
     return (
@@ -356,12 +374,20 @@ export default function Home() {
     return current;
   }, WELLNESS_STATES[0]);
 
+  const pointsValue = Number.isFinite(derived?.overallHealthScore)
+    ? Math.round(derived.overallHealthScore)
+    : '--';
+  const energyValue = Number.isFinite(effectiveScore) ? Math.round(effectiveScore) : '--';
+  const streakValue = Number.isFinite(sperm?.history?.length) ? sperm.history.length : '--';
+
   const topStats = [
-    { id: 'points', label: 'Points', value: derived?.overallHealthScore ?? '--' },
-    { id: 'energy', label: 'Energy', value: Math.round(effectiveScore) ?? '--' },
+    { id: 'points', label: 'Points', value: pointsValue },
+    { id: 'energy', label: 'Energy', value: energyValue },
     { id: 'settings', label: 'Settings', action: () => handleNavSelect('settings') },
-    { id: 'streak', label: 'Streak', value: latestCheckIn?.streak ?? '0' },
+    { id: 'streak', label: 'Streak', value: streakValue },
   ];
+
+  const activeBuddyState = buddyOverride ?? wellnessState;
 
   return (
     <>
@@ -390,7 +416,7 @@ export default function Home() {
             {sperm?.name ?? 'Buddy'} · Day {sperm?.currentDayIndex ?? 1}
           </div>
           <div className="rounded-full bg-pink-100/60 px-4 py-1 text-xs font-semibold text-pink-500">
-            {moodLabel}
+            {buddyOverride ? buddyOverride.label : moodLabel}
           </div>
           <div className="relative mt-6 flex h-56 w-56 items-center justify-center">
             <Image
@@ -403,8 +429,8 @@ export default function Home() {
             />
             <div className="relative z-10 flex h-full w-full items-center justify-center animate-float">
               <Image
-                src={wellnessState.asset}
-                alt={wellnessState.alt}
+                src={activeBuddyState.asset}
+                alt={activeBuddyState.alt}
                 width={220}
                 height={220}
                 priority
@@ -412,18 +438,45 @@ export default function Home() {
               />
             </div>
           </div>
-          <div className="mt-4 text-[0.7rem] font-semibold uppercase tracking-[0.35em] text-slate-500">
-            Wellness {Math.round(effectiveScore)}
+          <div className="mt-2 text-[0.65rem] font-semibold uppercase tracking-[0.3em] text-slate-400">
+            {activeBuddyState.label ?? activeBuddyState.alt}
+          </div>
+          <div className="mt-2 text-[0.7rem] font-semibold uppercase tracking-[0.35em] text-slate-500">
+            Wellness {Number.isFinite(effectiveScore) ? Math.round(effectiveScore) : '--'}
+          </div>
+          <div className="mt-4 flex w-full max-w-sm flex-col items-stretch gap-2 text-left">
+            <label className="text-[0.65rem] font-semibold uppercase tracking-[0.3em] text-slate-500">
+              Debug Wellness
+            </label>
+            <input
+              type="range"
+              min="0"
+              max="100"
+              step="1"
+              value={debugWellness ?? Math.round(combinedScore)}
+              onChange={(event) => setDebugWellness(Number(event.target.value))}
+              className="accent-[#8f54ff]"
+            />
+            <button
+              type="button"
+              onClick={() => setDebugWellness(null)}
+              className="self-end text-xs font-semibold text-indigo-500 underline"
+            >
+              reset
+            </button>
           </div>
         </section>
 
         <section className="px-6">
           <div className="mb-2 flex items-center justify-between text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
-            <span>Daily Check-In</span>
+            <span>Daily Todos</span>
             <span>{today}</span>
           </div>
-          <div className="max-h-48 overflow-y-auto rounded-3xl border border-slate-200 bg-white/90 px-4 py-3">
-            <HabitPanel today={today} habitForm={habitForm} onToggle={handleHabitToggle} submitting={submitting} />
+          <div
+            id="habits-panel"
+            className="max-h-56 overflow-y-auto rounded-3xl bg-slate-50 px-3 py-3 ring-1 ring-transparent transition focus-within:ring-indigo-200"
+          >
+            <HabitPanel habitForm={habitForm} onToggle={handleHabitToggle} submitting={submitting} />
           </div>
         </section>
       </main>
