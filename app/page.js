@@ -44,6 +44,12 @@ const DEFAULT_HOME_BACKGROUND = null;
 const GOOD_HABIT_KEYS = GOOD_HABITS_CONFIG.map((habit) => habit.key);
 const BAD_HABIT_KEYS = BAD_HABITS_CONFIG.map((habit) => habit.key);
 const CHAT_BUBBLE_IMAGES = [chat1, chat2, chat3, chat4, chat5, chat6];
+const STAT_DISPLAY_CONFIG = Object.freeze([
+  { key: 'motility', label: 'Motility', abbr: 'MOT' },
+  { key: 'linearity', label: 'Linearity', abbr: 'LIN' },
+  { key: 'flow', label: 'Flow', abbr: 'FLOW' },
+  { key: 'signals', label: 'Signals', abbr: 'SIG' },
+]);
 
 export default function Home() {
   const router = useRouter();
@@ -631,23 +637,49 @@ export default function Home() {
     return current;
   }, WELLNESS_STATES[0]);
 
-  const pointsValue =
+  const latestStatDelta = latestCheckIn?.statDelta ?? null;
+  const headerStats = STAT_DISPLAY_CONFIG.map((stat) => {
+    const rawValue = sperm?.stats?.[stat.key];
+    const value = Number.isFinite(rawValue) ? Math.round(rawValue) : '--';
+    const rawDelta =
+      latestStatDelta && Number.isFinite(latestStatDelta[`${stat.key}Delta`])
+        ? latestStatDelta[`${stat.key}Delta`]
+        : null;
+
+    let trendIcon = '▬';
+    let trendColor = 'text-slate-400';
+    let trendLabel = 'Even';
+
+    if (rawDelta === null) {
+      trendIcon = '▬';
+      trendColor = 'text-slate-300';
+      trendLabel = '—';
+    } else if (rawDelta > 0.05) {
+      trendIcon = '▲';
+      trendColor = 'text-emerald-500';
+      trendLabel = `+${rawDelta.toFixed(1)}`;
+    } else if (rawDelta < -0.05) {
+      trendIcon = '▼';
+      trendColor = 'text-rose-500';
+      trendLabel = `${rawDelta.toFixed(1)}`;
+    }
+
+    return {
+      ...stat,
+      value,
+      trendIcon,
+      trendColor,
+      trendLabel,
+    };
+  });
+
+  const activeBuddyState = buddyOverride ?? wellnessState;
+  const coinsDisplay =
     coins !== null
       ? coins
       : Number.isFinite(derived?.overallHealthScore)
       ? Math.round(derived.overallHealthScore)
-      : '--';
-  const energyValue = Number.isFinite(effectiveScore) ? Math.round(effectiveScore) : '--';
-  const streakValue = Number.isFinite(sperm?.history?.length) ? sperm.history.length : '--';
-
-  const topStats = [
-    { id: 'points', label: 'Points', value: pointsValue },
-    { id: 'energy', label: 'Energy', value: energyValue },
-    { id: 'streak', label: 'Streak', value: streakValue },
-  ];
-
-  const activeBuddyState = buddyOverride ?? wellnessState;
-    const coinsDisplay = coins !== null ? coins : Number.isFinite(pointsValue) ? Number(pointsValue) : 0;
+      : 0;
   const equippedOutfitItem =
     SHOP_CLOTHING_ITEMS.find((item) => item.id === equippedClothing) ?? null;
   const previewOutfitItem = previewClothing
@@ -815,26 +847,25 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
         <div className="absolute inset-0 -z-10 bg-white" />
       )}
       <header className="relative z-10 flex flex-col items-center px-6 pt-6 pb-4">
-        <div className="flex flex-wrap items-center justify-center gap-6 text-center">
-          {topStats.map((item) => (
+        <div className="flex w-full max-w-3xl flex-wrap justify-center gap-4 text-left">
+          {headerStats.map((stat) => (
             <div
-              key={item.id}
-              className="flex min-w-[120px] flex-col items-center text-sm font-semibold text-slate-600"
+              key={stat.key}
+              className="flex min-w-[140px] flex-1 basis-[160px] flex-col rounded-3xl border border-white/70 bg-white/80 px-4 py-3 text-slate-600 shadow-sm backdrop-blur"
             >
-              <span className="text-xs uppercase tracking-[0.3em] text-slate-400">
-                {item.label}
-              </span>
-              {item.action ? (
-                <button
-                  type="button"
-                  onClick={item.action}
-                  className="mt-1 rounded-full bg-slate-100 px-4 py-1 text-xs font-semibold text-slate-600"
-                >
-                  Open
-                </button>
-              ) : (
-                <span className="mt-1 text-lg text-slate-700">{item.value}</span>
-              )}
+              <div className="flex items-center justify-between">
+                <span className="text-[0.65rem] font-semibold uppercase tracking-[0.3em] text-slate-400">
+                  {stat.abbr}
+                </span>
+                <span className={`flex items-center gap-1 text-xs font-semibold ${stat.trendColor}`}>
+                  <span aria-hidden>{stat.trendIcon}</span>
+                  <span>{stat.trendLabel}</span>
+                </span>
+              </div>
+              <p className="mt-2 text-2xl font-bold text-slate-800">{stat.value}</p>
+              <p className="mt-1 text-xs font-medium uppercase tracking-[0.25em] text-slate-400">
+                {stat.label}
+              </p>
             </div>
           ))}
         </div>
