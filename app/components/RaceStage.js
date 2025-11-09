@@ -334,7 +334,7 @@ export default function RaceStage({
             <feDropShadow dx="0" dy="6" stdDeviation="10" floodColor="rgba(136,71,120,0.35)" />
           </filter>
           <filter id="player-glow" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="6" result="coloredBlur"/>
+            <feGaussianBlur stdDeviation="8" result="coloredBlur"/>
             <feMerge>
               <feMergeNode in="coloredBlur"/>
               <feMergeNode in="SourceGraphic"/>
