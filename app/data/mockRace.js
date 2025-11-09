@@ -79,25 +79,86 @@ export const MOCK_RACERS = Object.freeze([
   },
 ]);
 
-const LINEAR_LOOP = [
+// DRIFTWAY: Smooth flowing S-curves perfect for drifting
+const DRIFTWAY_PATH = [
   { x: 0, y: 0 },
-  { x: 5, y: -6 },
-  { x: 10, y: -18 },
-  { x: 15, y: -32 },
-  { x: 20, y: -12 },
-  { x: 25, y: 10 },
-  { x: 30, y: 26 },
-  { x: 35, y: 38 },
-  { x: 40, y: 18 },
-  { x: 45, y: -8 },
-  { x: 50, y: -28 },
-  { x: 55, y: -38 },
-  { x: 60, y: -16 },
-  { x: 65, y: 12 },
-  { x: 70, y: 30 },
-  { x: 75, y: 40 },
-  { x: 80, y: 18 },
+  { x: 8, y: -8 },
+  { x: 16, y: -22 },
+  { x: 24, y: -30 },
+  { x: 32, y: -25 },
+  { x: 40, y: -5 },
+  { x: 48, y: 15 },
+  { x: 56, y: 28 },
+  { x: 64, y: 32 },
+  { x: 72, y: 22 },
+  { x: 80, y: 5 },
 ];
+
+// GULF STREAM: Long sweeping oceanic curves
+const GULFSTREAM_PATH = [
+  { x: 0, y: 0 },
+  { x: 12, y: -5 },
+  { x: 24, y: -12 },
+  { x: 36, y: -18 },
+  { x: 48, y: -15 },
+  { x: 60, y: -5 },
+  { x: 72, y: 8 },
+  { x: 84, y: 18 },
+  { x: 96, y: 20 },
+];
+
+// RAPIDS: Chaotic quick direction changes like whitewater
+const RAPIDS_PATH = [
+  { x: 0, y: 0 },
+  { x: 6, y: -15 },
+  { x: 12, y: -8 },
+  { x: 18, y: -22 },
+  { x: 24, y: -12 },
+  { x: 30, y: 5 },
+  { x: 36, y: -5 },
+  { x: 42, y: 12 },
+  { x: 48, y: 2 },
+  { x: 54, y: 18 },
+  { x: 60, y: 8 },
+  { x: 66, y: -8 },
+  { x: 72, y: 0 },
+];
+
+// SPIRAL: Gradually tightening spiral pattern
+const SPIRAL_PATH = [];
+for (let i = 0; i <= 14; i++) {
+  const angle = (i / 14) * Math.PI * 2.5; // 1.25 rotations
+  const radius = 35 - (i * 1.8); // Gradually tightening
+  SPIRAL_PATH.push({
+    x: i * 6,
+    y: Math.sin(angle) * radius,
+  });
+}
+
+// CANYON: Tight winding like a narrow canyon pass
+const CANYON_PATH = [
+  { x: 0, y: 0 },
+  { x: 10, y: -12 },
+  { x: 20, y: -18 },
+  { x: 30, y: -22 },
+  { x: 40, y: -18 },
+  { x: 50, y: -8 },
+  { x: 60, y: 2 },
+  { x: 70, y: 8 },
+  { x: 80, y: 6 },
+  { x: 90, y: -2 },
+];
+
+// VORTEX: Circular swirling pattern
+const VORTEX_PATH = [];
+for (let i = 0; i <= 16; i++) {
+  const angle = (i / 16) * Math.PI * 2.8; // 1.4 rotations
+  const radius = 28 + Math.sin(angle * 1.5) * 10; // Oscillating radius
+  VORTEX_PATH.push({
+    x: i * 5.5,
+    y: Math.sin(angle) * radius + Math.cos(angle * 0.5) * 8,
+  });
+}
 
 function transformPoints(points, options = {}) {
   const {
@@ -129,7 +190,7 @@ export const TRACK_PRESETS = Object.freeze([
   {
     id: 'driftway',
     name: 'Driftway',
-    controlPoints: transformPoints(LINEAR_LOOP, {
+    controlPoints: transformPoints(DRIFTWAY_PATH, {
       scaleX: 185,
       scaleY: 38,
       rotate: -2.2,
@@ -147,7 +208,7 @@ export const TRACK_PRESETS = Object.freeze([
   {
     id: 'gulfstream',
     name: 'Gulf Stream',
-    controlPoints: transformPoints(LINEAR_LOOP, {
+    controlPoints: transformPoints(GULFSTREAM_PATH, {
       scaleX: 210,
       scaleY: 43,
       rotate: 4.8,
@@ -165,7 +226,7 @@ export const TRACK_PRESETS = Object.freeze([
   {
     id: 'rapids',
     name: 'Rapids',
-    controlPoints: transformPoints(LINEAR_LOOP, {
+    controlPoints: transformPoints(RAPIDS_PATH, {
       scaleX: 195,
       scaleY: 52,
       rotate: -6.5,
@@ -183,7 +244,7 @@ export const TRACK_PRESETS = Object.freeze([
   {
     id: 'spiral',
     name: 'Spiral',
-    controlPoints: transformPoints(LINEAR_LOOP, {
+    controlPoints: transformPoints(SPIRAL_PATH, {
       scaleX: 178,
       scaleY: 48,
       rotate: 8.2,
@@ -201,7 +262,7 @@ export const TRACK_PRESETS = Object.freeze([
   {
     id: 'canyon',
     name: 'Canyon',
-    controlPoints: transformPoints(LINEAR_LOOP, {
+    controlPoints: transformPoints(CANYON_PATH, {
       scaleX: 202,
       scaleY: 35,
       rotate: 1.8,
@@ -219,7 +280,7 @@ export const TRACK_PRESETS = Object.freeze([
   {
     id: 'vortex',
     name: 'Vortex',
-    controlPoints: transformPoints(LINEAR_LOOP, {
+    controlPoints: transformPoints(VORTEX_PATH, {
       scaleX: 188,
       scaleY: 56,
       rotate: -11.3,

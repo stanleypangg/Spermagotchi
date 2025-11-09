@@ -7,8 +7,8 @@
       "flow": 233.3999999999997,
       "signals": 263
     },
-    "elo": 1290,
-    "spermPoints": 1875,
+    "elo": 1310,
+    "spermPoints": 1998,
     "raceHistory": [
       {
         "place": 1,
@@ -583,6 +583,30 @@
         "eloChange": 10,
         "eloAfter": 1290,
         "pointsEarned": 60
+      },
+      {
+        "place": 1,
+        "totalRacers": 4,
+        "trackId": "driftway",
+        "raceTime": 25.449999999999836,
+        "opponents": [
+          {
+            "name": "ElitePro",
+            "place": 2
+          },
+          {
+            "name": "HerculesStrong",
+            "place": 3
+          },
+          {
+            "name": "PrimeTime",
+            "place": 4
+          }
+        ],
+        "timestamp": "2025-11-09T14:13:40.649Z",
+        "eloChange": 20,
+        "eloAfter": 1310,
+        "pointsEarned": 123
       }
     ],
     "currentStreak": 20,
