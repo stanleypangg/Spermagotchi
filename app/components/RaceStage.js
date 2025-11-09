@@ -343,20 +343,20 @@ export default function RaceStage({
             responseDialogue = getRandomDialogue('collisionResponse');
             responseLaneId = event.otherRacerId;
           }
-          duration = 2000;
+          duration = 3500;
           break;
 
         case 'overtake':
           const overtakeSubcategory = event.isOvertaker ? 'overtaker' : 'overtaken';
           dialogue = getRandomDialogue('overtake', overtakeSubcategory);
-          duration = 1800;
+          duration = 3000;
           break;
 
         case 'hyperburst:start':
           // Only show dialogue 30% of the time to avoid clutter
           if (Math.random() < 0.3) {
             dialogue = getRandomDialogue('hyperburst');
-            duration = 1500;
+            duration = 2500;
           }
           break;
 
@@ -364,7 +364,7 @@ export default function RaceStage({
           // Only show zone dialogue 20% of the time and only for viscous/gradient
           if (event.zone !== 'flow' && Math.random() < 0.2) {
             dialogue = getRandomDialogue('zoneEnter', event.zone);
-            duration = 1800;
+            duration = 3000;
           }
           break;
 
@@ -372,7 +372,7 @@ export default function RaceStage({
           // Only show finish dialogue for top 3 positions
           if (event.place <= 3) {
             dialogue = getRandomDialogue('finish');
-            duration = 3000;
+            duration = 4000;
           }
           break;
       }
@@ -402,7 +402,25 @@ export default function RaceStage({
     });
 
     if (newBubbles.length > 0) {
-      setSpeechBubbles((prev) => [...prev, ...newBubbles]);
+      setSpeechBubbles((prev) => {
+        // Remove any existing bubbles from racers that are getting new bubbles
+        const newBubbleLaneIds = new Set(newBubbles.map(b => b.laneId));
+        const filtered = prev.filter(bubble => !newBubbleLaneIds.has(bubble.laneId));
+        
+        // Also deduplicate newBubbles - keep only the last bubble per racer
+        const deduplicatedNew = [];
+        const seenLaneIds = new Set();
+        // Iterate backwards to keep the most recent bubble for each racer
+        for (let i = newBubbles.length - 1; i >= 0; i--) {
+          const bubble = newBubbles[i];
+          if (!seenLaneIds.has(bubble.laneId)) {
+            deduplicatedNew.unshift(bubble);
+            seenLaneIds.add(bubble.laneId);
+          }
+        }
+        
+        return [...filtered, ...deduplicatedNew];
+      });
     }
   }, [frame?.events]);
 
@@ -623,6 +641,10 @@ export default function RaceStage({
 
   const viewBoxWidth = bounds.maxX - bounds.minX || halfW * 2 || 400;
   const viewBoxHeight = bounds.maxY - bounds.minY || halfH * 2 || 300;
+
+  // Calculate scale factor for speech bubbles to maintain readable size
+  const baseCameraSpan = 360; // Default camera span
+  const bubbleScaleFactor = Math.max(1, viewBoxWidth / baseCameraSpan);
 
   const outerPath = useMemo(() => {
     if (!geometry) return '';
@@ -1091,12 +1113,12 @@ export default function RaceStage({
           // Calculate fade based on remaining time
           const elapsed = Date.now() - bubble.createdAt;
           const remaining = bubble.duration - elapsed;
-          const opacity = remaining < 500 ? remaining / 500 : 1;
+          const opacity = remaining < 800 ? remaining / 800 : 1;
 
-          // Position above the racer
-          const offsetY = -40;
-          const padding = 10;
-          const fontSize = 10;
+          // Position above the racer (scaled with bubbleScaleFactor)
+          const offsetY = -32 * bubbleScaleFactor;
+          const padding = 6 * bubbleScaleFactor;
+          const fontSize = 8 * bubbleScaleFactor;
           const maxCharsPerLine = 18;
           
           // Simple word wrapping
@@ -1126,6 +1148,7 @@ export default function RaceStage({
           const maxLineWidth = Math.max(...displayLines.map(line => line.length * charWidth));
           const bubbleWidth = maxLineWidth + padding * 2;
           const bubbleHeight = displayLines.length * lineHeight + padding * 1.5;
+          const strokeWidth = 1.5 * bubbleScaleFactor;
 
           return (
             <g
@@ -1140,19 +1163,19 @@ export default function RaceStage({
                 y={offsetY - bubbleHeight}
                 width={bubbleWidth}
                 height={bubbleHeight}
-                rx={7}
+                rx={5 * bubbleScaleFactor}
                 fill="white"
                 stroke="#374151"
-                strokeWidth={1.8}
+                strokeWidth={strokeWidth}
                 filter="url(#tube-shadow)"
               />
               
               {/* Speech bubble tail */}
               <path
-                d={`M ${-7} ${offsetY - 2} L ${0} ${offsetY + 8} L ${7} ${offsetY - 2}`}
+                d={`M ${-5 * bubbleScaleFactor} ${offsetY - 2 * bubbleScaleFactor} L ${0} ${offsetY + 6 * bubbleScaleFactor} L ${5 * bubbleScaleFactor} ${offsetY - 2 * bubbleScaleFactor}`}
                 fill="white"
                 stroke="#374151"
-                strokeWidth={1.8}
+                strokeWidth={strokeWidth}
                 strokeLinejoin="round"
               />
 
