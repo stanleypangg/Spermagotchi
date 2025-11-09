@@ -36,6 +36,8 @@ export const STAT_CONFIG = Object.freeze([
 export const NAV_ITEMS = Object.freeze([
   { id: 'home', label: 'Home', icon: '🏠' },
   { id: 'shop', label: 'Shop', icon: '🛍️' },
+  { id: 'racing', label: 'Racing', icon: '🏁' },
+  { id: 'leaderboards', label: 'Leaderboards', icon: '🥇' },
   { id: 'history', label: 'History', icon: '📈' },
   { id: 'settings', label: 'Settings', icon: '⚙️' },
 ]);

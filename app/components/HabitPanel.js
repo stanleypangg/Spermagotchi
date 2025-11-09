@@ -35,7 +35,10 @@ export default function HabitPanel({ habitForm, onToggle, submitting }) {
         })}
       </div>
 
-      <div className="flex flex-1 min-h-0 flex-col gap-1.5 overflow-y-auto pr-1">
+      <div
+        className="flex flex-1 min-h-0 flex-col gap-1.5 overflow-y-auto pr-1"
+        style={{ scrollbarGutter: 'stable both-edges' }}
+      >
         {activeHabits.map((habit) => (
           <label
             key={habit.key}

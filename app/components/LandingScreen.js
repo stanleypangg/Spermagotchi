@@ -146,7 +146,7 @@ export default function LandingScreen({
                 type="text"
                 value={name}
                 onChange={(event) => onNameChange(event.target.value)}
-                placeholder="e.g. Splash, Bolt, Luna"
+                placeholder="e.g. Nut, Seed, Goon, Baby Batter"
                 maxLength={24}
                 autoComplete="off"
                 className="w-full rounded-2xl border border-indigo-200/80 bg-white px-4 py-3 text-base font-semibold text-[#2d265a] outline-none transition focus:border-indigo-300 focus:ring-4 focus:ring-indigo-200/60"

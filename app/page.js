@@ -1,9 +1,15 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import petriDish from '@/public/petri.png';
-import speechBubble from '@/public/speech.webp';
+import chat1 from '@/public/chat1.png';
+import chat2 from '@/public/chat2.png';
+import chat3 from '@/public/chat3.png';
+import chat4 from '@/public/chat4.png';
+import chat5 from '@/public/chat5.png';
+import chat6 from '@/public/chat6.png';
 import LandingScreen from './components/LandingScreen';
 import HabitPanel from './components/HabitPanel';
 import HistoryPanel from './components/HistoryPanel';
@@ -17,6 +23,8 @@ import {
   HABIT_IMAGE_OVERRIDES,
   SHOP_CLOTHING_ITEMS,
   SHOP_BACKGROUND_ITEMS,
+  GOOD_HABITS_CONFIG,
+  BAD_HABITS_CONFIG,
 } from './data/constants';
 import {
   fetchSpermState as fetchSpermStateApi,
@@ -33,8 +41,12 @@ const BOTTOM_NAV_HEIGHT = 88;
 const DEFAULT_PREVIEW_BACKGROUND = null;
 const DEFAULT_STARTING_COINS = 250;
 const DEFAULT_HOME_BACKGROUND = null;
+const GOOD_HABIT_KEYS = GOOD_HABITS_CONFIG.map((habit) => habit.key);
+const BAD_HABIT_KEYS = BAD_HABITS_CONFIG.map((habit) => habit.key);
+const CHAT_BUBBLE_IMAGES = [chat1, chat2, chat3, chat4, chat5, chat6];
 
 export default function Home() {
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [spermId, setSpermId] = useState(null);
   const [sperm, setSperm] = useState(null);
@@ -63,6 +75,7 @@ export default function Home() {
   const [previewBackground, setPreviewBackground] = useState(null);
   const [purchaseCandidate, setPurchaseCandidate] = useState(null);
   const [showTodos, setShowTodos] = useState(false);
+  const [chatBubbleIndex, setChatBubbleIndex] = useState(0);
   const [shopTab, setShopTab] = useState('outfits');
   const [previewBackgroundLoaded, setPreviewBackgroundLoaded] = useState(true);
   const currentBackgroundPreviewId = previewBackground ?? equippedBackground ?? null;
@@ -83,6 +96,43 @@ export default function Home() {
   }, [showTodos]);
 
   const panelHeight = '100vh';
+  const habitValues = Object.values(habitForm ?? {});
+  const totalHabits = habitValues.length;
+  const completedHabits = habitValues.filter(Boolean).length;
+  const completionPercent =
+    totalHabits > 0 ? Math.round((completedHabits / totalHabits) * 100) : 0;
+  const tasksRemaining = Math.max(totalHabits - completedHabits, 0);
+  const safeChatIndex =
+    CHAT_BUBBLE_IMAGES.length > 0 && Number.isFinite(chatBubbleIndex)
+      ? chatBubbleIndex % CHAT_BUBBLE_IMAGES.length
+      : 0;
+  const activeChatBubble = CHAT_BUBBLE_IMAGES[safeChatIndex] ?? chat1;
+  const chatBubbleAlt = `Buddy chat bubble ${safeChatIndex + 1}`;
+  const completionHeadline =
+    tasksRemaining === 0
+      ? 'Nice work, everything is logged!'
+      : tasksRemaining === 1
+      ? 'Almost there - 1 habit left'
+      : `Keep going - ${tasksRemaining} habits left`;
+  const completionSubcopy = submitting
+    ? 'Syncing your latest check-in - keep the app open.'
+    : tasksRemaining === 0
+    ? 'Take a breath and enjoy the streak you are building.'
+    : 'Small, consistent check-ins keep your swimmer thriving.';
+  const totalGoodHabits = GOOD_HABIT_KEYS.length;
+  const totalBadHabits = BAD_HABIT_KEYS.length;
+  const completedGoodHabits = GOOD_HABIT_KEYS.reduce(
+    (count, key) => count + (habitForm?.[key] ? 1 : 0),
+    0,
+  );
+  const completedBadHabits = BAD_HABIT_KEYS.reduce(
+    (count, key) => count + (habitForm?.[key] ? 1 : 0),
+    0,
+  );
+  const goodPercent =
+    totalGoodHabits > 0 ? Math.round((completedGoodHabits / totalGoodHabits) * 100) : 0;
+  const badPercent =
+    totalBadHabits > 0 ? Math.round((completedBadHabits / totalBadHabits) * 100) : 0;
 
   const renderCoinValue = useCallback(
     (value, sizeClass = 'h-4 w-4') => (
@@ -124,6 +174,10 @@ export default function Home() {
     setActiveTab('home');
   }, []);
 
+  const handleChatBubbleCycle = useCallback(() => {
+    setChatBubbleIndex((previous) => (previous + 1) % CHAT_BUBBLE_IMAGES.length);
+  }, []);
+
   const handleNavSelect = useCallback(
     (tab) => {
       if (tab === 'home') {
@@ -137,10 +191,20 @@ export default function Home() {
         setActiveModal(null);
         return;
       }
+      if (tab === 'racing') {
+        setShowTodos(false);
+        router.push('/race');
+        return;
+      }
+      if (tab === 'leaderboards') {
+        setShowTodos(false);
+        router.push('/leaderboards');
+        return;
+      }
       setActiveTab(tab);
       setActiveModal(tab);
     },
-    [closeModal],
+    [closeModal, router],
   );
 
   const fetchSpermState = useCallback(async (id) => {
@@ -794,7 +858,11 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
       <div className="relative mt-8 flex flex-1 items-stretch overflow-hidden px-6">
         <aside
           id="daily-todos-panel"
-          className="fixed left-0 top-0 z-40 flex flex-col rounded-3xl border border-slate-200 bg-white px-6 pb-6 pt-10 shadow-lg transition-all duration-500 ease-out"
+          role="dialog"
+          aria-modal={showTodos}
+          aria-hidden={!showTodos}
+          aria-labelledby="daily-todos-title"
+          className="fixed left-0 top-0 z-40 flex flex-col overflow-hidden rounded-[32px] border border-indigo-100/70 bg-white/95 px-7 pb-8 pt-9 shadow-[0_24px_60px_rgba(63,61,86,0.16)] transition-all duration-500 ease-out"
           style={{
             width: TODO_PANEL_WIDTH,
             height: panelHeight,
@@ -804,35 +872,78 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
             visibility: showTodos ? 'visible' : 'hidden',
           }}
         >
-          <div className="absolute inset-0 -z-10 rounded-3xl bg-white" />
-          <div className="flex items-start gap-4">
+          <div className="pointer-events-none absolute inset-0 -z-10">
+            <div className="absolute inset-0 rounded-[32px] bg-linear-to-br from-white via-white/95 to-indigo-50/70" />
+            <div className="absolute -top-24 -right-24 h-56 w-56 rounded-full bg-indigo-200/40 blur-3xl" />
+            <div className="absolute -bottom-32 -left-20 h-48 w-48 rounded-full bg-pink-200/30 blur-3xl" />
+          </div>
+          <header className="flex items-start justify-between gap-6">
+            <div className="space-y-2">
+              <p className="text-[0.65rem] font-semibold uppercase tracking-[0.3em] text-slate-500">
+                Daily Check-ins
+              </p>
+              <h2 id="daily-todos-title" className="text-lg font-semibold text-[#322c52]">
+                Tap In
+              </h2>
+            </div>
             <button
               type="button"
               onClick={() => setShowTodos(false)}
-              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 text-sm font-semibold text-slate-500 transition hover:border-indigo-200 hover:text-indigo-600"
+              className="group inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-indigo-100 bg-white/70 text-slate-500 transition hover:border-indigo-200 hover:text-indigo-600"
               aria-label="Close daily todos"
             >
-              ✕
+              <span aria-hidden className="block h-4 w-4">
+                <svg viewBox="0 0 12 12" className="h-full w-full" stroke="currentColor" strokeLinecap="round" strokeWidth="1.5">
+                  <line x1="1" y1="1" x2="11" y2="11" />
+                  <line x1="1" y1="11" x2="11" y2="1" />
+                </svg>
+              </span>
             </button>
-            <div className="space-y-2">
-              <p className="text-[0.65rem] font-semibold uppercase tracking-[0.3em] text-slate-500">
-                Daily Todos
-              </p>
-              <p className="text-sm font-semibold text-slate-700">Do Your Quick Daily Check-ins</p>
-              <p className="text-xs text-slate-400">
-                Toggle today’s habits to keep your swimmer in peak form.
-              </p>
+          </header>
+          <section className="mt-6 rounded-2xl border border-white/60 bg-white/50 p-4 shadow-sm">
+            <div className="flex flex-col gap-4">
+              <div
+                className="h-2 w-full overflow-hidden rounded-full bg-emerald-100/60"
+                role="progressbar"
+                aria-valuemin={0}
+                aria-valuemax={totalGoodHabits}
+                aria-valuenow={completedGoodHabits}
+                aria-label="Good habits logged"
+              >
+                <div
+                  className="h-full rounded-full bg-linear-to-r from-emerald-400 via-emerald-500 to-teal-500 transition-[width] duration-500 ease-out"
+                  style={{ width: `${goodPercent}%` }}
+                />
+              </div>
+              <div
+                className="h-2 w-full overflow-hidden rounded-full bg-rose-100/70"
+                role="progressbar"
+                aria-valuemin={0}
+                aria-valuemax={totalBadHabits}
+                aria-valuenow={completedBadHabits}
+                aria-label="Bad habits flagged"
+              >
+                <div
+                  className="h-full rounded-full bg-linear-to-r from-rose-500 via-red-500 to-orange-500 transition-[width] duration-500 ease-out"
+                  style={{ width: `${badPercent}%` }}
+                />
+              </div>
             </div>
-          </div>
-          <div className="mt-6 flex-1 min-h-0 overflow-y-auto pr-1">
-            <HabitPanel habitForm={habitForm} onToggle={handleHabitToggle} submitting={submitting} />
+          </section>
+          <div className="mt-6 flex flex-1 min-h-0 flex-col rounded-2xl border border-white/60 bg-white/60 p-3 shadow-sm">
+            <div
+              className="flex-1 min-h-0 overflow-y-auto pr-1"
+              style={{ scrollbarGutter: 'stable both-edges' }}
+            >
+              <HabitPanel habitForm={habitForm} onToggle={handleHabitToggle} submitting={submitting} />
+            </div>
           </div>
         </aside>
 
         <div
           aria-hidden="true"
           onClick={() => setShowTodos(false)}
-          className="fixed inset-x-0 top-0 z-30 bg-slate-900/10 transition-opacity duration-300 ease-out"
+          className="fixed inset-x-0 top-0 z-30 bg-slate-950/25 transition-opacity duration-300 ease-out"
           style={{
             opacity: showTodos ? 1 : 0,
             pointerEvents: showTodos ? 'auto' : 'none',
@@ -845,20 +956,25 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
         >
           <div className="flex w-full max-w-xl flex-col items-center justify-center px-4 text-center">
             <div className="relative mt-8 flex h-[360px] w-full max-w-[360px] flex-col items-center justify-center">
-              <div className="pointer-events-none absolute -top-24 right-0 z-30 w-48 sm:w-56">
-                <div className="animate-float relative w-full">
-                  <Image
-                    src={speechBubble}
-                    alt="Buddy speech bubble"
-                    width={160}
-                    height={120}
-                    priority
-                    className="h-auto w-full object-contain"
-                  />
-                  <span className="absolute inset-0 flex items-center justify-center px-6 text-center text-sm font-semibold leading-snug text-slate-700">
-                    Placeholder speech text
+              <div className="animate-float absolute -right-12 z-30 w-48 -top-6 sm:-right-12 sm:w-56">
+                <button
+                  type="button"
+                  onClick={handleChatBubbleCycle}
+                  className="group relative inline-flex w-full items-center justify-center transition duration-200 hover:scale-[1.02] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400"
+                  aria-label="Cycle buddy chat bubble"
+                >
+                  <span className="relative block h-40 w-48 sm:h-48 sm:w-56">
+                    <Image
+                      src={activeChatBubble}
+                      alt={chatBubbleAlt}
+                      fill
+                      sizes="(max-width: 640px) 10rem, 12rem"
+                      priority
+                      className="object-contain drop-shadow-[0_12px_24px_rgba(63,61,86,0.24)]"
+                    />
                   </span>
-                </div>
+                  <span className="sr-only">Tap to cycle chat bubble</span>
+                </button>
               </div>
               <Image
                 src={petriDish}
@@ -968,7 +1084,7 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
     return (
       <main className="grid min-h-[calc(100vh-88px)] max-h-[calc(100vh-88px)] grid-rows-1 gap-6 overflow-hidden bg-white px-4 py-8 md:grid-cols-[320px_1fr] md:px-12">
         <aside className="flex flex-col gap-4 overflow-hidden">
-          <div className="rounded-3xl border border-slate-200 bg-white px-6 py-5 shadow-sm">
+          <div className="border border-slate-200 bg-white px-6 py-5 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
                 <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
@@ -986,7 +1102,6 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
                 Back
               </button>
             </div>
-            <p className="mt-3 text-xs text-slate-400">Coins mirror your Points from the main loop.</p>
           </div>
 
           <div className="flex flex-1 flex-col gap-3 overflow-hidden rounded-3xl border border-slate-200 bg-white px-4 py-5 shadow-sm">
