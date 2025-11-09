@@ -683,7 +683,8 @@ export default function Home() {
   const handleHabitToggle = useCallback(
     (key, value) => {
       const nextHabits = { ...habitForm, [key]: value };
-      syncHabitForm(nextHabits, habitForm);
+      // DON'T submit habits immediately - only save selections
+      // Stats will only update when "Next Day" is clicked
       setHabitForm(nextHabits);
       const override = HABIT_IMAGE_OVERRIDES[key];
       if (value && override) {
@@ -692,7 +693,7 @@ export default function Home() {
         setBuddyOverride(selectOverrideFromHabits(nextHabits));
       }
       
-      // Save habit form to player store
+      // Save habit form to player store (for persistence only, not stat changes)
       if (spermId) {
         fetch('/api/player', {
           method: 'POST',
@@ -704,7 +705,7 @@ export default function Home() {
         }).catch(err => console.error('Failed to save habits:', err));
       }
     },
-    [habitForm, buddyOverride, selectOverrideFromHabits, syncHabitForm, spermId],
+    [habitForm, buddyOverride, selectOverrideFromHabits, spermId],
   );
 
   const handleReset = () => {
@@ -759,6 +760,48 @@ export default function Home() {
     return current;
   }, WELLNESS_STATES[0]);
 
+  // Calculate current habit deltas in real-time
+  const calculateHabitDeltas = useCallback((habits) => {
+    const deltas = { motility: 0, linearity: 0, flow: 0, signals: 0 };
+    
+    if (habits?.drinkMatcha) {
+      deltas.signals += 1;
+      deltas.flow += 0.5;
+    }
+    if (habits?.goon) {
+      deltas.motility += 1.2;
+      deltas.signals += 0.5;
+    }
+    if (habits?.sleep8Hours) {
+      deltas.linearity += 1.5;
+      deltas.motility += 0.5;
+    }
+    if (habits?.drink2LWater) {
+      deltas.flow += 1.2;
+      deltas.linearity += 0.3;
+    }
+    if (habits?.drinkAlcohol) {
+      deltas.motility -= 1.5;
+      deltas.linearity -= 1;
+      deltas.signals -= 0.5;
+    }
+    if (habits?.smokeCigarettes) {
+      deltas.motility -= 2;
+      deltas.signals -= 1;
+    }
+    if (habits?.eatFastFood) {
+      deltas.motility -= 1;
+      deltas.flow -= 0.7;
+    }
+    if (habits?.hotLaptop) {
+      deltas.motility -= 1.2;
+      deltas.flow -= 1;
+    }
+    
+    return deltas;
+  }, []);
+  
+  const currentHabitDeltas = useMemo(() => calculateHabitDeltas(habitForm), [habitForm, calculateHabitDeltas]);
   const latestStatDelta = latestCheckIn?.statDelta ?? null;
   const headerStats = STAT_DISPLAY_CONFIG.map((stat) => {
     const rawValue = sperm?.stats?.[stat.key];
@@ -767,6 +810,9 @@ export default function Home() {
       latestStatDelta && Number.isFinite(latestStatDelta[`${stat.key}Delta`])
         ? latestStatDelta[`${stat.key}Delta`]
         : null;
+    
+    // Get current habit delta for this stat
+    const currentDelta = currentHabitDeltas[stat.key] || 0;
 
     let trendIcon = '▬';
     let trendColor = 'text-slate-400';
@@ -789,6 +835,7 @@ export default function Home() {
     return {
       ...stat,
       value,
+      currentDelta, // Add current delta to stat object
       trendIcon,
       trendColor,
       trendLabel,
@@ -1124,26 +1171,33 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
             const rankInfo = getStatRank(statValue);
             
             return (
-              <div
-                key={stat.key}
+            <div
+              key={stat.key}
                 className="group relative flex min-w-[140px] flex-1 basis-[160px] flex-row items-center justify-between rounded-3xl border border-white/70 bg-white/80 px-4 py-3 text-slate-600 shadow-sm backdrop-blur transition hover:shadow-md"
-              >
+            >
                 {/* Left side: Stat info */}
                 <div className="flex flex-col">
                   <div className="flex items-center gap-2">
-                    <span className="text-[0.65rem] font-semibold uppercase tracking-[0.3em] text-slate-400">
-                      {stat.abbr}
-                    </span>
-                    <span className={`flex items-center gap-1 text-xs font-semibold ${stat.trendColor}`}>
-                      <span aria-hidden>{stat.trendIcon}</span>
-                      <span>{stat.trendLabel}</span>
-                    </span>
+                <span className="text-[0.65rem] font-semibold uppercase tracking-[0.3em] text-slate-400">
+                  {stat.abbr}
+                </span>
+                <span className={`flex items-center gap-1 text-xs font-semibold ${stat.trendColor}`}>
+                  <span aria-hidden>{stat.trendIcon}</span>
+                  <span>{stat.trendLabel}</span>
+                </span>
+              </div>
+                  <div className="mt-2 flex items-baseline gap-2">
+                    <p className="text-2xl font-bold text-slate-800">{stat.value}</p>
+                    {stat.currentDelta !== 0 && (
+                      <p className={`text-lg font-bold ${stat.currentDelta > 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                        {stat.currentDelta > 0 ? '+' : ''}{stat.currentDelta.toFixed(1)}
+                      </p>
+                    )}
                   </div>
-                  <p className="mt-2 text-2xl font-bold text-slate-800">{stat.value}</p>
-                  <p className="mt-1 text-xs font-medium uppercase tracking-[0.25em] text-slate-400">
-                    {stat.label}
-                  </p>
-                </div>
+              <p className="mt-1 text-xs font-medium uppercase tracking-[0.25em] text-slate-400">
+                {stat.label}
+              </p>
+            </div>
                 
                 {/* Right side: Rank Badge */}
                 <div className={`flex-shrink-0 rounded-full bg-gradient-to-r ${rankInfo.color} px-3 py-1.5 shadow-lg ${rankInfo.glow}`}>
@@ -1377,13 +1431,13 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
                 className="accent-[#8f54ff]"
               />
               <div className="flex items-center justify-between gap-2">
-                <button
-                  type="button"
-                  onClick={() => setDebugWellness(null)}
+              <button
+                type="button"
+                onClick={() => setDebugWellness(null)}
                   className="text-xs font-semibold text-indigo-500 underline"
-                >
-                  reset
-                </button>
+              >
+                reset
+              </button>
                 <div className="flex flex-col items-center gap-1">
                   <button
                     type="button"
@@ -1554,20 +1608,20 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
                       className="flex items-center gap-3 text-left"
                     >
                       <div className="relative h-20 w-full overflow-hidden rounded-xl border border-slate-200 shadow-sm">
-                        <Image
-                          src={item.imagePath}
-                          alt={`${item.name} background thumbnail`}
-                          fill
-                          className="object-cover"
+                          <Image
+                            src={item.imagePath}
+                            alt={`${item.name} background thumbnail`}
+                            fill
+                            className="object-cover"
                           sizes="280px"
-                          priority={isSelected}
-                          unoptimized
-                        />
+                            priority={isSelected}
+                            unoptimized
+                          />
                         <div className="absolute inset-0 bg-black/5" />
                         {isEquipped && (
                           <div className="absolute top-2 right-2 rounded-full bg-indigo-500 px-2 py-1 text-[10px] font-bold text-white shadow-lg">
                             ✓ Applied
-                          </div>
+                        </div>
                         )}
                       </div>
                     </button>
@@ -1777,20 +1831,20 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
                 </div>
               </>
             ) : (
-              <div className="relative z-10 flex h-full w-full items-center justify-center px-6 py-8">
-                <Image
-                  src={overlayOutfit ? overlayOutfit.imagePath : activeBuddyState.asset}
-                  alt={
-                    overlayOutfit
-                      ? `${overlayOutfit.name} preview`
-                      : activeBuddyState.alt
-                  }
-                  width={520}
-                  height={520}
-                  priority
-                  className="h-full w-full animate-float object-contain drop-shadow-[0_25px_70px_rgba(63,61,86,0.25)]"
-                />
-              </div>
+            <div className="relative z-10 flex h-full w-full items-center justify-center px-6 py-8">
+              <Image
+                src={overlayOutfit ? overlayOutfit.imagePath : activeBuddyState.asset}
+                alt={
+                  overlayOutfit
+                    ? `${overlayOutfit.name} preview`
+                    : activeBuddyState.alt
+                }
+                width={520}
+                height={520}
+                priority
+                className="h-full w-full animate-float object-contain drop-shadow-[0_25px_70px_rgba(63,61,86,0.25)]"
+              />
+            </div>
             )}
           </div>
         </section>

@@ -2,10 +2,10 @@
   "baka": {
     "name": "baka",
     "stats": {
-      "motility": 149.4,
-      "linearity": 140.20000000000005,
-      "flow": 142.29999999999995,
-      "signals": 155.5
+      "motility": 181.99999999999974,
+      "linearity": 155.80000000000007,
+      "flow": 155.69999999999993,
+      "signals": 189
     },
     "elo": 1155,
     "spermPoints": 617,
@@ -348,7 +348,16 @@
     "currentStreak": 1,
     "longestStreak": 2,
     "lastCheckInDate": "2025-11-10",
-    "todayHabits": {},
+    "todayHabits": {
+      "drinkMatcha": true,
+      "goon": true,
+      "sleep8Hours": true,
+      "drink2LWater": false,
+      "drinkAlcohol": false,
+      "smokeCigarettes": false,
+      "eatFastFood": false,
+      "hotLaptop": false
+    },
     "ownedClothing": [
       "67",
       "among-us"
