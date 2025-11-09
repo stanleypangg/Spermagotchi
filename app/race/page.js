@@ -13,6 +13,7 @@ import {
 } from '@/app/data/mockRace';
 
 const DT = 1 / 60;
+const FINISH_WIND_DOWN_MS = 1500;
 
 export default function RacePage() {
   const [engineBundle, setEngineBundle] = useState(null);
@@ -27,6 +28,14 @@ export default function RacePage() {
   const lastRef = useRef(0);
   const isRunningRef = useRef(false);
   const frameRef = useRef(null);
+  const finishTimerRef = useRef(null);
+
+  const clearFinishTimer = () => {
+    if (finishTimerRef.current) {
+      clearTimeout(finishTimerRef.current);
+      finishTimerRef.current = null;
+    }
+  };
 
   const bootEngine = useMemo(
     () => async () =>
@@ -64,6 +73,13 @@ export default function RacePage() {
     };
   }, [bootEngine]);
 
+  useEffect(
+    () => () => {
+      clearFinishTimer();
+    },
+    [],
+  );
+
   useEffect(() => {
     if (!isRunning) {
       isRunningRef.current = false;
@@ -92,13 +108,16 @@ export default function RacePage() {
       if (nextFrame) {
         frameRef.current = nextFrame;
         setFrame(nextFrame);
-        if (nextFrame.isFinished && !finishOrder.length) {
+        if (nextFrame.isFinished && !finishTimerRef.current) {
           const ordered = [...nextFrame.lanes]
             .filter((lane) => lane.finished)
             .sort((a, b) => a.place - b.place);
           setFinishOrder(ordered);
-          setIsRunning(false);
-          isRunningRef.current = false;
+          finishTimerRef.current = setTimeout(() => {
+            finishTimerRef.current = null;
+            setIsRunning(false);
+            isRunningRef.current = false;
+          }, FINISH_WIND_DOWN_MS);
         }
       }
 
@@ -115,11 +134,12 @@ export default function RacePage() {
         rafRef.current = null;
       }
     };
-  }, [isRunning, finishOrder.length]);
+  }, [isRunning]);
 
   const handleReset = async () => {
     setIsRunning(false);
     isRunningRef.current = false;
+    clearFinishTimer();
     await initRapier();
     const engine = await bootEngine();
     engineRef.current = engine;

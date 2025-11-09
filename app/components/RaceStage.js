@@ -93,14 +93,18 @@ export default function RaceStage({
     [frame?.lanes],
   );
 
-  const leader =
-    (playerLane && (!playerLane.finished || !playerLane.parked)
-      ? playerLane
-      : unfinishedLeaderboard[0]) ??
-    frame?.lanes?.reduce(
-      (best, lane) => (lane.progress > (best?.progress ?? -Infinity) ? lane : best),
-      frame?.lanes?.[0],
-    );
+  const leader = useMemo(() => {
+    if (!frame?.lanes?.length) {
+      return null;
+    }
+    if (playerLane && !playerLane.finished) {
+      return playerLane;
+    }
+    if (unfinishedLeaderboard.length > 0) {
+      return unfinishedLeaderboard[0];
+    }
+    return playerLane ?? frame.lanes[0];
+  }, [frame?.lanes, playerLane, unfinishedLeaderboard]);
 
   const cameraRef = useRef({
     x: leader?.x ?? 0,
@@ -108,6 +112,7 @@ export default function RaceStage({
     t: frame?.t ?? 0,
     initialized: false,
     leaderId: leader?.id ?? null,
+    lookahead: 90,
   });
   const [cameraCenter, setCameraCenter] = useState({
     x: leader?.x ?? 0,
@@ -121,23 +126,19 @@ export default function RaceStage({
     const prev = cameraRef.current;
     const tangent = leader.tangent ?? { x: 1, y: 0 };
     const speed = leader.velocity ?? 0;
-    const baseLookahead = Math.min(120, speed * 1.5);
-    const finishBias =
+    const baseLookahead = Math.min(120, speed * 1.6);
+    const desiredLookahead =
       leader.finished && geometry
         ? Math.max(baseLookahead, (geometry.width ?? 80) * 0.6)
         : baseLookahead;
-    const filteredTangent = prev.tangent
-      ? {
-          x: prev.tangent.x + (tangent.x - prev.tangent.x) * 0.35,
-          y: prev.tangent.y + (tangent.y - prev.tangent.y) * 0.35,
-        }
-      : tangent;
-    const targetX = leader.x + filteredTangent.x * finishBias;
-    const targetY = leader.y + filteredTangent.y * finishBias;
     const dt = Math.max(1 / 120, frame.t - (prev.t ?? frame.t));
     const leaderChanged = prev.leaderId && prev.leaderId !== leader.id;
-    const smoothingRate = leaderChanged ? 4.2 : 2.4;
+    const smoothingRate = leaderChanged ? 6.2 : 3.5;
     const smoothing = 1 - Math.exp(-dt * smoothingRate);
+    const prevLookahead = prev.lookahead ?? baseLookahead;
+    const lookahead = prevLookahead + (desiredLookahead - prevLookahead) * smoothing;
+    const targetX = leader.x + tangent.x * lookahead;
+    const targetY = leader.y + tangent.y * lookahead;
     const baseX = prev.initialized ? prev.x : targetX;
     const baseY = prev.initialized ? prev.y : targetY;
     const nextX = baseX + (targetX - baseX) * smoothing;
@@ -148,7 +149,7 @@ export default function RaceStage({
       t: frame.t,
       initialized: true,
       leaderId: leader.id,
-      tangent: filteredTangent,
+      lookahead,
     };
     setCameraCenter({ x: nextX, y: nextY });
   }, [frame, leader, geometry]);
