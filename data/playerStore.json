@@ -7,8 +7,8 @@
       "flow": 233.3999999999997,
       "signals": 263
     },
-    "elo": 1460,
-    "spermPoints": 2898,
+    "elo": 1480,
+    "spermPoints": 3009,
     "raceHistory": [
       {
         "place": 1,
@@ -799,6 +799,30 @@
         "eloChange": 10,
         "eloAfter": 1460,
         "pointsEarned": 68
+      },
+      {
+        "place": 1,
+        "totalRacers": 4,
+        "trackId": "canyon",
+        "raceTime": 50.7499999999984,
+        "opponents": [
+          {
+            "name": "WaveRider",
+            "place": 2
+          },
+          {
+            "name": "PeakPerformer",
+            "place": 3
+          },
+          {
+            "name": "PitStopPro",
+            "place": 4
+          }
+        ],
+        "timestamp": "2025-11-09T14:32:39.293Z",
+        "eloChange": 20,
+        "eloAfter": 1480,
+        "pointsEarned": 111
       }
     ],
     "currentStreak": 20,
