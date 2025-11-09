@@ -1349,13 +1349,41 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
                 onChange={(event) => setDebugWellness(Number(event.target.value))}
                 className="accent-[#8f54ff]"
               />
-              <button
-                type="button"
-                onClick={() => setDebugWellness(null)}
-                className="self-end text-xs font-semibold text-indigo-500 underline"
-              >
-                reset
-              </button>
+              <div className="flex items-center justify-between gap-2">
+                <button
+                  type="button"
+                  onClick={() => setDebugWellness(null)}
+                  className="text-xs font-semibold text-indigo-500 underline"
+                >
+                  reset
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!spermId) return;
+                    try {
+                      const res = await fetch('/api/player/skip-day', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name: spermId }),
+                      });
+                      const data = await res.json();
+                      if (data.player) {
+                        scheduleFeedbackClear(data.message || 'Day skipped!');
+                        // Reload player data
+                        await fetchSpermState(spermId);
+                        setHabitForm({ ...DEFAULT_HABIT_FORM });
+                      }
+                    } catch (err) {
+                      console.error('Failed to skip day:', err);
+                      setError('Failed to skip day');
+                    }
+                  }}
+                  className="rounded-full border border-orange-300 bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-600 transition hover:bg-orange-100"
+                >
+                  ⏭️ Skip Day
+                </button>
+              </div>
             </div>
           </div>
         </section>

@@ -68,85 +68,101 @@ export default function RaceMatchmaking({
 
   if (phase === 'idle') {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-6">
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-purple-50 via-pink-50 to-slate-50 p-6">
         <div className="w-full max-w-2xl space-y-6">
-          {/* Player Stats Card */}
-          <div className="rounded-3xl border-2 border-slate-200 bg-white p-8 shadow-lg">
-            <div className="mb-6 flex items-center justify-between">
-              <div>
-                <h1 className="text-3xl font-bold text-slate-800">{playerData?.name ?? 'Player'}</h1>
-                <div className="mt-2 flex items-center gap-3">
-                  <span className="text-4xl">{tier.icon}</span>
-                  <div>
-                    <p className="text-sm font-semibold text-slate-500">Rank</p>
-                    <p className="text-xl font-bold" style={{ color: tier.color }}>
-                      {tier.name}
-                    </p>
+          {/* Player Stats Card - More Gamified */}
+          <div className="relative overflow-hidden rounded-3xl border-2 border-purple-200 bg-white p-8 shadow-2xl">
+            <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-gradient-to-br from-purple-200/30 to-pink-200/30 blur-3xl" />
+            <div className="absolute -left-20 -bottom-20 h-64 w-64 rounded-full bg-gradient-to-tr from-pink-200/30 to-purple-200/30 blur-3xl" />
+            
+            <div className="relative z-10">
+              <div className="mb-6 flex items-center justify-between">
+                <div>
+                  <h1 className="text-4xl font-black text-slate-800" style={{ fontFamily: 'Impact, fantasy' }}>
+                    {playerData?.name ?? 'Player'}
+                  </h1>
+                  <div className="mt-3 flex items-center gap-3">
+                    <div className="flex items-center gap-2 rounded-full border-2 px-4 py-2 shadow-md" style={{ borderColor: tier.color, backgroundColor: `${tier.color}20` }}>
+                      <span className="text-3xl">{tier.icon}</span>
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Rank</p>
+                        <p className="text-2xl font-black" style={{ color: tier.color }}>
+                          {tier.name}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="rounded-2xl border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50 px-6 py-4 shadow-lg">
+                    <p className="text-xs font-bold uppercase tracking-wider text-purple-600">ELO Rating</p>
+                    <p className="text-5xl font-black text-purple-700">{elo}</p>
                   </div>
                 </div>
               </div>
-              <div className="text-right">
-                <p className="text-sm font-semibold text-slate-500">ELO Rating</p>
-                <p className="text-4xl font-bold text-slate-800">{elo}</p>
-              </div>
-            </div>
 
-            {/* Win/Loss Record */}
-            <div className="mb-6 flex gap-4 rounded-2xl bg-slate-50 p-4">
-              <div className="flex-1 text-center">
-                <p className="text-2xl font-bold text-emerald-600">{wins}</p>
-                <p className="text-xs font-semibold text-slate-500">WINS</p>
+              {/* Win/Loss Record - Enhanced */}
+              <div className="mb-6 grid grid-cols-3 gap-3">
+                <div className="rounded-xl border-2 border-emerald-200 bg-gradient-to-br from-emerald-50 to-teal-50 p-4 text-center shadow-md">
+                  <p className="text-3xl font-black text-emerald-600">{wins}</p>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-700">Wins</p>
+                </div>
+                <div className="rounded-xl border-2 border-rose-200 bg-gradient-to-br from-rose-50 to-red-50 p-4 text-center shadow-md">
+                  <p className="text-3xl font-black text-rose-600">{losses}</p>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-rose-700">Losses</p>
+                </div>
+                <div className="rounded-xl border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50 p-4 text-center shadow-md">
+                  <p className="text-3xl font-black text-purple-600">
+                    {wins + losses > 0 ? Math.round((wins / (wins + losses)) * 100) : 0}%
+                  </p>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-purple-700">Win Rate</p>
+                </div>
               </div>
-              <div className="h-12 w-px bg-slate-300" />
-              <div className="flex-1 text-center">
-                <p className="text-2xl font-bold text-rose-600">{losses}</p>
-                <p className="text-xs font-semibold text-slate-500">LOSSES</p>
-              </div>
-              <div className="h-12 w-px bg-slate-300" />
-              <div className="flex-1 text-center">
-                <p className="text-2xl font-bold text-slate-800">
-                  {wins + losses > 0 ? Math.round((wins / (wins + losses)) * 100) : 0}%
-                </p>
-                <p className="text-xs font-semibold text-slate-500">WIN RATE</p>
-              </div>
-            </div>
 
-            {/* Stats Display */}
-            <div className="space-y-3">
-              <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Current Stats</p>
-              {STAT_DISPLAY_CONFIG.map(stat => {
-                const value = Math.round(stats[stat.key] ?? 50);
-                return (
-                  <div key={stat.key}>
-                    <div className="mb-1 flex justify-between text-sm">
-                      <span className="font-semibold text-slate-600">{stat.label}</span>
-                      <span className="font-bold text-slate-800">{value}</span>
-                    </div>
-                    <div className="h-2 overflow-hidden rounded-full bg-slate-200">
-                      <div
-                        className="h-full rounded-full bg-gradient-to-r from-purple-500 to-pink-500 transition-all duration-300"
-                        style={{ width: `${value}%` }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
+              {/* Stats Display - Compact */}
+              <div className="space-y-2">
+                <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Combat Stats</p>
+                <div className="grid grid-cols-2 gap-3">
+                  {STAT_DISPLAY_CONFIG.map(stat => {
+                    const value = Math.round(stats[stat.key] ?? 50);
+                    return (
+                      <div key={stat.key} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                        <div className="mb-1.5 flex items-center justify-between">
+                          <span className="text-xs font-bold text-slate-700">{stat.label}</span>
+                          <span className="text-lg font-black text-slate-800">{value}</span>
+                        </div>
+                        <div className="h-1.5 overflow-hidden rounded-full bg-slate-200">
+                          <div
+                            className="h-full rounded-full bg-gradient-to-r from-purple-500 to-pink-500"
+                            style={{ width: `${value}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Find Race Button */}
+          {/* Find Race Button - More Exciting */}
           <button
             type="button"
             onClick={handleFindRace}
-            className="w-full rounded-3xl bg-gradient-to-r from-purple-500 to-pink-500 px-8 py-6 text-2xl font-bold text-white shadow-xl transition hover:from-purple-600 hover:to-pink-600 hover:shadow-2xl active:scale-95"
+            className="group relative w-full overflow-hidden rounded-3xl bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500 px-8 py-8 shadow-2xl transition hover:shadow-purple-500/50 active:scale-95"
           >
-            <span className="drop-shadow-md">🏁 Find Race</span>
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" style={{
+              animation: 'shimmer 2s infinite',
+            }} />
+            <span className="relative text-3xl font-black text-white drop-shadow-lg" style={{ fontFamily: 'Impact, fantasy' }}>
+              🏁 FIND RACE
+            </span>
           </button>
 
           {/* Back Button */}
           <a
             href="/"
-            className="block w-full rounded-3xl border-2 border-slate-200 bg-white px-8 py-4 text-center text-lg font-bold text-slate-600 shadow-md transition hover:bg-slate-50"
+            className="block w-full rounded-3xl border-2 border-slate-300 bg-white px-8 py-4 text-center text-base font-bold text-slate-600 shadow-md transition hover:border-purple-300 hover:bg-slate-50"
           >
             ← Back to Home
           </a>
