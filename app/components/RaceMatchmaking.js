@@ -126,18 +126,29 @@ export default function RaceMatchmaking({
                   {STAT_DISPLAY_CONFIG.map(stat => {
                     const value = Math.round(stats[stat.key] ?? 50);
                     
-                    // Calculate stat rank
+                    // Calculate stat rank - smart system that scales beyond 100
                     const getStatRank = (val) => {
-                      if (val >= 95) return { rank: 'SSS+', color: 'from-yellow-400 to-orange-400' };
-                      if (val >= 90) return { rank: 'SSS', color: 'from-purple-400 to-pink-400' };
-                      if (val >= 80) return { rank: 'SS', color: 'from-red-400 to-rose-400' };
-                      if (val >= 70) return { rank: 'S', color: 'from-orange-400 to-amber-400' };
-                      if (val >= 60) return { rank: 'A', color: 'from-emerald-400 to-teal-400' };
+                      if (val >= 300) return { rank: 'SSS+', color: 'from-yellow-400 to-orange-400' };
+                      if (val >= 250) return { rank: 'SSS', color: 'from-purple-400 to-pink-400' };
+                      if (val >= 200) return { rank: 'SS+', color: 'from-red-500 to-rose-500' };
+                      if (val >= 150) return { rank: 'SS', color: 'from-red-400 to-rose-400' };
+                      if (val >= 120) return { rank: 'S+', color: 'from-orange-500 to-amber-500' };
+                      if (val >= 100) return { rank: 'S', color: 'from-orange-400 to-amber-400' };
+                      if (val >= 85) return { rank: 'A+', color: 'from-emerald-500 to-teal-500' };
+                      if (val >= 70) return { rank: 'A', color: 'from-emerald-400 to-teal-400' };
+                      if (val >= 60) return { rank: 'B+', color: 'from-blue-500 to-cyan-500' };
                       if (val >= 50) return { rank: 'B', color: 'from-blue-400 to-cyan-400' };
+                      if (val >= 40) return { rank: 'C+', color: 'from-slate-500 to-slate-600' };
                       return { rank: 'C', color: 'from-slate-400 to-slate-500' };
                     };
                     
                     const rankInfo = getStatRank(value);
+                    
+                    // Normalize stat for progress bar (0-100 scale for visual)
+                    const normalizeForDisplay = (val) => {
+                      // Soft cap visualization: 50→50%, 100→75%, 150→87%, 200→93%
+                      return Math.min(100, 100 * (1 - Math.exp(-val / 100)));
+                    };
                     
                     return (
                       <div key={stat.key} className="relative rounded-xl border border-slate-200 bg-slate-50 p-3">
@@ -153,7 +164,7 @@ export default function RaceMatchmaking({
                         <div className="h-1.5 overflow-hidden rounded-full bg-slate-200">
                           <div
                             className="h-full rounded-full bg-gradient-to-r from-purple-500 to-pink-500"
-                            style={{ width: `${value}%` }}
+                            style={{ width: `${normalizeForDisplay(value)}%` }}
                           />
                         </div>
                       </div>

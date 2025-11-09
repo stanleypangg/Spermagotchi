@@ -169,12 +169,12 @@ export async function POST(request) {
       }
     }
     
-    // Apply stat changes with streak bonus
+    // Apply stat changes with streak bonus - NO CAP on stats!
     const newStats = {
-      motility: Math.max(0, Math.min(100, (playerData.stats.motility || 50) + habitDelta.motility + streakBonus)),
-      linearity: Math.max(0, Math.min(100, (playerData.stats.linearity || 50) + habitDelta.linearity + streakBonus)),
-      flow: Math.max(0, Math.min(100, (playerData.stats.flow || 50) + habitDelta.flow + streakBonus)),
-      signals: Math.max(0, Math.min(100, (playerData.stats.signals || 50) + habitDelta.signals + streakBonus)),
+      motility: Math.max(0, (playerData.stats.motility || 50) + habitDelta.motility + streakBonus),
+      linearity: Math.max(0, (playerData.stats.linearity || 50) + habitDelta.linearity + streakBonus),
+      flow: Math.max(0, (playerData.stats.flow || 50) + habitDelta.flow + streakBonus),
+      signals: Math.max(0, (playerData.stats.signals || 50) + habitDelta.signals + streakBonus),
     };
     
     const newPoints = (playerData.spermPoints || 0) + streakPoints;

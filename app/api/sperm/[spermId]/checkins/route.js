@@ -93,13 +93,14 @@ export async function POST(request, { params }) {
     }
     
     // Just process habits and update stats - NO streak changes
+    // Stats can grow beyond 100 - no cap!
     const delta = processHabits(habits);
     
     const newStats = {
-      motility: Math.max(0, Math.min(100, playerData.stats.motility + delta.motility)),
-      linearity: Math.max(0, Math.min(100, playerData.stats.linearity + delta.linearity)),
-      flow: Math.max(0, Math.min(100, playerData.stats.flow + delta.flow)),
-      signals: Math.max(0, Math.min(100, playerData.stats.signals + delta.signals)),
+      motility: Math.max(0, playerData.stats.motility + delta.motility),
+      linearity: Math.max(0, playerData.stats.linearity + delta.linearity),
+      flow: Math.max(0, playerData.stats.flow + delta.flow),
+      signals: Math.max(0, playerData.stats.signals + delta.signals),
     };
     
     // Update player data - keep streak/date unchanged

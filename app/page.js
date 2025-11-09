@@ -1104,14 +1104,19 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
               signals: 'Chemical sensing and navigation. Boosts performance in gradient zones.',
             };
             
-            // Calculate stat rank
+            // Calculate stat rank using smart system
             const getStatRank = (value) => {
-              if (value >= 95) return { rank: 'SSS+', color: 'from-yellow-400 to-orange-400', textColor: 'text-yellow-600', glow: 'shadow-yellow-500/50' };
-              if (value >= 90) return { rank: 'SSS', color: 'from-purple-400 to-pink-400', textColor: 'text-purple-600', glow: 'shadow-purple-500/50' };
-              if (value >= 80) return { rank: 'SS', color: 'from-red-400 to-rose-400', textColor: 'text-red-600', glow: 'shadow-red-500/30' };
-              if (value >= 70) return { rank: 'S', color: 'from-orange-400 to-amber-400', textColor: 'text-orange-600', glow: 'shadow-orange-500/30' };
-              if (value >= 60) return { rank: 'A', color: 'from-emerald-400 to-teal-400', textColor: 'text-emerald-600', glow: 'shadow-emerald-500/20' };
+              if (value >= 300) return { rank: 'SSS+', color: 'from-yellow-400 to-orange-400', textColor: 'text-yellow-600', glow: 'shadow-yellow-500/50' };
+              if (value >= 250) return { rank: 'SSS', color: 'from-purple-400 to-pink-400', textColor: 'text-purple-600', glow: 'shadow-purple-500/50' };
+              if (value >= 200) return { rank: 'SS+', color: 'from-red-500 to-rose-500', textColor: 'text-red-600', glow: 'shadow-red-500/40' };
+              if (value >= 150) return { rank: 'SS', color: 'from-red-400 to-rose-400', textColor: 'text-red-600', glow: 'shadow-red-500/30' };
+              if (value >= 120) return { rank: 'S+', color: 'from-orange-500 to-amber-500', textColor: 'text-orange-600', glow: 'shadow-orange-500/40' };
+              if (value >= 100) return { rank: 'S', color: 'from-orange-400 to-amber-400', textColor: 'text-orange-600', glow: 'shadow-orange-500/30' };
+              if (value >= 85) return { rank: 'A+', color: 'from-emerald-500 to-teal-500', textColor: 'text-emerald-600', glow: 'shadow-emerald-500/30' };
+              if (value >= 70) return { rank: 'A', color: 'from-emerald-400 to-teal-400', textColor: 'text-emerald-600', glow: 'shadow-emerald-500/20' };
+              if (value >= 60) return { rank: 'B+', color: 'from-blue-500 to-cyan-500', textColor: 'text-blue-600', glow: 'shadow-blue-500/30' };
               if (value >= 50) return { rank: 'B', color: 'from-blue-400 to-cyan-400', textColor: 'text-blue-600', glow: 'shadow-blue-500/20' };
+              if (value >= 40) return { rank: 'C+', color: 'from-slate-500 to-slate-600', textColor: 'text-slate-600', glow: '' };
               return { rank: 'C', color: 'from-slate-400 to-slate-500', textColor: 'text-slate-600', glow: '' };
             };
             
@@ -1121,26 +1126,29 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
             return (
               <div
                 key={stat.key}
-                className="group relative flex min-w-[140px] flex-1 basis-[160px] flex-col rounded-3xl border border-white/70 bg-white/80 px-4 py-3 text-slate-600 shadow-sm backdrop-blur transition hover:shadow-md"
+                className="group relative flex min-w-[140px] flex-1 basis-[160px] flex-row items-center justify-between rounded-3xl border border-white/70 bg-white/80 px-4 py-3 text-slate-600 shadow-sm backdrop-blur transition hover:shadow-md"
               >
-                {/* Rank Badge */}
-                <div className={`absolute -top-2 -right-2 rounded-full bg-gradient-to-r ${rankInfo.color} px-2.5 py-1 shadow-lg ${rankInfo.glow}`}>
-                  <p className="text-[10px] font-black text-white drop-shadow-md">{rankInfo.rank}</p>
+                {/* Left side: Stat info */}
+                <div className="flex flex-col">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[0.65rem] font-semibold uppercase tracking-[0.3em] text-slate-400">
+                      {stat.abbr}
+                    </span>
+                    <span className={`flex items-center gap-1 text-xs font-semibold ${stat.trendColor}`}>
+                      <span aria-hidden>{stat.trendIcon}</span>
+                      <span>{stat.trendLabel}</span>
+                    </span>
+                  </div>
+                  <p className="mt-2 text-2xl font-bold text-slate-800">{stat.value}</p>
+                  <p className="mt-1 text-xs font-medium uppercase tracking-[0.25em] text-slate-400">
+                    {stat.label}
+                  </p>
                 </div>
                 
-                <div className="flex items-center justify-between">
-                  <span className="text-[0.65rem] font-semibold uppercase tracking-[0.3em] text-slate-400">
-                    {stat.abbr}
-                  </span>
-                  <span className={`flex items-center gap-1 text-xs font-semibold ${stat.trendColor}`}>
-                    <span aria-hidden>{stat.trendIcon}</span>
-                    <span>{stat.trendLabel}</span>
-                  </span>
+                {/* Right side: Rank Badge */}
+                <div className={`flex-shrink-0 rounded-full bg-gradient-to-r ${rankInfo.color} px-3 py-1.5 shadow-lg ${rankInfo.glow}`}>
+                  <p className="text-xs font-black text-white drop-shadow-md">{rankInfo.rank}</p>
                 </div>
-                <p className="mt-2 text-2xl font-bold text-slate-800">{stat.value}</p>
-                <p className="mt-1 text-xs font-medium uppercase tracking-[0.25em] text-slate-400">
-                  {stat.label}
-                </p>
                 
                 {/* Tooltip on hover */}
                 <div className="pointer-events-none absolute -bottom-2 left-1/2 -translate-x-1/2 translate-y-full opacity-0 transition-opacity duration-200 group-hover:opacity-100 z-50">
