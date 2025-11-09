@@ -115,7 +115,7 @@ export default function RaceStage({
   frame,
   width = 900,
   height = 520,
-  cameraSpan = 260,
+  cameraSpan = 360,
 }) {
   const centerPath = useMemo(
     () => svgPathFromGeometry(geometry),
