@@ -132,6 +132,104 @@ function polylineToPath(points) {
 
 const clampValue = (value, min, max) => Math.min(max, Math.max(min, value));
 
+// Dialogue system for race interactions
+const DIALOGUE = {
+  collision: {
+    aggressor: [
+      "Outta my way, slowpoke!",
+      "Move it or lose it!",
+      "Watch where you're swimming!",
+      "Step aside, tail dragger!",
+      "Coming through!",
+      "Learn to stay in your lane!",
+      "Too slow, pal!",
+      "Sorry, not sorry!",
+      "My motility is superior!",
+      "Beep beep, move aside!",
+      "Can't handle my thrust!",
+      "Get wiggling or get lost!",
+    ],
+    victim: [
+      "Hey! Watch the tail!",
+      "Ow! My flagellum!",
+      "That's gonna leave a mark!",
+      "Seriously?!",
+      "Not cool, dude!",
+      "I'm swimming here!",
+      "Watch it!",
+      "Rude!",
+      "My acrosome!",
+      "Tail collision!",
+      "That hurt my head!",
+      "I need that membrane!",
+    ],
+  },
+  collisionResponse: [
+    "My bad!",
+    "Oops!",
+    "Sorry!",
+    "Didn't see ya!",
+    "Tight quarters!",
+    "Accidents happen!",
+    "Lost control there!",
+    "This tube is crowded!",
+  ],
+  hyperburst: [
+    "TURBO MODE!",
+    "Engaging hyperdrive!",
+    "Maximum motility!",
+    "Catch me if you can!",
+    "Full speed ahead!",
+    "Zooooom!",
+    "Here we go!",
+    "Flagellum ACTIVATED!",
+    "Hyperspeed engaged!",
+    "Prepare for thrust!",
+    "Time to wiggle!",
+  ],
+  zoneEnter: {
+    flow: [
+      "Smooth sailing!",
+      "Nice and easy!",
+      "Love this zone!",
+      "Perfect viscosity!",
+      "So smooth!",
+    ],
+    gradient: [
+      "Getting challenging!",
+      "Bit harder here...",
+      "Ooh, sticky!",
+      "Extra resistance!",
+      "Working harder now!",
+    ],
+    viscous: [
+      "This is thick!",
+      "Like swimming in syrup!",
+      "So... slow...",
+      "Ugh, viscous zone!",
+      "Need more power!",
+      "Can barely move!",
+      "Heavy going!",
+    ],
+  },
+  finish: [
+    "YES! Made it!",
+    "Fertilization here I come!",
+    "Mission accomplished!",
+    "Victory!",
+    "I did it!",
+    "First to the egg!",
+    "Champions breed champions!",
+    "Genetic superiority!",
+  ],
+};
+
+function getRandomDialogue(category, subcategory = null) {
+  const pool = subcategory ? DIALOGUE[category]?.[subcategory] : DIALOGUE[category];
+  if (!pool || !pool.length) return null;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
 function computeIndicators(lanes, bounds, leader, totalLength) {
   const indicators = [];
   const visible = [];
@@ -185,6 +283,8 @@ export default function RaceStage({
   finishOrder = [],
 }) {
   const [showEndScreen, setShowEndScreen] = useState(false);
+  const [speechBubbles, setSpeechBubbles] = useState([]);
+  const speechBubbleIdCounter = useRef(0);
   
   // Delay showing the end screen
   useEffect(() => {
@@ -197,6 +297,101 @@ export default function RaceStage({
       setShowEndScreen(false);
     }
   }, [isFinished, finishOrder.length]);
+
+  // Handle race events and create speech bubbles
+  useEffect(() => {
+    if (!frame?.events || frame.events.length === 0) return;
+
+    const newBubbles = [];
+    const currentTime = Date.now();
+
+    frame.events.forEach((event) => {
+      let dialogue = null;
+      let responseDialogue = null;
+      let responseLaneId = null;
+      let duration = 2500; // Default duration in ms
+
+      switch (event.kind) {
+        case 'collision':
+          const isPlayer = event.racerId === 'player';
+          const subcategory = event.isAggressor ? 'aggressor' : 'victim';
+          dialogue = getRandomDialogue('collision', subcategory);
+          
+          // Sometimes add a response from the other racer
+          if (Math.random() > 0.5) {
+            responseDialogue = getRandomDialogue('collisionResponse');
+            responseLaneId = event.otherRacerId;
+          }
+          duration = 2000;
+          break;
+
+        case 'hyperburst:start':
+          // Only show dialogue 30% of the time to avoid clutter
+          if (Math.random() < 0.3) {
+            dialogue = getRandomDialogue('hyperburst');
+            duration = 1500;
+          }
+          break;
+
+        case 'zone:enter':
+          // Only show zone dialogue 20% of the time and only for viscous/gradient
+          if (event.zone !== 'flow' && Math.random() < 0.2) {
+            dialogue = getRandomDialogue('zoneEnter', event.zone);
+            duration = 1800;
+          }
+          break;
+
+        case 'finish':
+          // Only show finish dialogue for top 3 positions
+          if (event.place <= 3) {
+            dialogue = getRandomDialogue('finish');
+            duration = 3000;
+          }
+          break;
+      }
+
+      if (dialogue) {
+        const bubbleId = speechBubbleIdCounter.current++;
+        newBubbles.push({
+          id: bubbleId,
+          laneId: event.racerId,
+          text: dialogue,
+          createdAt: currentTime,
+          duration: duration,
+        });
+
+        // Add response bubble if applicable
+        if (responseDialogue && responseLaneId) {
+          const responseBubbleId = speechBubbleIdCounter.current++;
+          newBubbles.push({
+            id: responseBubbleId,
+            laneId: responseLaneId,
+            text: responseDialogue,
+            createdAt: currentTime + 300, // Slight delay for response
+            duration: duration - 300,
+          });
+        }
+      }
+    });
+
+    if (newBubbles.length > 0) {
+      setSpeechBubbles((prev) => [...prev, ...newBubbles]);
+    }
+  }, [frame?.events]);
+
+  // Clean up expired speech bubbles
+  useEffect(() => {
+    if (speechBubbles.length === 0) return;
+
+    const interval = setInterval(() => {
+      const currentTime = Date.now();
+      setSpeechBubbles((prev) =>
+        prev.filter((bubble) => currentTime - bubble.createdAt < bubble.duration)
+      );
+    }, 100);
+
+    return () => clearInterval(interval);
+  }, [speechBubbles.length]);
   
   const centerPath = useMemo(
     () => svgPathFromGeometry(geometry),
@@ -856,6 +1051,80 @@ export default function RaceStage({
             </text>
           </g>
         ))}
+
+        {/* Speech Bubbles */}
+        {speechBubbles.map((bubble) => {
+          const lane = frame?.lanes?.find((l) => l.id === bubble.laneId);
+          if (!lane) return null;
+
+          // Check if lane is visible in viewport
+          const isVisible = visible.some((v) => v.id === lane.id);
+          if (!isVisible) return null;
+
+          // Calculate fade based on remaining time
+          const elapsed = Date.now() - bubble.createdAt;
+          const remaining = bubble.duration - elapsed;
+          const opacity = remaining < 500 ? remaining / 500 : 1;
+
+          // Position above the racer
+          const offsetY = -35;
+          const padding = 8;
+          const fontSize = 11;
+          const maxWidth = 120;
+
+          // Estimate text width (rough approximation)
+          const charWidth = fontSize * 0.55;
+          const textWidth = Math.min(bubble.text.length * charWidth, maxWidth);
+          const bubbleWidth = textWidth + padding * 2;
+          const bubbleHeight = fontSize + padding * 1.5;
+
+          return (
+            <g
+              key={bubble.id}
+              transform={`translate(${lane.x}, ${lane.y})`}
+              opacity={opacity}
+              className="speech-bubble"
+            >
+              {/* Speech bubble background */}
+              <rect
+                x={-bubbleWidth / 2}
+                y={offsetY - bubbleHeight}
+                width={bubbleWidth}
+                height={bubbleHeight}
+                rx={6}
+                fill="white"
+                stroke="#374151"
+                strokeWidth={1.5}
+                filter="url(#tube-shadow)"
+              />
+              
+              {/* Speech bubble tail */}
+              <path
+                d={`M ${-6} ${offsetY} L ${0} ${offsetY + 8} L ${6} ${offsetY}`}
+                fill="white"
+                stroke="#374151"
+                strokeWidth={1.5}
+                strokeLinejoin="round"
+              />
+
+              {/* Text */}
+              <text
+                x={0}
+                y={offsetY - bubbleHeight / 2 + fontSize / 3}
+                textAnchor="middle"
+                fontSize={fontSize}
+                fontWeight="600"
+                fill="#1f2937"
+                style={{ 
+                  fontFamily: 'Arial, sans-serif',
+                  pointerEvents: 'none',
+                }}
+              >
+                {bubble.text.length > 20 ? bubble.text.substring(0, 20) + '...' : bubble.text}
+              </text>
+            </g>
+          );
+        })}
       </svg>
 
       {/* Top Progress Bar */}
