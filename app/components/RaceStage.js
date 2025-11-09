@@ -333,6 +333,13 @@ export default function RaceStage({
           <filter id="tube-shadow" x="-30%" y="-30%" width="160%" height="160%">
             <feDropShadow dx="0" dy="6" stdDeviation="10" floodColor="rgba(136,71,120,0.35)" />
           </filter>
+          <filter id="player-glow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="6" result="coloredBlur"/>
+            <feMerge>
+              <feMergeNode in="coloredBlur"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
         </defs>
 
         {overallBounds && (
@@ -488,6 +495,14 @@ export default function RaceStage({
                 <circle cx={0} cy={0} r={SPRITE_SIZE.width / 2} />
               </clipPath>
             </defs>
+            <circle
+              cx={0}
+              cy={0}
+              r={SPRITE_SIZE.width / 2 + 4}
+              fill={lane.tint ?? '#38bdf8'}
+              opacity={0.6}
+              filter="url(#player-glow)"
+            />
             <circle
               cx={0}
               cy={0}
