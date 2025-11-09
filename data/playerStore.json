@@ -2,13 +2,13 @@
   "baka": {
     "name": "baka",
     "stats": {
-      "motility": 189.5999999999997,
-      "linearity": 164.7000000000001,
-      "flow": 163.2999999999999,
-      "signals": 196.5
+      "motility": 258.49999999999955,
+      "linearity": 237.6000000000003,
+      "flow": 233.3999999999997,
+      "signals": 263
     },
-    "elo": 1185,
-    "spermPoints": 827,
+    "elo": 1290,
+    "spermPoints": 1875,
     "raceHistory": [
       {
         "place": 1,
@@ -415,26 +415,188 @@
         "eloChange": 20,
         "eloAfter": 1185,
         "pointsEarned": 114
+      },
+      {
+        "place": 1,
+        "totalRacers": 4,
+        "trackId": "rapids",
+        "raceTime": 44.3333333333321,
+        "opponents": [
+          {
+            "name": "FrostBite",
+            "place": 2
+          },
+          {
+            "name": "DesertStorm",
+            "place": 3
+          },
+          {
+            "name": "ProSwimmer",
+            "place": 4
+          }
+        ],
+        "timestamp": "2025-11-09T13:56:37.781Z",
+        "eloChange": 20,
+        "eloAfter": 1205,
+        "pointsEarned": 113
+      },
+      {
+        "place": 2,
+        "totalRacers": 4,
+        "trackId": "rapids",
+        "raceTime": 44.13333333333211,
+        "opponents": [
+          {
+            "name": "LunaticRacer",
+            "place": 1
+          },
+          {
+            "name": "OceanSwift",
+            "place": 3
+          },
+          {
+            "name": "CyberRacer",
+            "place": 4
+          }
+        ],
+        "timestamp": "2025-11-09T14:03:30.419Z",
+        "eloChange": 10,
+        "eloAfter": 1215,
+        "pointsEarned": 63
+      },
+      {
+        "place": 1,
+        "totalRacers": 4,
+        "trackId": "driftway",
+        "raceTime": 38.199999999999115,
+        "opponents": [
+          {
+            "name": "TwiLight",
+            "place": 2
+          },
+          {
+            "name": "CurrentKing",
+            "place": 3
+          },
+          {
+            "name": "CanyonSpeed",
+            "place": 4
+          }
+        ],
+        "timestamp": "2025-11-09T14:04:02.303Z",
+        "eloChange": 20,
+        "eloAfter": 1235,
+        "pointsEarned": 115
+      },
+      {
+        "place": 1,
+        "totalRacers": 4,
+        "trackId": "gulfstream",
+        "raceTime": 40.21666666666567,
+        "opponents": [
+          {
+            "name": "ProSwimmer",
+            "place": 2
+          },
+          {
+            "name": "AresWar",
+            "place": 3
+          },
+          {
+            "name": "SwiftCircuit",
+            "place": 4
+          }
+        ],
+        "timestamp": "2025-11-09T14:04:35.391Z",
+        "eloChange": 20,
+        "eloAfter": 1255,
+        "pointsEarned": 114
+      },
+      {
+        "place": 1,
+        "totalRacers": 4,
+        "trackId": "rapids",
+        "raceTime": 45.633333333332025,
+        "opponents": [
+          {
+            "name": "HyperRush",
+            "place": 2
+          },
+          {
+            "name": "OceanSwift",
+            "place": 3
+          },
+          {
+            "name": "ThrottleMax",
+            "place": 4
+          }
+        ],
+        "timestamp": "2025-11-09T14:05:51.565Z",
+        "eloChange": 20,
+        "eloAfter": 1275,
+        "pointsEarned": 113
+      },
+      {
+        "place": 3,
+        "totalRacers": 4,
+        "trackId": "rapids",
+        "raceTime": 44.98333333333206,
+        "opponents": [
+          {
+            "name": "FinishFirst",
+            "place": 1
+          },
+          {
+            "name": "RapidRetailer",
+            "place": 2
+          },
+          {
+            "name": "SwiftSeller",
+            "place": 4
+          }
+        ],
+        "timestamp": "2025-11-09T14:06:26.865Z",
+        "eloChange": 5,
+        "eloAfter": 1280,
+        "pointsEarned": 38
+      },
+      {
+        "place": 2,
+        "totalRacers": 4,
+        "trackId": "vortex",
+        "raceTime": 55.88333333333144,
+        "opponents": [
+          {
+            "name": "SpeedyService",
+            "place": 1
+          },
+          {
+            "name": "StreamSpeed",
+            "place": 3
+          },
+          {
+            "name": "DashDealer",
+            "place": 4
+          }
+        ],
+        "timestamp": "2025-11-09T14:07:34.749Z",
+        "eloChange": 10,
+        "eloAfter": 1290,
+        "pointsEarned": 60
       }
     ],
-    "currentStreak": 4,
-    "longestStreak": 4,
-    "lastCheckInDate": "2025-11-13",
-    "todayHabits": {
-      "drinkMatcha": false,
-      "goon": false,
-      "sleep8Hours": false,
-      "drink2LWater": false,
-      "drinkAlcohol": false,
-      "smokeCigarettes": false,
-      "eatFastFood": false,
-      "hotLaptop": false
-    },
+    "currentStreak": 20,
+    "longestStreak": 20,
+    "lastCheckInDate": "2025-12-03",
+    "todayHabits": {},
     "ownedClothing": [
       "67",
-      "among-us"
+      "among-us",
+      "butt-plug",
+      "speed-core",
+      "condom-suit"
     ],
-    "equippedClothing": "among-us",
+    "equippedClothing": "condom-suit",
     "ownedBackgrounds": [
       "sperm-kingdom",
       "th16"
