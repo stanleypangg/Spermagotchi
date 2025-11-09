@@ -8,7 +8,7 @@
       "signals": 71.5
     },
     "elo": 1095,
-    "spermPoints": 302,
+    "spermPoints": 270,
     "raceHistory": [
       {
         "place": 1,
@@ -247,15 +247,40 @@
         "eloChange": 5,
         "eloAfter": 1095,
         "pointsEarned": 43
+      },
+      {
+        "place": 4,
+        "totalRacers": 4,
+        "trackId": "rapids",
+        "raceTime": 44.583333333332085,
+        "opponents": [
+          {
+            "name": "EliteCell",
+            "place": 1
+          },
+          {
+            "name": "JetStream",
+            "place": 2
+          },
+          {
+            "name": "DashTrack",
+            "place": 3
+          }
+        ],
+        "timestamp": "2025-11-09T12:32:53.447Z",
+        "eloChange": 0,
+        "eloAfter": 1095,
+        "pointsEarned": 23
       }
     ],
     "currentStreak": 1,
     "longestStreak": 0,
     "lastCheckInDate": "2025-11-09",
     "ownedClothing": [
-      "67"
+      "67",
+      "among-us"
     ],
-    "equippedClothing": "67",
+    "equippedClothing": "among-us",
     "ownedBackgrounds": [
       "sperm-kingdom",
       "th16"
