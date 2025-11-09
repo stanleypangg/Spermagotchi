@@ -16,6 +16,7 @@ import HistoryPanel from './components/HistoryPanel';
 import SettingsPanel from './components/SettingsPanel';
 import NavigationBar from './components/NavigationBar';
 import Modal from './components/Modal';
+import StreakModal from './components/StreakModal';
 import {
   NAV_ITEMS,
   DEFAULT_HABIT_FORM,
@@ -84,6 +85,7 @@ export default function Home() {
   const [chatBubbleIndex, setChatBubbleIndex] = useState(0);
   const [shopTab, setShopTab] = useState('outfits');
   const [previewBackgroundLoaded, setPreviewBackgroundLoaded] = useState(true);
+  const [showStreakModal, setShowStreakModal] = useState(false);
   const currentBackgroundPreviewId = previewBackground ?? equippedBackground ?? null;
 
   useEffect(() => {
@@ -357,9 +359,9 @@ export default function Home() {
       setLoading(true);
       setError(null);
 
-      const storedId = window.localStorage.getItem('spermId');
+      const storedName = window.localStorage.getItem('player-name');
 
-      if (!storedId) {
+      if (!storedName) {
         if (!isCancelled) {
           setSpermId(null);
           setSperm(null);
@@ -373,9 +375,11 @@ export default function Home() {
       }
 
     try {
-      const data = await fetchSpermState(storedId);
-      if (!data) {
-        window.localStorage.removeItem('spermId');
+      const res = await fetch(`/api/player?name=${encodeURIComponent(storedName)}`);
+      const data = await res.json();
+      
+      if (!data || !data.player) {
+        window.localStorage.removeItem('player-name');
         if (!isCancelled) {
           setSpermId(null);
           setSperm(null);
@@ -386,12 +390,49 @@ export default function Home() {
         }
         return;
       }
+      
+      // Set the player data directly from the API response
       if (!isCancelled) {
-        setSpermId(storedId);
+        setSpermId(storedName);
         setShowLanding(false);
+        
+        // Map player data to sperm format
+        const playerData = data.player;
+        setSperm({
+          id: storedName,
+          name: playerData.name,
+          stats: playerData.stats,
+          elo: playerData.elo,
+          spermPoints: playerData.spermPoints,
+          raceHistory: playerData.raceHistory,
+          currentStreak: playerData.currentStreak || 0,
+          longestStreak: playerData.longestStreak || 0,
+          lastCheckInDate: playerData.lastCheckInDate,
+          currentDayIndex: 1,
+          createdAt: playerData.createdAt,
+          history: [],
+        });
+        
+        // Calculate derived stats
+        const derivedStats = {
+          overallHealthScore: (
+            0.35 * playerData.stats.motility +
+            0.30 * playerData.stats.linearity +
+            0.20 * playerData.stats.flow +
+            0.15 * playerData.stats.signals
+          ),
+          performanceRating: (
+            0.45 * playerData.stats.motility +
+            0.35 * playerData.stats.linearity +
+            0.20 * playerData.stats.signals
+          ),
+          consistencyScore: 50,
+        };
+        setDerived(derivedStats);
+        setLatestCheckIn(null);
       }
     } catch (err) {
-      window.localStorage.removeItem('spermId');
+      window.localStorage.removeItem('player-name');
       if (!isCancelled) {
         setSpermId(null);
         setSperm(null);
@@ -420,14 +461,40 @@ export default function Home() {
   }, [fetchSpermState]);
 
   useEffect(() => {
-    if (coins === null && typeof derived?.overallHealthScore === 'number') {
-      setCoins(
-        Number.isFinite(DEFAULT_STARTING_COINS)
-          ? Math.max(0, Math.round(DEFAULT_STARTING_COINS))
-          : Math.max(0, Math.round(derived.overallHealthScore ?? 0)),
-      );
-    }
-  }, [coins, derived]);
+    // Always sync coins with sperm points from player data
+    const points = sperm?.spermPoints ?? (coins !== null ? coins : DEFAULT_STARTING_COINS);
+    setCoins(Math.max(0, Math.round(points)));
+  }, [sperm?.spermPoints]);
+
+  // Reload player data when page gains focus (returns from race)
+  useEffect(() => {
+    const handleFocus = async () => {
+      if (spermId && typeof window !== 'undefined') {
+        try {
+          const res = await fetch(`/api/player?name=${encodeURIComponent(spermId)}`);
+          const data = await res.json();
+          if (data?.player) {
+            setSperm({
+              id: spermId,
+              name: data.player.name,
+              stats: data.player.stats,
+              elo: data.player.elo,
+              spermPoints: data.player.spermPoints,
+              raceHistory: data.player.raceHistory,
+              currentDayIndex: 1,
+              createdAt: data.player.createdAt,
+              history: [],
+            });
+          }
+        } catch (err) {
+          console.error('Failed to refresh player data:', err);
+        }
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [spermId]);
 
   useEffect(() => {
     if ((activeTab === 'history' || activeModal === 'history') && spermId) {
@@ -442,6 +509,39 @@ export default function Home() {
       setPreviewBackgroundLoaded(true);
     }
   }, [activeTab]);
+
+  // Refresh player data when opening shop or home (to get updated points/stats after racing)
+  useEffect(() => {
+    if ((activeTab === 'shop' || activeTab === 'home') && spermId) {
+      const refreshPlayerData = async () => {
+        try {
+          const res = await fetch(`/api/player?name=${encodeURIComponent(spermId)}`);
+          const data = await res.json();
+          if (data?.player) {
+            const playerData = data.player;
+            setSperm({
+              id: spermId,
+              name: playerData.name,
+              stats: playerData.stats,
+              elo: playerData.elo,
+              spermPoints: playerData.spermPoints,
+              raceHistory: playerData.raceHistory,
+              currentStreak: playerData.currentStreak || 0,
+              longestStreak: playerData.longestStreak || 0,
+              lastCheckInDate: playerData.lastCheckInDate,
+              currentDayIndex: 1,
+              createdAt: playerData.createdAt,
+              history: [],
+            });
+            setCoins(Math.max(0, Math.round(playerData.spermPoints ?? 0)));
+          }
+        } catch (err) {
+          console.error('Failed to refresh player data:', err);
+        }
+      };
+      refreshPlayerData();
+    }
+  }, [activeTab, spermId]);
 
   useEffect(() => {
     if (shopTab === 'outfits') {
@@ -498,19 +598,22 @@ export default function Home() {
     setLoading(true);
 
     try {
-      const newSperm = await createRemoteSperm(trimmedName);
-      if (typeof window !== 'undefined') {
-        window.localStorage.setItem('spermId', newSperm.id);
+      // Create/fetch player using simple API
+      const res = await fetch(`/api/player?name=${encodeURIComponent(trimmedName)}`);
+      const data = await res.json();
+      
+      if (!data || !data.player) {
+        throw new Error('Could not create player.');
       }
-      setSpermId(newSperm.id);
+      
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem('player-name', trimmedName);
+      }
+      setSpermId(trimmedName);
       setHabitForm({ ...DEFAULT_HABIT_FORM });
       setBuddyOverride(null);
       setHistory([]);
       setActiveTab('home');
-      const data = await fetchSpermState(newSperm.id);
-      if (!data) {
-        throw new Error('Could not locate the newly hatched buddy.');
-      }
       setCreateName('');
       scheduleFeedbackClear('Buddy hatched! 🌟');
       return true;
@@ -536,10 +639,29 @@ export default function Home() {
       setSubmitting(true);
       setError(null);
       try {
-        await submitHabitCheckInApi({
-          spermId,
-          habits: nextHabits,
+        const result = await fetch(`/api/sperm/${spermId}/checkins`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ habits: nextHabits }),
         });
+        const data = await result.json();
+        
+        if (!result.ok) {
+          throw new Error(data.error || 'Failed to submit habits');
+        }
+        
+        // Show streak bonus feedback if applicable
+        if (data.streakBonus > 0 || data.streakPoints > 0) {
+          let message = '✅ Habits logged!';
+          if (data.streakBonus > 0) {
+            message += ` 🔥 Streak Bonus: +${data.streakBonus} to all stats!`;
+          }
+          if (data.streakPoints > 0) {
+            message += ` 💰 +${data.streakPoints} points!`;
+          }
+          scheduleFeedbackClear(message);
+        }
+        
         await fetchSpermState(spermId);
         if (activeTab === 'history' || activeModal === 'history') {
           await fetchHistory(spermId);
@@ -589,7 +711,7 @@ export default function Home() {
     if (typeof window === 'undefined') {
       return;
     }
-    window.localStorage.removeItem('spermId');
+    window.localStorage.removeItem('player-name');
     setSpermId(null);
     setSperm(null);
     setDerived(null);
@@ -761,7 +883,7 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
     setPurchaseCandidate(null);
   }, []);
 
-  const handleConfirmPurchase = useCallback(() => {
+  const handleConfirmPurchase = useCallback(async () => {
     if (!purchaseCandidate) {
       return;
     }
@@ -773,11 +895,24 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
       return;
     }
 
-    setCoins((prevCoins) => {
-      const baseline = prevCoins ?? coinsDisplay;
-      const updated = baseline - price;
-      return updated < 0 ? 0 : updated;
-    });
+    const newCoins = Math.max(0, currentCoins - price);
+    setCoins(newCoins);
+
+    // Save new points to player data
+    if (spermId && typeof window !== 'undefined') {
+      try {
+        await fetch('/api/player', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: spermId,
+            data: { spermPoints: newCoins },
+          }),
+        });
+      } catch (err) {
+        console.error('Failed to save sperm points:', err);
+      }
+    }
 
     if (category === 'background') {
       setOwnedBackgrounds((prev) => {
@@ -808,6 +943,7 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
     coinsDisplay,
     purchaseCandidate,
     scheduleFeedbackClear,
+    spermId,
   ]);
 
   const homeDisplayOutfit = equippedOutfitItem;
@@ -847,6 +983,26 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
         <div className="absolute inset-0 -z-10 bg-white" />
       )}
       <header className="relative z-10 flex flex-col items-center px-6 pt-6 pb-4">
+        {/* Streak Indicator Button */}
+        {sperm?.currentStreak > 0 && (
+          <button
+            type="button"
+            onClick={() => setShowStreakModal(true)}
+            className="absolute right-6 top-6 group"
+          >
+            <div className="flex items-center gap-2 rounded-full border-2 border-orange-300 bg-gradient-to-r from-orange-100 to-amber-100 px-4 py-2 shadow-lg transition hover:scale-105 hover:shadow-xl">
+              <span className="text-2xl animate-pulse">🔥</span>
+              <div className="text-left">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-orange-600">Streak</p>
+                <p className="text-xl font-black text-orange-700">{sperm.currentStreak}</p>
+              </div>
+            </div>
+            <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition whitespace-nowrap rounded-full bg-slate-800 px-3 py-1 text-xs font-semibold text-white shadow-lg">
+              View Rewards
+            </div>
+          </button>
+        )}
+        
         <div className="flex w-full max-w-3xl flex-wrap justify-center gap-4 text-left">
           {headerStats.map((stat) => (
             <div
@@ -1040,6 +1196,30 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
             <div className="mt-4 text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
               {sperm?.name ?? 'Buddy'}
             </div>
+            
+            {/* Streak Display */}
+            {sperm?.currentStreak > 0 && (
+              <div className="mt-3 flex items-center justify-center gap-3">
+                <div className="rounded-full border-2 border-orange-200 bg-gradient-to-r from-orange-50 to-amber-50 px-4 py-2 shadow-md">
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl">🔥</span>
+                    <div className="text-left">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-orange-600">Streak</p>
+                      <p className="text-xl font-black text-orange-700">{sperm.currentStreak} Days</p>
+                    </div>
+                  </div>
+                </div>
+                {sperm.longestStreak > sperm.currentStreak && (
+                  <div className="rounded-full border-2 border-purple-200 bg-gradient-to-r from-purple-50 to-pink-50 px-4 py-2 shadow-md">
+                    <div className="text-center">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-purple-600">Best</p>
+                      <p className="text-lg font-black text-purple-700">{sperm.longestStreak}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+            
             <div className="mt-4 flex w-full max-w-sm flex-col items-stretch gap-2 text-left">
               <label className="text-[0.65rem] font-semibold uppercase tracking-[0.3em] text-slate-500">
                 Debug Wellness
@@ -1073,16 +1253,18 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
       SHOP_CLOTHING_ITEMS.find((item) => item.id === selectedOutfitId) ?? null;
     const overlayOutfit = previewOutfitItem ?? null;
 
+    const isBackgroundTab = shopTab === 'backgrounds';
+    
+    // Calculate background preview
     const selectedBackgroundId = previewBackground ?? equippedBackground ?? null;
     const selectedBackground =
       SHOP_BACKGROUND_ITEMS.find((item) => item.id === selectedBackgroundId) ?? null;
-    const overlayBackgroundItem = currentBackgroundPreviewItem;
+    const overlayBackgroundItem = selectedBackground;
     const previewBackgroundImage = overlayBackgroundItem?.imagePath ?? DEFAULT_PREVIEW_BACKGROUND;
     const backgroundAlt = overlayBackgroundItem
       ? `${overlayBackgroundItem.name} background`
       : 'Default background';
 
-    const isBackgroundTab = shopTab === 'backgrounds';
     const sidebarItems = isBackgroundTab ? SHOP_BACKGROUND_ITEMS : SHOP_CLOTHING_ITEMS;
 
     const selectedItem = isBackgroundTab ? selectedBackground : previewOutfitItem ?? null;
@@ -1184,8 +1366,8 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
                 return (
                   <div
                     key={item.id}
-                    className={`flex items-center gap-3 rounded-2xl border px-3 py-3 transition ${
-                      isSelected ? 'border-indigo-200 bg-indigo-50' : 'border-slate-200 bg-white hover:border-slate-300'
+                    className={`flex flex-col gap-3 rounded-2xl border p-3 transition ${
+                      isSelected ? 'border-indigo-300 bg-indigo-50 shadow-md' : 'border-slate-200 bg-white hover:border-slate-300'
                     }`}
                   >
                     <button
@@ -1193,78 +1375,86 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
                       onClick={() =>
                         (isBackgroundTab ? handleSelectBackground : handleSelectOutfit)(item)
                       }
-                      className="flex flex-1 items-center gap-3 text-left"
+                      className="flex items-center gap-3 text-left"
                     >
                       {isBackgroundTab ? (
-                        <div className="relative h-16 w-28 overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
+                        <div className="relative h-20 w-full overflow-hidden rounded-xl border border-slate-200 shadow-sm">
                           <Image
                             src={item.imagePath}
                             alt={`${item.name} background thumbnail`}
                             fill
                             className="object-cover"
-                            sizes="112px"
+                            sizes="280px"
                             priority={isSelected}
                             unoptimized
                           />
-                          <div className="absolute inset-0 bg-black/10" />
+                          <div className="absolute inset-0 bg-black/5" />
+                          {isEquipped && (
+                            <div className="absolute top-2 right-2 rounded-full bg-indigo-500 px-2 py-1 text-[10px] font-bold text-white shadow-lg">
+                              ✓ Applied
+                            </div>
+                          )}
                         </div>
                       ) : null}
+                    </button>
+                    
+                    <div className="flex items-center justify-between">
                       <span className="text-sm font-semibold text-slate-700">{item.name}</span>
-                      {isOwned ? (
+                      {isOwned && !isBackgroundTab && (
                         <span
-                          className={`ml-auto inline-flex h-6 w-6 items-center justify-center rounded-full text-xs ${
+                          className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-xs ${
                             isEquipped
                               ? 'bg-indigo-500 text-white'
                               : 'bg-slate-200 text-slate-600'
                           }`}
-                          aria-label={
-                            isBackgroundTab ? (isEquipped ? 'Applied' : 'Owned') : isEquipped ? 'Equipped' : 'Owned'
-                          }
                         >
                           {isEquipped ? '✓' : '•'}
                         </span>
-                      ) : null}
-                    </button>
-                    {isOwned ? (
-                      <button
-                        type="button"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          (isBackgroundTab ? handleEquipBackground : handleEquipOwned)(item);
-                        }}
-                        className={`inline-flex min-w-[104px] items-center justify-center gap-2 rounded-full px-3 py-1 text-xs font-semibold transition ${
-                          isEquipped
-                            ? 'bg-indigo-500 text-white'
-                            : 'border border-indigo-200 text-indigo-600 hover:bg-indigo-50'
-                        }`}
-                      >
-                        <span>
+                      )}
+                    </div>
+                    
+                    <div className="flex gap-2">
+                      {isOwned ? (
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            (isBackgroundTab ? handleEquipBackground : handleEquipOwned)(item);
+                          }}
+                          className={`flex-1 rounded-full px-4 py-2 text-xs font-bold transition ${
+                            isEquipped
+                              ? 'bg-indigo-500 text-white cursor-default'
+                              : 'border-2 border-indigo-300 text-indigo-600 hover:bg-indigo-50'
+                          }`}
+                          disabled={isEquipped}
+                        >
                           {isBackgroundTab
                             ? isEquipped
-                              ? 'Applied'
+                              ? '✓ Applied'
                               : 'Apply'
                             : isEquipped
-                            ? 'Equipped'
+                            ? '✓ Equipped'
                             : 'Equip'}
-                        </span>
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          handleOpenPurchaseModal(item, isBackgroundTab ? 'background' : 'outfit');
-                        }}
-                        className={`flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold transition ${
-                          affordable
-                            ? 'bg-emerald-500 text-white hover:bg-emerald-600'
-                            : 'bg-slate-100 text-slate-400 hover:bg-slate-200'
-                        }`}
-                      >
-                        {renderCoinValue(item.price, 'h-4 w-4')}
-                        <span>Buy</span>
-                      </button>
-                    )}
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            handleOpenPurchaseModal(item, isBackgroundTab ? 'background' : 'outfit');
+                          }}
+                          className={`flex flex-1 items-center justify-center gap-2 rounded-full px-4 py-2 text-xs font-bold transition ${
+                            affordable
+                              ? 'bg-emerald-500 text-white hover:bg-emerald-600 shadow-md'
+                              : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                          }`}
+                          disabled={!affordable}
+                        >
+                          {renderCoinValue(item.price, 'h-4 w-4')}
+                          <span>Buy</span>
+                        </button>
+                      )}
+                    </div>
                   </div>
                 );
               })}
@@ -1323,7 +1513,24 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
         </div>
 
           <div className="relative mx-auto flex h-[520px] -mt-5 my-auto w-full max-w-[520px] items-center justify-center">
-            {previewBackgroundImage ? (
+            {isBackgroundTab && overlayBackgroundItem ? (
+              <div className="absolute inset-0 -z-10 overflow-hidden rounded-[40px] border border-slate-200/70 shadow-[0_40px_80px_rgba(63,61,86,0.18)]">
+                {!previewBackgroundLoaded ? (
+                  <div className="absolute inset-0 animate-pulse bg-slate-200/60" />
+                ) : null}
+                <Image
+                  key={overlayBackgroundItem.id}
+                  src={overlayBackgroundItem.imagePath}
+                  alt={overlayBackgroundItem.name}
+                  fill
+                  className="object-cover"
+                  priority
+                  unoptimized
+                  onLoadingComplete={() => setPreviewBackgroundLoaded(true)}
+                />
+                <div className="absolute inset-0 bg-linear-to-t from-black/40 via-transparent to-white/25 backdrop-blur-[1px]" />
+              </div>
+            ) : previewBackgroundImage ? (
               <div className="absolute inset-0 -z-10 overflow-hidden rounded-[40px] border border-slate-200/70 shadow-[0_40px_80px_rgba(63,61,86,0.18)]">
                 {!previewBackgroundLoaded ? (
                   <div className="absolute inset-0 animate-pulse bg-slate-200/60" />
@@ -1468,6 +1675,15 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
       <Modal title="Settings & Debug" open={activeModal === 'settings'} onClose={closeModal}>
         <SettingsPanel loading={loading} onReset={handleReset} />
       </Modal>
+
+      <StreakModal
+        isOpen={showStreakModal}
+        onClose={() => setShowStreakModal(false)}
+        streakData={{
+          currentStreak: sperm?.currentStreak || 0,
+          longestStreak: sperm?.longestStreak || 0,
+        }}
+      />
     </>
   );
 }

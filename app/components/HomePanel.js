@@ -13,9 +13,35 @@ export default function HomePanel({ latestCheckIn }) {
         </li>
         <li className="flex items-start gap-2">
           <span className="mt-1 text-xs font-bold text-indigo-500">3</span>
-          <span>Consistency unlocks weekly boosts—misses shave MOT &amp; LIN.</span>
+          <span>Maintain daily streaks for bonus stats and sperm points!</span>
         </li>
       </ul>
+      
+      {/* Streak Rewards Info */}
+      <div className="rounded-2xl border border-orange-100/80 bg-gradient-to-r from-orange-50/50 to-amber-50/50 px-4 py-3 shadow-sm">
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-lg">🔥</span>
+          <span className="text-xs font-bold uppercase tracking-wider text-orange-600">Daily Streak Bonuses</span>
+        </div>
+        <div className="space-y-0.5 text-[11px] text-slate-600">
+          <div className="flex justify-between">
+            <span>3 days:</span>
+            <span className="font-semibold text-orange-600">+1 stats, +10 pts</span>
+          </div>
+          <div className="flex justify-between">
+            <span>7 days:</span>
+            <span className="font-semibold text-orange-700">+2 stats, +20 pts</span>
+          </div>
+          <div className="flex justify-between">
+            <span>14 days:</span>
+            <span className="font-semibold text-purple-600">+3 stats, +50 pts</span>
+          </div>
+          <div className="flex justify-between">
+            <span>30 days:</span>
+            <span className="font-semibold text-yellow-600">+5 stats, +100 pts</span>
+          </div>
+        </div>
+      </div>
       <div className="flex items-center justify-between rounded-2xl border border-indigo-100/80 bg-white px-4 py-3 font-semibold text-[#5a4b81] shadow-sm">
         {latestCheckIn ? (
           <>

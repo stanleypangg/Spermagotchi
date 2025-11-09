@@ -1,25 +1,32 @@
 import { NextResponse } from 'next/server';
-import { getHistory } from '@/lib/spermGame';
+import fs from 'fs';
+import path from 'path';
 
-function handleError(error) {
-  const status = error?.status ?? 500;
-  const message = error?.message ?? 'Internal server error';
-  return NextResponse.json({ error: message }, { status });
-}
+const STORE_PATH = path.join(process.cwd(), 'data', 'playerStore.json');
 
-export async function GET(request, context) {
+function readStore() {
   try {
-    const { spermId } = await context.params;
-    if (!spermId) {
-      return NextResponse.json({ error: 'Missing spermId.' }, { status: 400 });
-    }
-    const { searchParams } = new URL(request.url);
-    const limitParam = searchParams.get('limit');
-    const limit = limitParam ? Number.parseInt(limitParam, 10) : undefined;
-    const history = getHistory(spermId, limit);
-    return NextResponse.json({ history }, { status: 200 });
+    const data = fs.readFileSync(STORE_PATH, 'utf8');
+    return JSON.parse(data);
   } catch (error) {
-    return handleError(error);
+    return {};
   }
 }
 
+// Bridge old history API to new player store
+export async function GET(request, { params }) {
+  try {
+    const { spermId } = await params;
+    const store = readStore();
+    const playerData = store[spermId];
+    
+    if (!playerData) {
+      return NextResponse.json({ error: 'Sperm not found.' }, { status: 404 });
+    }
+    
+    // Return empty history for now (can be expanded later)
+    return NextResponse.json({ history: [] });
+  } catch (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}

@@ -162,6 +162,78 @@ export const TRACK_PRESETS = Object.freeze([
     width: 88,
     closed: false,
   },
+  {
+    id: 'rapids',
+    name: 'Rapids',
+    controlPoints: transformPoints(LINEAR_LOOP, {
+      scaleX: 195,
+      scaleY: 52,
+      rotate: -6.5,
+      translateX: -28,
+      translateY: 12,
+    }),
+    zones: [
+      { kind: 'flow', start: 0, end: 0.4 },
+      { kind: 'viscous', start: 0.4, end: 0.7 },
+      { kind: 'gradient', start: 0.7, end: 1.0 },
+    ],
+    width: 82,
+    closed: false,
+  },
+  {
+    id: 'spiral',
+    name: 'Spiral',
+    controlPoints: transformPoints(LINEAR_LOOP, {
+      scaleX: 178,
+      scaleY: 48,
+      rotate: 8.2,
+      translateX: -42,
+      translateY: -15,
+    }),
+    zones: [
+      { kind: 'viscous', start: 0, end: 0.3 },
+      { kind: 'gradient', start: 0.3, end: 0.65 },
+      { kind: 'flow', start: 0.65, end: 1.0 },
+    ],
+    width: 85,
+    closed: false,
+  },
+  {
+    id: 'canyon',
+    name: 'Canyon',
+    controlPoints: transformPoints(LINEAR_LOOP, {
+      scaleX: 202,
+      scaleY: 35,
+      rotate: 1.8,
+      translateX: -20,
+      translateY: 5,
+    }),
+    zones: [
+      { kind: 'gradient', start: 0, end: 0.35 },
+      { kind: 'viscous', start: 0.35, end: 0.6 },
+      { kind: 'flow', start: 0.6, end: 1.0 },
+    ],
+    width: 75,
+    closed: false,
+  },
+  {
+    id: 'vortex',
+    name: 'Vortex',
+    controlPoints: transformPoints(LINEAR_LOOP, {
+      scaleX: 188,
+      scaleY: 56,
+      rotate: -11.3,
+      translateX: -32,
+      translateY: -22,
+    }),
+    zones: [
+      { kind: 'flow', start: 0, end: 0.28 },
+      { kind: 'gradient', start: 0.28, end: 0.72 },
+      { kind: 'viscous', start: 0.72, end: 1.0 },
+    ],
+    width: 90,
+    closed: false,
+  },
 ]);
 
 export const MOCK_TRACK = TRACK_PRESETS[0];

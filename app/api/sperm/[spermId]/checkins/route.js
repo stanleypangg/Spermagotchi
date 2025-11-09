@@ -1,24 +1,184 @@
 import { NextResponse } from 'next/server';
-import { submitHabitCheckIn } from '@/lib/spermGame';
+import fs from 'fs';
+import path from 'path';
 
-function handleError(error) {
-  const status = error?.status ?? 500;
-  const message = error?.message ?? 'Internal server error';
-  return NextResponse.json({ error: message }, { status });
-}
+const STORE_PATH = path.join(process.cwd(), 'data', 'playerStore.json');
 
-export async function POST(request, context) {
+function readStore() {
   try {
-    const { spermId } = await context.params;
-    const body = await request.json();
-    if (!spermId) {
-      return NextResponse.json({ error: 'Missing spermId.' }, { status: 400 });
-    }
-    const { habits } = body ?? {};
-    const result = submitHabitCheckIn(spermId, habits);
-    return NextResponse.json(result, { status: 200 });
+    const data = fs.readFileSync(STORE_PATH, 'utf8');
+    return JSON.parse(data);
   } catch (error) {
-    return handleError(error);
+    return {};
   }
 }
 
+function writeStore(data) {
+  fs.writeFileSync(STORE_PATH, JSON.stringify(data, null, 2));
+}
+
+function processHabits(habits) {
+  const delta = {
+    motility: 0,
+    linearity: 0,
+    flow: 0,
+    signals: 0,
+  };
+
+  // Good habits
+  if (habits.drinkMatcha) {
+    delta.signals += 1;
+    delta.flow += 0.5;
+  }
+  if (habits.goon) {
+    delta.motility += 1.2;
+    delta.signals += 0.5;
+  }
+  if (habits.sleep8Hours) {
+    delta.linearity += 1.5;
+    delta.motility += 0.5;
+  }
+  if (habits.drink2LWater) {
+    delta.flow += 1.2;
+    delta.linearity += 0.3;
+  }
+
+  // Bad habits
+  if (habits.drinkAlcohol) {
+    delta.motility -= 1.5;
+    delta.linearity -= 1;
+    delta.signals -= 0.5;
+  }
+  if (habits.smokeCigarettes) {
+    delta.motility -= 2;
+    delta.signals -= 1;
+  }
+  if (habits.eatFastFood) {
+    delta.motility -= 1;
+    delta.flow -= 0.7;
+  }
+  if (habits.hotLaptop) {
+    delta.motility -= 1.2;
+    delta.flow -= 1;
+  }
+
+  return delta;
+}
+
+function getTodayDateString() {
+  const now = new Date();
+  return now.toISOString().split('T')[0];
+}
+
+function getYesterdayDateString() {
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  return yesterday.toISOString().split('T')[0];
+}
+
+// Bridge old sperm checkins API to new player store
+export async function POST(request, { params }) {
+  try {
+    const { spermId } = await params;
+    const body = await request.json();
+    const { habits } = body;
+    
+    const store = readStore();
+    const playerData = store[spermId];
+    
+    if (!playerData) {
+      return NextResponse.json({ error: 'Sperm not found.' }, { status: 404 });
+    }
+    
+    const today = getTodayDateString();
+    const yesterday = getYesterdayDateString();
+    const lastCheckIn = playerData.lastCheckInDate;
+    
+    // Calculate streak
+    let currentStreak = playerData.currentStreak || 0;
+    let longestStreak = playerData.longestStreak || 0;
+    let streakBonus = 0;
+    let streakPoints = 0;
+    
+    if (lastCheckIn === today) {
+      // Already checked in today, don't update streak
+      currentStreak = playerData.currentStreak || 0;
+    } else if (lastCheckIn === yesterday) {
+      // Continuing streak
+      currentStreak += 1;
+      longestStreak = Math.max(longestStreak, currentStreak);
+      
+      // Streak bonuses based on milestones
+      if (currentStreak >= 30) {
+        streakBonus = 5;
+        streakPoints = 100;
+      } else if (currentStreak >= 14) {
+        streakBonus = 3;
+        streakPoints = 50;
+      } else if (currentStreak >= 10) {
+        streakBonus = 2;
+        streakPoints = 30;
+      } else if (currentStreak >= 7) {
+        streakBonus = 2;
+        streakPoints = 20;
+      } else if (currentStreak >= 5) {
+        streakBonus = 1;
+        streakPoints = 10;
+      } else if (currentStreak >= 3) {
+        streakBonus = 1;
+        streakPoints = 10;
+      }
+    } else {
+      // Streak broken or first check-in
+      currentStreak = 1;
+    }
+    
+    // Process habits and update stats
+    const delta = processHabits(habits);
+    
+    // Add streak bonus to all stats
+    const finalDelta = {
+      motility: delta.motility + streakBonus,
+      linearity: delta.linearity + streakBonus,
+      flow: delta.flow + streakBonus,
+      signals: delta.signals + streakBonus,
+    };
+    
+    const newStats = {
+      motility: Math.max(0, Math.min(100, playerData.stats.motility + finalDelta.motility)),
+      linearity: Math.max(0, Math.min(100, playerData.stats.linearity + finalDelta.linearity)),
+      flow: Math.max(0, Math.min(100, playerData.stats.flow + finalDelta.flow)),
+      signals: Math.max(0, Math.min(100, playerData.stats.signals + finalDelta.signals)),
+    };
+    
+    const newPoints = (playerData.spermPoints || 0) + streakPoints;
+    
+    // Update player data
+    store[spermId] = {
+      ...playerData,
+      stats: newStats,
+      currentStreak,
+      longestStreak,
+      lastCheckInDate: today,
+      spermPoints: newPoints,
+    };
+    
+    writeStore(store);
+    
+    return NextResponse.json({
+      sperm: {
+        id: spermId,
+        name: playerData.name,
+        stats: newStats,
+        currentStreak,
+        longestStreak,
+        spermPoints: newPoints,
+      },
+      delta: finalDelta,
+      streakBonus,
+      streakPoints,
+    });
+  } catch (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}

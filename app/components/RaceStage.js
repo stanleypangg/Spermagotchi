@@ -302,6 +302,10 @@ export default function RaceStage({
   cameraSpan = 360,
   isFinished = false,
   finishOrder = [],
+  eloGained = null,
+  pointsEarned = null,
+  onReturnHome = null,
+  onRaceAgain = null,
 }) {
   const [showEndScreen, setShowEndScreen] = useState(false);
   const [speechBubbles, setSpeechBubbles] = useState([]);
@@ -1322,22 +1326,22 @@ export default function RaceStage({
 
       {/* End Screen */}
       {showEndScreen && (
-        <div className="absolute inset-0 backdrop-blur-xl bg-black/40 flex items-center justify-center animate-[fadeIn_0.5s_ease-out]">
-          <div className="max-w-2xl w-full px-8">
+        <div className="absolute inset-0 backdrop-blur-xl bg-black/40 flex items-center justify-center p-4 animate-[fadeIn_0.5s_ease-out] overflow-y-auto">
+          <div className="max-w-xl w-full">
             {/* Title with bouncing animation */}
-            <div className="text-center mb-8 animate-[bounceIn_0.8s_ease-out]">
-              <h1 className="text-6xl font-black text-white drop-shadow-[0_8px_16px_rgba(0,0,0,0.8)] mb-2" style={{ fontFamily: 'Impact, fantasy' }}>
+            <div className="text-center mb-4 animate-[bounceIn_0.8s_ease-out]">
+              <h1 className="text-4xl font-black text-white drop-shadow-[0_8px_16px_rgba(0,0,0,0.8)] mb-1" style={{ fontFamily: 'Impact, fantasy' }}>
                 RACE COMPLETE!
               </h1>
-              <div className="flex items-center justify-center gap-2 text-2xl font-bold text-yellow-300 drop-shadow">
+              <div className="flex items-center justify-center gap-2 text-xl font-bold text-yellow-300 drop-shadow">
                 ⏱️ {frame?.t?.toFixed(2)}s
               </div>
             </div>
 
             {/* Player Result - Big and prominent */}
             {playerPosition && (
-              <div className="mb-8 animate-[scaleIn_0.6s_ease-out_0.3s_both]">
-                <div className={`bg-linear-to-br ${positionGradient} rounded-3xl p-6 shadow-2xl ${getPositionEffects(playerPosition).borderClass} ${getPositionEffects(playerPosition).containerClass} transform hover:scale-105 transition-transform overflow-hidden`}>
+              <div className="mb-4 animate-[scaleIn_0.6s_ease-out_0.3s_both]">
+                <div className={`bg-linear-to-br ${positionGradient} rounded-2xl p-4 shadow-2xl ${getPositionEffects(playerPosition).borderClass} ${getPositionEffects(playerPosition).containerClass} transform transition-transform overflow-hidden`}>
                   {/* Shimmer effect for 1st place */}
                   {getPositionEffects(playerPosition).shimmerStyle && (
                     <div
@@ -1349,21 +1353,19 @@ export default function RaceStage({
                   {/* Sparkles for 1st place */}
                   {getPositionEffects(playerPosition).showSparkles && (
                     <>
-                      <div className="absolute top-4 left-4 text-4xl animate-[sparkle_4s_ease-in-out_infinite]">✨</div>
-                      <div className="absolute top-4 right-4 text-4xl animate-[sparkle_4s_ease-in-out_infinite_1s]">✨</div>
-                      <div className="absolute bottom-4 left-8 text-3xl animate-[sparkle_4s_ease-in-out_infinite_2s]">⭐</div>
-                      <div className="absolute bottom-4 right-8 text-3xl animate-[sparkle_4s_ease-in-out_infinite_3s]">⭐</div>
+                      <div className="absolute top-2 left-2 text-2xl animate-[sparkle_4s_ease-in-out_infinite]">✨</div>
+                      <div className="absolute top-2 right-2 text-2xl animate-[sparkle_4s_ease-in-out_infinite_1s]">✨</div>
                     </>
                   )}
                   
                   <div className={`text-center relative z-10 ${getPositionEffects(playerPosition).glowClass}`}>
-                    <div className="text-sm font-bold text-white/90 uppercase tracking-widest mb-2">Your Result</div>
-                    <div className="flex items-center justify-center gap-4">
-                      <div className="text-7xl font-black text-white drop-shadow-[0_8px_16px_rgba(0,0,0,0.8)]" style={{ fontFamily: 'Impact, fantasy' }}>
+                    <div className="text-xs font-bold text-white/90 uppercase tracking-widest mb-1">Your Result</div>
+                    <div className="flex items-center justify-center gap-3">
+                      <div className="text-5xl font-black text-white drop-shadow-[0_8px_16px_rgba(0,0,0,0.8)]" style={{ fontFamily: 'Impact, fantasy' }}>
                         {playerPosition === 1 ? '🥇' : playerPosition === 2 ? '🥈' : playerPosition === 3 ? '🥉' : ''}
                         {playerPosition}
                       </div>
-                      <div className="text-4xl font-bold text-white/90">
+                      <div className="text-3xl font-bold text-white/90">
                         / {frame?.lanes?.length}
                       </div>
                     </div>
@@ -1372,37 +1374,55 @@ export default function RaceStage({
                     {(() => {
                       const placementMsg = getPlacementMessage(playerPosition, frame?.lanes?.length);
                       return (
-                        <div className="mt-4 space-y-2">
+                        <div className="mt-2 space-y-1">
                           <div className={`font-black drop-shadow-lg ${
-                            playerPosition === 1 ? 'text-2xl text-yellow-200 animate-pulse' :
-                            playerPosition === 2 ? 'text-xl text-slate-200' :
-                            playerPosition === 3 ? 'text-lg text-orange-200' :
-                            'text-base text-white/90'
+                            playerPosition === 1 ? 'text-lg text-yellow-200 animate-pulse' :
+                            playerPosition === 2 ? 'text-base text-slate-200' :
+                            playerPosition === 3 ? 'text-base text-orange-200' :
+                            'text-sm text-white/90'
                           }`}>
                             {placementMsg.title}
                           </div>
-                          <div className="text-sm font-semibold text-white/90 leading-relaxed px-2">
+                          <div className="text-xs font-semibold text-white/90 leading-relaxed px-2">
                             {placementMsg.message}
                           </div>
-                          {placementMsg.secondaryMessage && (
-                            <div className="text-xs font-medium text-white/80 italic px-2 mt-1">
-                              {placementMsg.secondaryMessage}
-                            </div>
-                          )}
                         </div>
                       );
                     })()}
+
+                    {/* Rewards Display */}
+                    <div className="mt-3 flex items-center justify-center gap-3">
+                      {eloGained !== null && (
+                        <div className="rounded-lg bg-emerald-600/90 px-4 py-2 shadow-lg backdrop-blur">
+                          <div className="text-[10px] font-semibold uppercase tracking-wider text-emerald-100">ELO</div>
+                          <div className="text-2xl font-black text-white">
+                            {eloGained > 0 ? '+' : ''}{eloGained}
+                          </div>
+                        </div>
+                      )}
+                      {pointsEarned !== null && (
+                        <div className="rounded-lg bg-purple-600/90 px-4 py-2 shadow-lg backdrop-blur">
+                          <div className="flex items-center justify-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-purple-100">
+                            <img src="https://cdn-icons-png.flaticon.com/512/7672/7672104.png" alt="Coin" className="h-3 w-3" />
+                            <span>Points</span>
+                          </div>
+                          <div className="text-2xl font-black text-white">
+                            +{pointsEarned}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
             )}
 
             {/* Leaderboard */}
-            <div className="bg-slate-900/80 rounded-2xl p-6 shadow-2xl border-2 border-white/30 backdrop-blur">
-              <h2 className="text-xl font-black text-white mb-4 text-center uppercase tracking-wider" style={{ fontFamily: 'Impact, fantasy' }}>
+            <div className="bg-slate-900/80 rounded-2xl p-4 shadow-2xl border-2 border-white/30 backdrop-blur">
+              <h2 className="text-base font-black text-white mb-3 text-center uppercase tracking-wider" style={{ fontFamily: 'Impact, fantasy' }}>
                 Final Standings
               </h2>
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 {finishOrder.map((racer, index) => {
                   const effects = getPositionEffects(racer.place);
                   const isFirst = racer.place === 1;
@@ -1412,10 +1432,10 @@ export default function RaceStage({
                   return (
                     <div
                       key={racer.id}
-                      className={`flex items-center gap-3 rounded-xl px-4 py-3 transform transition-all hover:scale-102 animate-[slideInRight_0.5s_ease-out] backdrop-blur relative overflow-hidden ${
-                        isFirst ? 'bg-yellow-600/40 border-2 border-yellow-400 shadow-[0_0_30px_rgba(234,179,8,0.6)]' :
-                        isSecond ? 'bg-slate-700/50 border-2 border-slate-400 shadow-[0_0_20px_rgba(203,213,225,0.4)]' :
-                        isThird ? 'bg-orange-700/40 border-2 border-orange-400 shadow-[0_0_15px_rgba(251,146,60,0.3)]' :
+                      className={`flex items-center gap-2 rounded-lg px-3 py-2 transform transition-all animate-[slideInRight_0.5s_ease-out] backdrop-blur relative overflow-hidden ${
+                        isFirst ? 'bg-yellow-600/40 border-2 border-yellow-400 shadow-[0_0_20px_rgba(234,179,8,0.5)]' :
+                        isSecond ? 'bg-slate-700/50 border border-slate-400' :
+                        isThird ? 'bg-orange-700/40 border border-orange-400' :
                         'bg-slate-800/60'
                       } ${effects.containerClass}`}
                       style={{ animationDelay: `${0.5 + index * 0.1}s`, animationFillMode: 'both' }}
@@ -1428,7 +1448,7 @@ export default function RaceStage({
                         />
                       )}
                       
-                      <div className={`flex items-center justify-center w-8 h-8 rounded-full text-white font-black text-sm ${
+                      <div className={`flex items-center justify-center w-6 h-6 rounded-full text-white font-black text-xs ${
                         isFirst ? 'bg-linear-to-br from-yellow-400 to-yellow-600 shadow-lg' :
                         isSecond ? 'bg-linear-to-br from-slate-300 to-slate-500 shadow-md' :
                         isThird ? 'bg-linear-to-br from-orange-400 to-orange-600 shadow-md' :
@@ -1437,16 +1457,16 @@ export default function RaceStage({
                         {racer.place}
                       </div>
                       <div
-                        className={`w-10 h-10 rounded-full shadow-lg ${
-                          isFirst ? 'border-3 border-yellow-300 shadow-[0_0_15px_rgba(234,179,8,0.5)]' :
-                          isSecond ? 'border-3 border-slate-300 shadow-[0_0_10px_rgba(203,213,225,0.4)]' :
-                          isThird ? 'border-3 border-orange-400 shadow-[0_0_8px_rgba(251,146,60,0.3)]' :
-                          'border-3 border-white'
+                        className={`w-8 h-8 rounded-full shadow-lg ${
+                          isFirst ? 'border-2 border-yellow-300' :
+                          isSecond ? 'border-2 border-slate-300' :
+                          isThird ? 'border-2 border-orange-400' :
+                          'border-2 border-white'
                         }`}
                         style={{ backgroundColor: racer.tint }}
                       />
                       <div className="flex-1 relative z-10">
-                        <div className={`font-bold text-lg ${
+                        <div className={`font-bold text-sm ${
                           isFirst ? 'text-yellow-100' :
                           isSecond ? 'text-slate-100' :
                           'text-white'
@@ -1454,18 +1474,35 @@ export default function RaceStage({
                           {racer.name}
                         </div>
                       </div>
-                      {racer.place === 1 && <span className="text-3xl animate-pulse">👑</span>}
-                      {racer.place === 2 && <span className="text-2xl">🥈</span>}
-                      {racer.place === 3 && <span className="text-2xl">🥉</span>}
-                      
-                      {/* Sparkle for 1st in leaderboard */}
-                      {isFirst && (
-                        <div className="absolute -right-2 -top-2 text-2xl animate-[sparkle_4s_ease-in-out_infinite]">✨</div>
-                      )}
+                      {racer.place === 1 && <span className="text-xl animate-pulse">👑</span>}
+                      {racer.place === 2 && <span className="text-lg">🥈</span>}
+                      {racer.place === 3 && <span className="text-lg">🥉</span>}
                     </div>
                   );
                 })}
               </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="mt-4 flex items-center justify-center gap-3 animate-[fadeIn_0.8s_ease-out_1s_both]">
+              {onReturnHome && (
+                <button
+                  type="button"
+                  onClick={onReturnHome}
+                  className="rounded-full bg-gradient-to-r from-purple-500 to-pink-500 px-6 py-3 text-base font-bold text-white shadow-xl transition hover:from-purple-600 hover:to-pink-600 hover:scale-105"
+                >
+                  🏠 Back to Home
+                </button>
+              )}
+              {onRaceAgain && (
+                <button
+                  type="button"
+                  onClick={onRaceAgain}
+                  className="rounded-full border-2 border-white/60 bg-white/20 px-6 py-3 text-base font-bold text-white shadow-xl backdrop-blur transition hover:bg-white/30 hover:scale-105"
+                >
+                  🏁 Race Again
+                </button>
+              )}
             </div>
           </div>
         </div>

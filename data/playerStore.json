@@ -1,0 +1,134 @@
+{
+  "baka": {
+    "name": "baka",
+    "stats": {
+      "motility": 55.60000000000002,
+      "linearity": 69.79999999999997,
+      "flow": 67.20000000000003,
+      "signals": 65
+    },
+    "elo": 1050,
+    "spermPoints": 166,
+    "raceHistory": [
+      {
+        "place": 1,
+        "totalRacers": 4,
+        "trackId": "canyon",
+        "opponents": [
+          {
+            "name": "Jet",
+            "place": 2
+          },
+          {
+            "name": "Orion",
+            "place": 3
+          },
+          {
+            "name": "Thunder",
+            "place": 4
+          }
+        ],
+        "timestamp": "2025-11-09T11:08:47.669Z",
+        "eloChange": 20,
+        "eloAfter": 1020
+      },
+      {
+        "place": 4,
+        "totalRacers": 4,
+        "trackId": "canyon",
+        "raceTime": 33.31666666666606,
+        "opponents": [
+          {
+            "name": "Echo",
+            "place": 1
+          },
+          {
+            "name": "Storm",
+            "place": 2
+          },
+          {
+            "name": "Viper",
+            "place": 3
+          }
+        ],
+        "timestamp": "2025-11-09T11:16:25.238Z",
+        "eloChange": 0,
+        "eloAfter": 1020,
+        "pointsEarned": 28
+      },
+      {
+        "place": 4,
+        "totalRacers": 4,
+        "trackId": "spiral",
+        "raceTime": 42.249999999998884,
+        "opponents": [
+          {
+            "name": "Nero",
+            "place": 1
+          },
+          {
+            "name": "Thunder",
+            "place": 2
+          },
+          {
+            "name": "Streak",
+            "place": 3
+          }
+        ],
+        "timestamp": "2025-11-09T11:22:41.650Z",
+        "eloChange": 0,
+        "eloAfter": 1020,
+        "pointsEarned": 24
+      },
+      {
+        "place": 2,
+        "totalRacers": 4,
+        "trackId": "driftway",
+        "raceTime": 40.59999999999898,
+        "opponents": [
+          {
+            "name": "Streak",
+            "place": 1
+          },
+          {
+            "name": "Leo",
+            "place": 3
+          },
+          {
+            "name": "Cyclone",
+            "place": 4
+          }
+        ],
+        "timestamp": "2025-11-09T11:28:45.102Z",
+        "eloChange": 10,
+        "eloAfter": 1030,
+        "pointsEarned": 64
+      },
+      {
+        "place": 1,
+        "totalRacers": 4,
+        "trackId": "gulfstream",
+        "raceTime": 37.8666666666658,
+        "opponents": [
+          {
+            "name": "Titan",
+            "place": 2
+          },
+          {
+            "name": "Surge",
+            "place": 3
+          },
+          {
+            "name": "Griffin",
+            "place": 4
+          }
+        ],
+        "timestamp": "2025-11-09T11:34:10.735Z",
+        "eloChange": 20,
+        "eloAfter": 1050,
+        "pointsEarned": 115
+      }
+    ],
+    "createdAt": "2025-11-09T10:58:34.177Z"
+  }
+}

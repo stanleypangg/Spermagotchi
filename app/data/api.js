@@ -45,3 +45,16 @@ export async function submitHabitCheckIn({ spermId, habits }) {
   }
 }
 
+export async function submitRaceResult({ spermId, raceData }) {
+  const res = await fetch(`/api/sperm/${spermId}/races`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(raceData),
+  });
+  if (!res.ok) {
+    const payload = await res.json().catch(() => ({}));
+    throw new Error(payload.error ?? 'Failed to submit race result.');
+  }
+  return res.json();
+}
+
