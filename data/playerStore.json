@@ -7,8 +7,8 @@
       "flow": 233.3999999999997,
       "signals": 263
     },
-    "elo": 1480,
-    "spermPoints": 3009,
+    "elo": 1520,
+    "spermPoints": 3250,
     "raceHistory": [
       {
         "place": 1,
@@ -823,6 +823,78 @@
         "eloChange": 20,
         "eloAfter": 1480,
         "pointsEarned": 111
+      },
+      {
+        "place": 2,
+        "totalRacers": 4,
+        "trackId": "canyon",
+        "raceTime": 58.54999999999796,
+        "opponents": [
+          {
+            "name": "ByteBlitz",
+            "place": 1
+          },
+          {
+            "name": "ThrottleMax",
+            "place": 3
+          },
+          {
+            "name": "BoostMaster",
+            "place": 4
+          }
+        ],
+        "timestamp": "2025-11-09T14:33:35.243Z",
+        "eloChange": 10,
+        "eloAfter": 1490,
+        "pointsEarned": 60
+      },
+      {
+        "place": 1,
+        "totalRacers": 4,
+        "trackId": "driftway",
+        "raceTime": 31.266666666666172,
+        "opponents": [
+          {
+            "name": "SwiftSaver",
+            "place": 2
+          },
+          {
+            "name": "StarStruck",
+            "place": 3
+          },
+          {
+            "name": "SpeedyService",
+            "place": 4
+          }
+        ],
+        "timestamp": "2025-11-09T14:34:09.388Z",
+        "eloChange": 20,
+        "eloAfter": 1510,
+        "pointsEarned": 119
+      },
+      {
+        "place": 2,
+        "totalRacers": 4,
+        "trackId": "gulfstream",
+        "raceTime": 49.999999999998444,
+        "opponents": [
+          {
+            "name": "BreezeRunner",
+            "place": 1
+          },
+          {
+            "name": "LokiTrick",
+            "place": 3
+          },
+          {
+            "name": "CircuitKing",
+            "place": 4
+          }
+        ],
+        "timestamp": "2025-11-09T14:35:05.247Z",
+        "eloChange": 10,
+        "eloAfter": 1520,
+        "pointsEarned": 62
       }
     ],
     "currentStreak": 20,
