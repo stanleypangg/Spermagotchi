@@ -7,8 +7,8 @@
       "flow": 142.29999999999995,
       "signals": 155.5
     },
-    "elo": 1135,
-    "spermPoints": 505,
+    "elo": 1155,
+    "spermPoints": 617,
     "raceHistory": [
       {
         "place": 1,
@@ -319,6 +319,30 @@
         "eloChange": 20,
         "eloAfter": 1135,
         "pointsEarned": 118
+      },
+      {
+        "place": 1,
+        "totalRacers": 4,
+        "trackId": "rapids",
+        "raceTime": 47.616666666665246,
+        "opponents": [
+          {
+            "name": "SpeedMerchant",
+            "place": 2
+          },
+          {
+            "name": "InstantSpeed",
+            "place": 3
+          },
+          {
+            "name": "AccelForce",
+            "place": 4
+          }
+        ],
+        "timestamp": "2025-11-09T12:56:55.032Z",
+        "eloChange": 20,
+        "eloAfter": 1155,
+        "pointsEarned": 112
       }
     ],
     "currentStreak": 1,

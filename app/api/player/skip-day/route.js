@@ -115,6 +115,17 @@ export async function POST(request) {
     // Check if player completed ANY habits today
     const completedHabitsToday = hasAnyHabits(habits);
     
+    // DEBUG: Log what we received
+    console.log('Skip Day Debug:', {
+      receivedHabits: habits,
+      completedHabitsToday,
+      currentStreak: playerData.currentStreak,
+      lastCheckIn: playerData.lastCheckInDate,
+      today,
+      yesterday,
+      tomorrow,
+    });
+    
     // Calculate streak based on check-in consistency
     let currentStreak = playerData.currentStreak || 0;
     let longestStreak = playerData.longestStreak || 0;
@@ -124,27 +135,47 @@ export async function POST(request) {
     
     if (!completedHabitsToday) {
       // No habits done = streak broken
+      console.log('❌ No habits completed - breaking streak');
       if (currentStreak > 0) {
         streakMessage = `💔 Streak broken! You had a ${currentStreak}-day streak.`;
       }
       currentStreak = 0;
     } else {
+      console.log('✅ Habits completed - checking streak continuation');
       // Habits completed - check streak continuation
       if (!lastCheckIn) {
         // First ever check-in
+        console.log('→ First ever check-in');
         currentStreak = 1;
         longestStreak = 1;
         streakMessage = '🎉 Started your first streak!';
-      } else if (lastCheckIn === today || lastCheckIn === yesterday) {
-        // Continuing streak (from today or yesterday)
-        currentStreak += 1;
-        longestStreak = Math.max(longestStreak, currentStreak);
-        streakMessage = `🔥 ${currentStreak}-day streak!`;
       } else {
-        // Streak was broken, starting fresh
-        currentStreak = 1;
-        longestStreak = Math.max(longestStreak, 1);
-        streakMessage = '🌟 Started a new streak!';
+        // For skip-day feature: check if lastCheckIn is within 1-2 days of tomorrow
+        // This handles both consecutive days and allows for one missed day
+        const lastCheckInDate = new Date(lastCheckIn);
+        const tomorrowDate = new Date(tomorrow);
+        const daysDiff = Math.round((tomorrowDate - lastCheckInDate) / (24 * 60 * 60 * 1000));
+        
+        console.log('→ Days since last check-in:', daysDiff, '(lastCheckIn:', lastCheckIn, ', advancing to:', tomorrow, ')');
+        
+        if (daysDiff === 1) {
+          // Consecutive day - continue streak
+          console.log('→ Continuing streak (consecutive day)');
+          currentStreak += 1;
+          longestStreak = Math.max(longestStreak, currentStreak);
+          streakMessage = `🔥 ${currentStreak}-day streak!`;
+        } else if (daysDiff <= 0) {
+          // Same day or future date (shouldn't happen, but handle it)
+          console.log('→ Same virtual day, maintaining streak');
+          // Don't increment, but don't break either
+          streakMessage = `🔥 ${currentStreak}-day streak continues!`;
+        } else {
+          // Gap in days - streak broken, starting fresh
+          console.log('→ Streak gap detected - missed', daysDiff - 1, 'day(s)');
+          currentStreak = 1;
+          longestStreak = Math.max(longestStreak, 1);
+          streakMessage = '🌟 Started a new streak!';
+        }
       }
       
       // Streak bonuses based on milestones
