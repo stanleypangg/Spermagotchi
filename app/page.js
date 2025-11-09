@@ -1185,6 +1185,7 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
 
   const homeDisplayOutfit = equippedOutfitItem;
   const homeBackgroundImage = equippedBackgroundItem?.imagePath ?? DEFAULT_HOME_BACKGROUND;
+  const homeBackgroundBlend = equippedBackgroundItem ? 'from-white/20 via-white/10 to-white/20' : 'bg-white';
   const homeBackgroundAlt = equippedBackgroundItem
     ? `${equippedBackgroundItem.name} background`
     : 'Default background';
@@ -1206,21 +1207,23 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
 
   const renderHomeView = () => (
     <main className="relative flex min-h-[calc(100vh-88px)] flex-col pb-[88px]">
-      {homeBackgroundImage ? (
-        <>
-          <Image
-            src={homeBackgroundImage}
-            alt={homeBackgroundAlt}
-            fill
-            priority
-            unoptimized
-            className="absolute inset-0 -z-10 object-cover"
-          />
-          <div className="absolute inset-0 -z-10 bg-white/30 backdrop-blur-[2px]" />
-        </>
-      ) : (
-        <div className="absolute inset-0 -z-10 bg-white" />
-      )}
+      <div className="absolute inset-0 -z-20 overflow-hidden">
+        {homeBackgroundImage ? (
+          <>
+            <Image
+              src={homeBackgroundImage}
+              alt={homeBackgroundAlt}
+              fill
+              priority
+              unoptimized
+              className="h-full w-full object-cover object-center scale-125 md:scale-[1.15]"
+            />
+            <div className={`absolute inset-0 bg-linear-to-b ${homeBackgroundBlend}`} />
+          </>
+        ) : (
+          <div className="h-full w-full bg-white" />
+        )}
+      </div>
       <header className="relative z-10 flex flex-col items-center px-6 pt-6 pb-4">
         {/* Streak Indicator Button - Always show */}
         {sperm && (

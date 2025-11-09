@@ -1023,7 +1023,44 @@
       "signals": 50
     },
     "elo": 1000,
-    "spermPoints": 168,
+    "spermPoints": 122,
+    "raceHistory": [],
+    "currentStreak": 0,
+    "longestStreak": 0,
+    "lastCheckInDate": null,
+    "todayHabits": {
+      "drinkMatcha": true,
+      "goon": true,
+      "sleep8Hours": true,
+      "drink2LWater": true,
+      "workout": true,
+      "drinkAlcohol": true,
+      "smokeCigarettes": true,
+      "eatFastFood": true,
+      "hotLaptop": true
+    },
+    "ownedClothing": [],
+    "equippedClothing": null,
+    "ownedBackgrounds": [],
+    "equippedBackground": null,
+    "ownedBeds": [
+      "peanut-butter",
+      "sock",
+      "pringles-can"
+    ],
+    "equippedBed": "pringles-can",
+    "createdAt": "2025-11-09T18:15:40.938Z"
+  },
+  "gay": {
+    "name": "gay",
+    "stats": {
+      "motility": 50,
+      "linearity": 50,
+      "flow": 50,
+      "signals": 50
+    },
+    "elo": 1000,
+    "spermPoints": 250,
     "raceHistory": [],
     "currentStreak": 0,
     "longestStreak": 0,
@@ -1033,11 +1070,43 @@
     "equippedClothing": null,
     "ownedBackgrounds": [],
     "equippedBackground": null,
-    "ownedBeds": [
-      "peanut-butter",
-      "sock"
+    "ownedBeds": [],
+    "equippedBed": null,
+    "createdAt": "2025-11-09T18:42:16.557Z"
+  },
+  "adsf": {
+    "name": "adsf",
+    "stats": {
+      "motility": 50,
+      "linearity": 50,
+      "flow": 50,
+      "signals": 50
+    },
+    "elo": 1000,
+    "spermPoints": 185,
+    "raceHistory": [],
+    "currentStreak": 0,
+    "longestStreak": 0,
+    "lastCheckInDate": null,
+    "todayHabits": {
+      "drinkMatcha": false,
+      "goon": false,
+      "sleep8Hours": false,
+      "drink2LWater": false,
+      "workout": false,
+      "drinkAlcohol": false,
+      "smokeCigarettes": false,
+      "eatFastFood": false,
+      "hotLaptop": false
+    },
+    "ownedClothing": [],
+    "equippedClothing": null,
+    "ownedBackgrounds": [
+      "sperm-kingdom"
     ],
-    "equippedBed": "sock",
-    "createdAt": "2025-11-09T18:15:40.938Z"
+    "equippedBackground": "sperm-kingdom",
+    "ownedBeds": [],
+    "equippedBed": null,
+    "createdAt": "2025-11-09T18:43:24.000Z"
   }
 }

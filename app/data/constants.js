@@ -343,5 +343,21 @@ export const SHOP_BED_ITEMS = Object.freeze([
     imagePath: '/peanutbutter.png',
     description: 'Creamy cushioning with a sticky-sweet landing zone.',
   },
+  {
+    id: 'pringles-can',
+    name: 'Pringles Can',
+    price: 46,
+    rarity: 'Epic',
+    imagePath: '/pringles.png',
+    description: 'Tall, cylindrical comfort with infinite stacking potential.',
+  },
+  {
+    id: 'rainbow-dash',
+    name: 'Rainbow Dash Plush',
+    price: 52,
+    rarity: 'Legendary',
+    imagePath: '/rainbowdash.png',
+    description: 'Soft pastel clouds and a flying buddy for sweet technicolor dreams.',
+  },
 ]);
 
