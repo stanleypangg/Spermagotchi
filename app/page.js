@@ -28,8 +28,10 @@ const WARDROBE_STATE_KEY = 'spermagotchi-wardrobe';
 const COIN_ICON_URL = 'https://cdn-icons-png.flaticon.com/512/7672/7672104.png';
 const TODO_PANEL_WIDTH = 360;
 const TODO_PANEL_GAP = 24;
+const BOTTOM_NAV_HEIGHT = 88;
 const DEFAULT_PREVIEW_BACKGROUND = null;
 const DEFAULT_STARTING_COINS = 250;
+const DEFAULT_HOME_BACKGROUND = null;
 
 export default function Home() {
   const [loading, setLoading] = useState(true);
@@ -61,6 +63,24 @@ export default function Home() {
   const [purchaseCandidate, setPurchaseCandidate] = useState(null);
   const [showTodos, setShowTodos] = useState(false);
   const [shopTab, setShopTab] = useState('outfits');
+  const [previewBackgroundLoaded, setPreviewBackgroundLoaded] = useState(true);
+
+  useEffect(() => {
+    if (!showTodos || typeof window === 'undefined') {
+      return undefined;
+    }
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        setShowTodos(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [showTodos]);
+
+  const panelHeight = `calc(100vh - ${BOTTOM_NAV_HEIGHT}px)`;
 
   const renderCoinValue = useCallback(
     (value, sizeClass = 'h-4 w-4') => (
@@ -311,6 +331,7 @@ export default function Home() {
     if (activeTab !== 'shop') {
       setPreviewClothing((prev) => (prev != null ? null : prev));
       setPreviewBackground((prev) => (prev != null ? null : prev));
+      setPreviewBackgroundLoaded(true);
     }
   }, [activeTab]);
 
@@ -338,6 +359,14 @@ export default function Home() {
     previewClothing,
   ]);
 
+  useEffect(() => {
+    if (previewBackground) {
+      setPreviewBackgroundLoaded(false);
+    } else {
+      setPreviewBackgroundLoaded(true);
+    }
+  }, [previewBackground]);
+
   const handleLandingNameChange = useCallback(
     (value) => {
       setCreateName(value);
@@ -352,7 +381,7 @@ export default function Home() {
     const trimmedName = createName.trim();
     if (!trimmedName) {
       setCreateError('Give your buddy a name to begin.');
-      return;
+      return false;
     }
 
     setCreating(true);
@@ -374,9 +403,9 @@ export default function Home() {
       if (!data) {
         throw new Error('Could not locate the newly hatched buddy.');
       }
-      setShowLanding(false);
       setCreateName('');
       scheduleFeedbackClear('Buddy hatched! 🌟');
+      return true;
     } catch (err) {
       console.error(err);
       const message =
@@ -384,16 +413,12 @@ export default function Home() {
           ? err.message
           : 'Could not hatch buddy. Try again.';
       setCreateError(message);
+      return false;
     } finally {
       setCreating(false);
       setLoading(false);
     }
-  }, [
-    createName,
-    createRemoteSperm,
-    fetchSpermState,
-    scheduleFeedbackClear,
-  ]);
+  }, [createName, createRemoteSperm, fetchSpermState, scheduleFeedbackClear]);
 
   const syncHabitForm = useCallback(
     async (nextHabits, previousHabits) => {
@@ -516,12 +541,11 @@ export default function Home() {
   const topStats = [
     { id: 'points', label: 'Points', value: pointsValue },
     { id: 'energy', label: 'Energy', value: energyValue },
-    { id: 'settings', label: 'Settings', action: () => handleNavSelect('settings') },
     { id: 'streak', label: 'Streak', value: streakValue },
   ];
 
   const activeBuddyState = buddyOverride ?? wellnessState;
-  const coinsDisplay = coins !== null ? coins : Number.isFinite(pointsValue) ? Number(pointsValue) : 0;
+    const coinsDisplay = coins !== null ? coins : Number.isFinite(pointsValue) ? Number(pointsValue) : 0;
   const equippedOutfitItem =
     SHOP_CLOTHING_ITEMS.find((item) => item.id === equippedClothing) ?? null;
   const previewOutfitItem = previewClothing
@@ -563,6 +587,7 @@ export default function Home() {
     (item) => {
       setError(null);
       setPreviewBackground(item.id);
+      setPreviewBackgroundLoaded(false);
       if (ownedBackgrounds.includes(item.id)) {
         setEquippedBackground(item.id);
       }
@@ -575,6 +600,7 @@ export default function Home() {
       setError(null);
       setEquippedBackground(item.id);
       setPreviewBackground(item.id);
+      setPreviewBackgroundLoaded(false);
       scheduleFeedbackClear(`${item.name} applied!`);
     },
     [scheduleFeedbackClear],
@@ -591,6 +617,7 @@ export default function Home() {
     setError(null);
     if (category === 'background') {
       setPreviewBackground(item.id);
+      setPreviewBackgroundLoaded(false);
     } else {
       setPreviewClothing(item.id);
     }
@@ -651,7 +678,7 @@ export default function Home() {
   ]);
 
   const homeDisplayOutfit = equippedOutfitItem;
-  const homeBackgroundImage = equippedBackgroundItem?.imagePath ?? null;
+  const homeBackgroundImage = equippedBackgroundItem?.imagePath ?? DEFAULT_HOME_BACKGROUND;
   const homeBackgroundAlt = equippedBackgroundItem
     ? `${equippedBackgroundItem.name} background`
     : 'Default background';
@@ -664,12 +691,13 @@ export default function Home() {
         onSubmit={handleLandingSubmit}
         creating={creating}
         error={createError}
+        onComplete={() => setShowLanding(false)}
       />
     );
   }
 
   const renderHomeView = () => (
-    <main className="relative flex min-h-screen flex-col pb-24">
+    <main className="relative flex min-h-[calc(100vh-88px)] flex-col pb-[88px]">
       {homeBackgroundImage ? (
         <>
           <Image
@@ -685,27 +713,16 @@ export default function Home() {
       ) : (
         <div className="absolute inset-0 -z-10 bg-white" />
       )}
-      <header className="flex flex-wrap items-center justify-between gap-4 px-6 pt-6">
-        <button
-          type="button"
-          onClick={() => setShowTodos((value) => !value)}
-          aria-pressed={showTodos}
-          className={`flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-semibold transition ${
-            showTodos
-              ? 'border-indigo-300 bg-indigo-50 text-indigo-600'
-              : 'border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:text-indigo-600'
-          }`}
-        >
-          <span className="text-lg">🗒️</span>
-          <span>{showTodos ? 'Hide Todos' : 'Daily Todos'}</span>
-        </button>
-        <div className="flex flex-1 flex-wrap items-center justify-center gap-6">
+      <header className="relative z-10 flex flex-col items-center px-6 pt-6 pb-4">
+        <div className="flex flex-wrap items-center justify-center gap-6 text-center">
           {topStats.map((item) => (
             <div
               key={item.id}
               className="flex min-w-[120px] flex-col items-center text-sm font-semibold text-slate-600"
             >
-              <span className="text-xs uppercase tracking-[0.3em] text-slate-400">{item.label}</span>
+              <span className="text-xs uppercase tracking-[0.3em] text-slate-400">
+                {item.label}
+              </span>
               {item.action ? (
                 <button
                   type="button"
@@ -720,32 +737,76 @@ export default function Home() {
             </div>
           ))}
         </div>
+        <button
+          type="button"
+          onClick={() => setShowTodos((previous) => !previous)}
+          aria-expanded={showTodos}
+          aria-controls="daily-todos-panel"
+          className="absolute left-6 top-6 inline-flex min-h-[36px] min-w-[136px] items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-600 transition hover:border-indigo-200 hover:text-indigo-600"
+        >
+          {showTodos ? (
+            <>
+              <span className="sr-only">Close daily todos</span>
+              <span aria-hidden>✕</span>
+            </>
+          ) : (
+            <>
+              <span className="sr-only">Open daily todos</span>
+              <span aria-hidden>Daily Todos</span>
+            </>
+          )}
+        </button>
       </header>
 
-      <div className="relative flex flex-1 items-stretch overflow-hidden px-6 pb-12 pt-8">
+      <div className="relative mt-8 flex flex-1 items-stretch overflow-hidden px-6">
         <aside
-          className="absolute inset-y-0 left-0 z-10 flex h-full flex-col rounded-3xl border border-slate-200 bg-white px-5 py-6 shadow-lg transition-all duration-500 ease-out"
+          id="daily-todos-panel"
+          className="fixed left-0 top-0 z-40 flex flex-col rounded-3xl border border-slate-200 bg-white px-5 pb-6 pt-16 shadow-lg transition-all duration-500 ease-out"
           style={{
             width: TODO_PANEL_WIDTH,
+            height: panelHeight,
+            maxHeight: panelHeight,
             transform: `translateX(${showTodos ? 0 : -(TODO_PANEL_WIDTH + TODO_PANEL_GAP)}px)`,
             opacity: showTodos ? 1 : 0,
             pointerEvents: showTodos ? 'auto' : 'none',
           }}
         >
+          <div className="absolute inset-0 -z-10 rounded-3xl bg-white" />
+          <button
+            type="button"
+            onClick={() => setShowTodos(false)}
+            className="absolute left-6 top-6 inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-sm font-semibold text-slate-500 transition hover:border-indigo-200 hover:text-indigo-600"
+            aria-label="Close daily todos"
+          >
+            ✕
+          </button>
           <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
               Do Your Quick Daily Check-ins
             </p>
             <p className="text-xs text-slate-400">
               Toggle today’s habits to keep your swimmer in peak form.
-          </p>
-        </div>
-          <div className="mt-4 flex-1 min-h-0 overflow-hidden">
+            </p>
+          </div>
+          <div className="mt-4 flex-1 min-h-0 overflow-y-auto pr-1">
             <HabitPanel habitForm={habitForm} onToggle={handleHabitToggle} submitting={submitting} />
           </div>
         </aside>
 
-        <section className="relative z-0 flex w-full justify-center transition-transform duration-500 ease-out">
+        <div
+          aria-hidden="true"
+          onClick={() => setShowTodos(false)}
+          className="fixed inset-x-0 top-0 z-30 bg-slate-900/10 transition-opacity duration-300 ease-out"
+          style={{
+            opacity: showTodos ? 1 : 0,
+            pointerEvents: showTodos ? 'auto' : 'none',
+            height: panelHeight,
+          }}
+        />
+
+        <section
+          className="relative z-0 flex w-full items-center justify-center transition-transform duration-500 ease-out"
+        >
           <div className="flex w-full max-w-xl flex-col items-center justify-center px-4 text-center">
             <div className="relative mt-8 flex h-[360px] w-full max-w-[360px] flex-col items-center justify-center">
               <Image
@@ -925,8 +986,17 @@ export default function Home() {
                         onClick={() =>
                           (isBackgroundTab ? handleSelectBackground : handleSelectOutfit)(item)
                         }
-                        className="flex flex-1 items-center gap-2 text-left"
+                        className="flex flex-1 items-center gap-3 text-left"
                       >
+                        {isBackgroundTab ? (
+                          <div className="relative h-14 w-20 overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
+                            <div
+                              className="absolute inset-0 bg-cover bg-center"
+                              style={{ backgroundImage: `url(${item.imagePath})` }}
+                            />
+                            <div className="absolute inset-0 bg-black/15" />
+                          </div>
+                        ) : null}
                         <span className="text-sm font-semibold text-slate-700">{item.name}</span>
                         {isOwned ? (
                           <span
@@ -1051,6 +1121,9 @@ export default function Home() {
           <div className="relative mx-auto flex h-[520px] -mt-5 my-auto w-full max-w-[520px] items-center justify-center">
             {previewBackgroundImage ? (
               <div className="absolute inset-0 -z-10 overflow-hidden rounded-[40px] border border-slate-200/70 shadow-[0_40px_80px_rgba(63,61,86,0.18)]">
+                {!previewBackgroundLoaded ? (
+                  <div className="absolute inset-0 animate-pulse bg-slate-200/60" />
+                ) : null}
                 <Image
                   src={previewBackgroundImage}
                   alt={backgroundAlt}
@@ -1058,8 +1131,9 @@ export default function Home() {
                   className="object-cover"
                   priority
                   unoptimized
+                  onLoadingComplete={() => setPreviewBackgroundLoaded(true)}
                 />
-                <div className="absolute inset-0 bg-white/12 backdrop-blur-[1px]" />
+                <div className="absolute inset-0 bg-linear-to-t from-black/40 via-transparent to-white/25 backdrop-blur-[1px]" />
               </div>
             ) : (
               <div className="absolute inset-0 -z-10 rounded-[40px] border border-slate-200/70 bg-white shadow-[0_40px_80px_rgba(63,61,86,0.18)]" />

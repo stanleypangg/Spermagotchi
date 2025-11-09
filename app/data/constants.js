@@ -70,7 +70,7 @@ export const GOOD_HABITS_CONFIG = Object.freeze([
     look: 'Well Rested',
     category: 'good',
     imageOverride: {
-      asset: '/sleep.webp',
+      asset: '/sleep.png',
       alt: 'Well rested buddy',
     },
   },
@@ -272,6 +272,14 @@ export const SHOP_BACKGROUND_ITEMS = Object.freeze([
     rarity: 'Common',
     imagePath: GRADIENT_ASSETS.sterile,
     description: 'Clinical clean vibes for peak focus on stats.',
+  },
+  {
+    id: 'sperm-kingdom',
+    name: 'Sperm Kingdom',
+    price: 65,
+    rarity: 'Legendary',
+    imagePath: '/sperm_kingdom.png',
+    description: 'A candy-coated wonderland swarming with cheery swimmers.',
   },
 ]);
 

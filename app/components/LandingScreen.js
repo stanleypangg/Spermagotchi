@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import petriDish from '@/public/petri.png';
 import happyBuddy from '@/public/happier.png';
+import splatGif from '@/public/splat.gif';
 
 export default function LandingScreen({
   name,
@@ -9,21 +10,55 @@ export default function LandingScreen({
   onSubmit,
   creating,
   error,
+  onComplete,
 }) {
-  const handleSubmit = (event) => {
+  const [stage, setStage] = useState('intro'); // intro | fading | form | outro | splat | done
+  const [formActive, setFormActive] = useState(false);
+  const [showSplat, setShowSplat] = useState(false);
+
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    if (formActive) {
-      setFormActive(false);
-      setTimeout(() => {
-        onSubmit();
-      }, 400);
-    } else {
-      onSubmit();
+    if (!formActive || stage === 'outro' || stage === 'splat' || stage === 'done') {
+      return;
+    }
+
+    const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+    setFormActive(false);
+    setStage('outro');
+    await delay(500);
+
+    let success = true;
+    if (onSubmit) {
+      try {
+        const result = await onSubmit();
+        success = result !== false;
+      } catch (err) {
+        success = false;
+      }
+    }
+
+    if (!success) {
+      setStage('form');
+      requestAnimationFrame(() => setFormActive(true));
+      return;
+    }
+
+    await delay(2000);
+
+    setShowSplat(true);
+    setStage('splat');
+
+    await delay(4000);
+
+    setShowSplat(false);
+    setStage('done');
+
+    if (onComplete) {
+      onComplete();
     }
   };
 
-  const [stage, setStage] = useState('intro'); // intro | fading | form
-  const [formActive, setFormActive] = useState(false);
 
   useEffect(() => {
     let timeout;
@@ -53,6 +88,9 @@ export default function LandingScreen({
     setStage('fading');
   };
 
+  const showIntro = stage === 'intro' || stage === 'fading';
+  const showForm = stage === 'form' || stage === 'outro';
+
   return (
     <main className="relative flex min-h-screen w-full items-center justify-center overflow-hidden bg-[radial-gradient(circle_at_top_left,rgba(129,140,248,0.35),transparent_45%),radial-gradient(circle_at_bottom_right,rgba(236,72,153,0.22),transparent_40%),#f7f8ff] text-[#2d265a]">
       <div className="pointer-events-none absolute inset-0 opacity-50">
@@ -60,7 +98,7 @@ export default function LandingScreen({
         <div className="absolute -bottom-40 right-[-15%] h-[400px] w-[400px] rounded-full bg-[radial-gradient(circle,rgba(129,140,248,0.2)_0%,rgba(255,255,255,0)_70%)] blur-3xl" />
       </div>
 
-      {stage !== 'form' ? (
+      {showIntro ? (
         <button
           type="button"
           onClick={handleBuddyClick}
@@ -91,7 +129,7 @@ export default function LandingScreen({
             Tap to begin
           </p>
         </button>
-      ) : (
+      ) : showForm ? (
         <div
           className={`relative z-10 flex w-full max-w-xl flex-col gap-6 rounded-[40px] border border-white/60 bg-white/85 px-8 py-10 shadow-[0_32px_110px_rgba(129,140,248,0.25)] backdrop-blur-xl transition-opacity duration-700 ease-out md:px-10 ${
             formActive ? 'opacity-100' : 'opacity-0'
@@ -136,7 +174,21 @@ export default function LandingScreen({
             </button>
           </form>
         </div>
-      )}
+      ) : null}
+
+      {showSplat ? (
+        <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center bg-white/10 backdrop-blur-[2px]">
+          <Image
+            src={splatGif}
+            alt="Splat animation"
+            width={640}
+            height={640}
+            unoptimized
+            className="w-[640px]"
+            style={{ animation: 'none' }}
+          />
+        </div>
+      ) : null}
     </main>
   );
 }
