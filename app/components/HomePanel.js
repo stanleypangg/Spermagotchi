@@ -5,15 +5,15 @@ export default function HomePanel({ latestCheckIn }) {
       <ul className="grid gap-2 text-sm text-slate-500">
         <li className="flex items-start gap-2">
           <span className="mt-1 text-xs font-bold text-indigo-500">1</span>
-          <span>Log quick daily check-ins to keep the loop moving.</span>
+          <span>Select your daily habits to improve your stats.</span>
         </li>
         <li className="flex items-start gap-2">
           <span className="mt-1 text-xs font-bold text-indigo-500">2</span>
-          <span>Your stats nudge forward with each good habit and streak.</span>
+          <span>Use "Next Day" to advance time and lock in your check-in.</span>
         </li>
         <li className="flex items-start gap-2">
           <span className="mt-1 text-xs font-bold text-indigo-500">3</span>
-          <span>Maintain daily streaks for bonus stats and sperm points!</span>
+          <span>Maintain daily streaks when days pass for bonus rewards!</span>
         </li>
       </ul>
       

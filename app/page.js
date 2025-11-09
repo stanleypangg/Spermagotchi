@@ -1104,11 +1104,30 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
               signals: 'Chemical sensing and navigation. Boosts performance in gradient zones.',
             };
             
+            // Calculate stat rank
+            const getStatRank = (value) => {
+              if (value >= 95) return { rank: 'SSS+', color: 'from-yellow-400 to-orange-400', textColor: 'text-yellow-600', glow: 'shadow-yellow-500/50' };
+              if (value >= 90) return { rank: 'SSS', color: 'from-purple-400 to-pink-400', textColor: 'text-purple-600', glow: 'shadow-purple-500/50' };
+              if (value >= 80) return { rank: 'SS', color: 'from-red-400 to-rose-400', textColor: 'text-red-600', glow: 'shadow-red-500/30' };
+              if (value >= 70) return { rank: 'S', color: 'from-orange-400 to-amber-400', textColor: 'text-orange-600', glow: 'shadow-orange-500/30' };
+              if (value >= 60) return { rank: 'A', color: 'from-emerald-400 to-teal-400', textColor: 'text-emerald-600', glow: 'shadow-emerald-500/20' };
+              if (value >= 50) return { rank: 'B', color: 'from-blue-400 to-cyan-400', textColor: 'text-blue-600', glow: 'shadow-blue-500/20' };
+              return { rank: 'C', color: 'from-slate-400 to-slate-500', textColor: 'text-slate-600', glow: '' };
+            };
+            
+            const statValue = typeof stat.value === 'number' ? stat.value : 0;
+            const rankInfo = getStatRank(statValue);
+            
             return (
               <div
                 key={stat.key}
                 className="group relative flex min-w-[140px] flex-1 basis-[160px] flex-col rounded-3xl border border-white/70 bg-white/80 px-4 py-3 text-slate-600 shadow-sm backdrop-blur transition hover:shadow-md"
               >
+                {/* Rank Badge */}
+                <div className={`absolute -top-2 -right-2 rounded-full bg-gradient-to-r ${rankInfo.color} px-2.5 py-1 shadow-lg ${rankInfo.glow}`}>
+                  <p className="text-[10px] font-black text-white drop-shadow-md">{rankInfo.rank}</p>
+                </div>
+                
                 <div className="flex items-center justify-between">
                   <span className="text-[0.65rem] font-semibold uppercase tracking-[0.3em] text-slate-400">
                     {stat.abbr}
@@ -1124,7 +1143,7 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
                 </p>
                 
                 {/* Tooltip on hover */}
-                <div className="pointer-events-none absolute -bottom-2 left-1/2 -translate-x-1/2 translate-y-full opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                <div className="pointer-events-none absolute -bottom-2 left-1/2 -translate-x-1/2 translate-y-full opacity-0 transition-opacity duration-200 group-hover:opacity-100 z-50">
                   <div className="rounded-xl bg-slate-800 px-3 py-2 shadow-xl">
                     <p className="text-xs text-white whitespace-nowrap">{tooltips[stat.key]}</p>
                     <div className="absolute -top-1 left-1/2 -translate-x-1/2 h-2 w-2 rotate-45 bg-slate-800" />
@@ -1357,32 +1376,41 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
                 >
                   reset
                 </button>
-                <button
-                  type="button"
-                  onClick={async () => {
-                    if (!spermId) return;
-                    try {
-                      const res = await fetch('/api/player/skip-day', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ name: spermId }),
-                      });
-                      const data = await res.json();
-                      if (data.player) {
-                        scheduleFeedbackClear(data.message || 'Day skipped!');
-                        // Reload player data
-                        await fetchSpermState(spermId);
-                        setHabitForm({ ...DEFAULT_HABIT_FORM });
+                <div className="flex flex-col items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (!spermId) return;
+                      try {
+                        const res = await fetch('/api/player/skip-day', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ 
+                            name: spermId,
+                            habits: habitForm, // Submit current habits
+                          }),
+                        });
+                        const data = await res.json();
+                        if (data.player) {
+                          scheduleFeedbackClear(data.message || 'Day advanced!');
+                          // Reload player data
+                          await fetchSpermState(spermId);
+                          setHabitForm({ ...DEFAULT_HABIT_FORM });
+                          setBuddyOverride(null);
+                        }
+                      } catch (err) {
+                        console.error('Failed to advance day:', err);
+                        setError('Failed to advance day');
                       }
-                    } catch (err) {
-                      console.error('Failed to skip day:', err);
-                      setError('Failed to skip day');
-                    }
-                  }}
-                  className="rounded-full border border-orange-300 bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-600 transition hover:bg-orange-100"
-                >
-                  ⏭️ Skip Day
-                </button>
+                    }}
+                    className="rounded-full border-2 border-orange-300 bg-gradient-to-r from-orange-100 to-amber-100 px-4 py-2 text-sm font-bold text-orange-700 shadow-md transition hover:from-orange-200 hover:to-amber-200 hover:scale-105"
+                  >
+                    ⏭️ Next Day (Demo)
+                  </button>
+                  <p className="text-[10px] text-slate-400 text-center max-w-[200px]">
+                    Advance to tomorrow & process check-in. Streaks only count when a day passes!
+                  </p>
+                </div>
               </div>
             </div>
           </div>

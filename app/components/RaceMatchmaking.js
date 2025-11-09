@@ -119,14 +119,33 @@ export default function RaceMatchmaking({
                 </div>
               </div>
 
-              {/* Stats Display - Compact */}
+              {/* Stats Display - Compact with Ranks */}
               <div className="space-y-2">
                 <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Combat Stats</p>
                 <div className="grid grid-cols-2 gap-3">
                   {STAT_DISPLAY_CONFIG.map(stat => {
                     const value = Math.round(stats[stat.key] ?? 50);
+                    
+                    // Calculate stat rank
+                    const getStatRank = (val) => {
+                      if (val >= 95) return { rank: 'SSS+', color: 'from-yellow-400 to-orange-400' };
+                      if (val >= 90) return { rank: 'SSS', color: 'from-purple-400 to-pink-400' };
+                      if (val >= 80) return { rank: 'SS', color: 'from-red-400 to-rose-400' };
+                      if (val >= 70) return { rank: 'S', color: 'from-orange-400 to-amber-400' };
+                      if (val >= 60) return { rank: 'A', color: 'from-emerald-400 to-teal-400' };
+                      if (val >= 50) return { rank: 'B', color: 'from-blue-400 to-cyan-400' };
+                      return { rank: 'C', color: 'from-slate-400 to-slate-500' };
+                    };
+                    
+                    const rankInfo = getStatRank(value);
+                    
                     return (
-                      <div key={stat.key} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                      <div key={stat.key} className="relative rounded-xl border border-slate-200 bg-slate-50 p-3">
+                        {/* Rank Badge */}
+                        <div className={`absolute -top-1.5 -right-1.5 rounded-full bg-gradient-to-r ${rankInfo.color} px-2 py-0.5 shadow-md`}>
+                          <p className="text-[9px] font-black text-white">{rankInfo.rank}</p>
+                        </div>
+                        
                         <div className="mb-1.5 flex items-center justify-between">
                           <span className="text-xs font-bold text-slate-700">{stat.label}</span>
                           <span className="text-lg font-black text-slate-800">{value}</span>

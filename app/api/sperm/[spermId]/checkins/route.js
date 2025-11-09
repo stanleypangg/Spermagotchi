@@ -77,6 +77,8 @@ function getYesterdayDateString() {
 }
 
 // Bridge old sperm checkins API to new player store
+// This endpoint ONLY saves habits, does NOT update streaks
+// Streaks are only updated when a day passes (via skip-day endpoint)
 export async function POST(request, { params }) {
   try {
     const { spermId } = await params;
@@ -90,79 +92,20 @@ export async function POST(request, { params }) {
       return NextResponse.json({ error: 'Sperm not found.' }, { status: 404 });
     }
     
-    const today = getTodayDateString();
-    const yesterday = getYesterdayDateString();
-    const lastCheckIn = playerData.lastCheckInDate;
-    
-    // Calculate streak
-    let currentStreak = playerData.currentStreak || 0;
-    let longestStreak = playerData.longestStreak || 0;
-    let streakBonus = 0;
-    let streakPoints = 0;
-    
-    if (lastCheckIn === today) {
-      // Already checked in today, don't update streak
-      currentStreak = playerData.currentStreak || 0;
-      longestStreak = playerData.longestStreak || 0;
-    } else if (lastCheckIn === yesterday) {
-      // Continuing streak
-      currentStreak += 1;
-      longestStreak = Math.max(longestStreak, currentStreak);
-      
-      // Streak bonuses based on milestones
-      if (currentStreak >= 30) {
-        streakBonus = 5;
-        streakPoints = 100;
-      } else if (currentStreak >= 14) {
-        streakBonus = 3;
-        streakPoints = 50;
-      } else if (currentStreak >= 10) {
-        streakBonus = 2;
-        streakPoints = 30;
-      } else if (currentStreak >= 7) {
-        streakBonus = 2;
-        streakPoints = 20;
-      } else if (currentStreak >= 5) {
-        streakBonus = 1;
-        streakPoints = 10;
-      } else if (currentStreak >= 3) {
-        streakBonus = 1;
-        streakPoints = 10;
-      }
-    } else {
-      // Streak broken or first check-in
-      currentStreak = 1;
-      longestStreak = Math.max(longestStreak, 1);
-    }
-    
-    // Process habits and update stats
+    // Just process habits and update stats - NO streak changes
     const delta = processHabits(habits);
     
-    // Add streak bonus to all stats
-    const finalDelta = {
-      motility: delta.motility + streakBonus,
-      linearity: delta.linearity + streakBonus,
-      flow: delta.flow + streakBonus,
-      signals: delta.signals + streakBonus,
-    };
-    
     const newStats = {
-      motility: Math.max(0, Math.min(100, playerData.stats.motility + finalDelta.motility)),
-      linearity: Math.max(0, Math.min(100, playerData.stats.linearity + finalDelta.linearity)),
-      flow: Math.max(0, Math.min(100, playerData.stats.flow + finalDelta.flow)),
-      signals: Math.max(0, Math.min(100, playerData.stats.signals + finalDelta.signals)),
+      motility: Math.max(0, Math.min(100, playerData.stats.motility + delta.motility)),
+      linearity: Math.max(0, Math.min(100, playerData.stats.linearity + delta.linearity)),
+      flow: Math.max(0, Math.min(100, playerData.stats.flow + delta.flow)),
+      signals: Math.max(0, Math.min(100, playerData.stats.signals + delta.signals)),
     };
     
-    const newPoints = (playerData.spermPoints || 0) + streakPoints;
-    
-    // Update player data
+    // Update player data - keep streak/date unchanged
     store[spermId] = {
       ...playerData,
       stats: newStats,
-      currentStreak,
-      longestStreak,
-      lastCheckInDate: today,
-      spermPoints: newPoints,
       todayHabits: playerData.todayHabits || {}, // Keep today's habit selections
     };
     
@@ -173,13 +116,13 @@ export async function POST(request, { params }) {
         id: spermId,
         name: playerData.name,
         stats: newStats,
-        currentStreak,
-        longestStreak,
-        spermPoints: newPoints,
+        currentStreak: playerData.currentStreak || 0,
+        longestStreak: playerData.longestStreak || 0,
+        spermPoints: playerData.spermPoints || 0,
       },
-      delta: finalDelta,
-      streakBonus,
-      streakPoints,
+      delta,
+      streakBonus: 0,
+      streakPoints: 0,
     });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
