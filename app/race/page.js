@@ -109,16 +109,22 @@ export default function RacePage() {
       if (nextFrame) {
         frameRef.current = nextFrame;
         setFrame(nextFrame);
-        if (nextFrame.isFinished && !finishTimerRef.current) {
+        
+        // Update finish order continuously as racers finish
+        if (nextFrame.isFinished) {
           const ordered = [...nextFrame.lanes]
             .filter((lane) => lane.finished)
             .sort((a, b) => a.place - b.place);
           setFinishOrder(ordered);
-          finishTimerRef.current = setTimeout(() => {
-            finishTimerRef.current = null;
-            setIsRunning(false);
-            isRunningRef.current = false;
-          }, FINISH_WIND_DOWN_MS);
+          
+          // Start wind-down timer only once
+          if (!finishTimerRef.current) {
+            finishTimerRef.current = setTimeout(() => {
+              finishTimerRef.current = null;
+              setIsRunning(false);
+              isRunningRef.current = false;
+            }, FINISH_WIND_DOWN_MS);
+          }
         }
       }
 
@@ -178,15 +184,28 @@ export default function RacePage() {
   }
 
   return (
-    <main className="h-screen w-screen overflow-hidden flex flex-col bg-slate-900 p-4">
-      <div className="relative flex-1 rounded-3xl overflow-hidden shadow-2xl border-4 border-white/10">
+    <main className="h-screen w-screen overflow-hidden flex flex-col bg-white p-4">
+      <div className="relative flex-1 rounded-3xl overflow-hidden shadow-2xl border-4 border-slate-200">
         <RaceStage
           geometry={engineBundle.geometry}
           frame={frame}
           cameraSpan={cameraSpan}
+          isFinished={frame.isFinished && finishOrder.length > 0}
+          finishOrder={finishOrder}
         />
         
-        <div className="pointer-events-auto absolute bottom-4 left-1/2 -translate-x-1/2 flex flex-wrap items-center justify-center gap-2 bg-slate-900/90 backdrop-blur-md px-4 py-2 rounded-full shadow-2xl border-2 border-white/20">
+        {/* Return to Main button */}
+        <div className="pointer-events-auto absolute top-4 left-4">
+          <a
+            href="/"
+            className="flex items-center gap-2 rounded-full bg-white/90 backdrop-blur-md border-2 border-slate-200 px-4 py-2 text-xs font-bold text-slate-600 shadow-lg transition hover:bg-slate-50"
+          >
+            <span>←</span>
+            <span>Return to Main</span>
+          </a>
+        </div>
+        
+        <div className="pointer-events-auto absolute bottom-4 left-1/2 -translate-x-1/2 flex flex-wrap items-center justify-center gap-2 bg-white/90 backdrop-blur-md px-4 py-2 rounded-full shadow-lg border-2 border-slate-200">
           <button
             type="button"
             onClick={() => {
@@ -196,7 +215,7 @@ export default function RacePage() {
                 setIsRunning((prev) => !prev);
               }
             }}
-            className="rounded-full bg-gradient-to-r from-purple-500 to-pink-500 px-4 py-1.5 text-xs font-bold text-white shadow-lg transition hover:from-purple-600 hover:to-pink-600"
+            className="rounded-full bg-gradient-to-r from-purple-500 to-pink-500 px-4 py-1.5 text-xs font-bold text-white shadow-md transition hover:from-purple-600 hover:to-pink-600"
           >
             {finishOrder.length
               ? 'Replay'
@@ -207,14 +226,14 @@ export default function RacePage() {
           <button
             type="button"
             onClick={handleReset}
-            className="rounded-full border-2 border-white/40 px-4 py-1.5 text-xs font-bold text-white transition hover:bg-white/10"
+            className="rounded-full border-2 border-slate-200 px-4 py-1.5 text-xs font-bold text-slate-600 transition hover:bg-slate-50"
           >
             Reset
           </button>
           <button
             type="button"
             onClick={() => setSpeedMultiplier(prev => prev === 1 ? 2 : 1)}
-            className={`rounded-full px-4 py-1.5 text-xs font-bold text-white shadow-lg transition ${
+            className={`rounded-full px-4 py-1.5 text-xs font-bold text-white shadow-md transition ${
               speedMultiplier === 2
                 ? 'bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600'
                 : 'bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600'
@@ -222,7 +241,7 @@ export default function RacePage() {
           >
             {speedMultiplier}x
           </button>
-          <label className="flex items-center gap-2 text-xs font-semibold text-white/90">
+          <label className="flex items-center gap-2 text-xs font-semibold text-slate-600">
             Zoom
             <input
               type="range"

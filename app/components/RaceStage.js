@@ -7,6 +7,7 @@ import {
   sampleTrackAt,
   trackBounds,
 } from '@/lib/race/geometry';
+import { GOOD_HABITS_CONFIG, BAD_HABITS_CONFIG } from '@/app/data/constants';
 
 const ZONE_COLORS = {
   flow: '#bfdbfe',
@@ -18,6 +19,70 @@ const SPRITE_SIZE = Object.freeze({
   width: 44,
   height: 44,
 });
+
+// Helper function to get motivational/congratulatory messages based on placement
+function getPlacementMessage(position, totalRacers) {
+  if (position === 1) {
+    return {
+      title: '🎉 VICTORY! 🎉',
+      message: 'Your swimmers are absolutely champion quality! Premium motility detected!',
+      emoji: '💪',
+    };
+  } else if (position === 2) {
+    return {
+      title: 'Great Job! 👏',
+      message: 'So close to gold! Your boys showed excellent form and speed!',
+      emoji: '🏃',
+    };
+  } else if (position === 3) {
+    return {
+      title: 'Nice! 👍',
+      message: 'Solid performance! Your swimmers made it to the podium!',
+      emoji: '🌟',
+    };
+  } else if (position === totalRacers) {
+    // Last place - suggest improvements
+    const suggestions = [
+      `Try ${GOOD_HABITS_CONFIG[0].title} (${GOOD_HABITS_CONFIG[0].effect})`,
+      `Try ${GOOD_HABITS_CONFIG[1].title} (${GOOD_HABITS_CONFIG[1].effect})`,
+      `Try ${GOOD_HABITS_CONFIG[2].title} (${GOOD_HABITS_CONFIG[2].effect})`,
+      `Try ${GOOD_HABITS_CONFIG[3].title} (${GOOD_HABITS_CONFIG[3].effect})`,
+    ];
+    const avoidSuggestions = [
+      `Avoid ${BAD_HABITS_CONFIG[0].title} (${BAD_HABITS_CONFIG[0].effect})`,
+      `Avoid ${BAD_HABITS_CONFIG[1].title} (${BAD_HABITS_CONFIG[1].effect})`,
+      `Avoid ${BAD_HABITS_CONFIG[2].title} (${BAD_HABITS_CONFIG[2].effect})`,
+      `Avoid ${BAD_HABITS_CONFIG[3].title} (${BAD_HABITS_CONFIG[3].effect})`,
+    ];
+    
+    // Randomly choose either a good habit to try OR a bad habit to avoid (not both)
+    const showGoodHabit = Math.random() > 0.5;
+    const message = showGoodHabit 
+      ? suggestions[Math.floor(Math.random() * suggestions.length)]
+      : avoidSuggestions[Math.floor(Math.random() * avoidSuggestions.length)];
+    
+    return {
+      title: 'Keep Swimming! 💧',
+      message: message,
+      emoji: '📈',
+    };
+  } else {
+    // Middle positions - encourage improvement
+    const suggestions = [
+      `${GOOD_HABITS_CONFIG[0].title}`,
+      `${GOOD_HABITS_CONFIG[1].title}`,
+      `${GOOD_HABITS_CONFIG[2].title}`,
+      `${GOOD_HABITS_CONFIG[3].title}`,
+    ];
+    const randomSuggestion = suggestions[Math.floor(Math.random() * suggestions.length)];
+    
+    return {
+      title: 'Good Effort! 💦',
+      message: `Your swimmers showed promise! Boost your stats with ${randomSuggestion}!`,
+      emoji: '🎯',
+    };
+  }
+}
 
 const DEFAULT_SPRITE = '/neutral.png';
 const SPRITE_OVERRIDES = Object.freeze({
@@ -119,6 +184,20 @@ export default function RaceStage({
   isFinished = false,
   finishOrder = [],
 }) {
+  const [showEndScreen, setShowEndScreen] = useState(false);
+  
+  // Delay showing the end screen
+  useEffect(() => {
+    if (isFinished && finishOrder.length > 0) {
+      const timer = setTimeout(() => {
+        setShowEndScreen(true);
+      }, 1500); // 1.5 second delay
+      return () => clearTimeout(timer);
+    } else {
+      setShowEndScreen(false);
+    }
+  }, [isFinished, finishOrder.length]);
+  
   const centerPath = useMemo(
     () => svgPathFromGeometry(geometry),
     [geometry],
@@ -139,9 +218,16 @@ export default function RaceStage({
 
   const playerPosition = useMemo(() => {
     if (!frame?.lanes || !playerLane) return null;
+    
+    // If the race is finished, use the actual place assigned at finish
+    if (isFinished && playerLane.finished && playerLane.place) {
+      return playerLane.place;
+    }
+    
+    // During the race, calculate position based on progress
     const sortedLanes = [...frame.lanes].sort((a, b) => b.progress - a.progress);
     return sortedLanes.findIndex(lane => lane.id === 'player') + 1;
-  }, [frame?.lanes, playerLane]);
+  }, [frame?.lanes, playerLane, isFinished]);
 
   const positionGradient = useMemo(() => {
     if (!playerPosition || !frame?.lanes) return 'from-yellow-400 via-orange-400 to-red-500';
@@ -158,6 +244,46 @@ export default function RaceStage({
       return 'from-red-500 via-rose-600 to-red-700';
     }
   }, [playerPosition, frame?.lanes]);
+
+  const getPositionEffects = (position) => {
+    if (position === 1) {
+      return {
+        containerClass: 'animate-[float-gentle_5s_ease-in-out_infinite] relative',
+        glowClass: 'animate-[glow-pulse_4s_ease-in-out_infinite]',
+        shimmerStyle: {
+          background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent)',
+          backgroundSize: '200% 100%',
+          animation: 'shimmer 4s infinite ease-in-out',
+        },
+        showSparkles: true,
+        borderClass: 'border-6 border-yellow-300 shadow-[0_0_60px_rgba(234,179,8,0.8),0_0_120px_rgba(234,179,8,0.5)]',
+      };
+    } else if (position === 2) {
+      return {
+        containerClass: 'animate-[float-gentle_3.5s_ease-in-out_infinite]',
+        glowClass: '',
+        shimmerStyle: null,
+        showSparkles: false,
+        borderClass: 'border-5 border-slate-300 shadow-[0_0_40px_rgba(203,213,225,0.6)]',
+      };
+    } else if (position === 3) {
+      return {
+        containerClass: '',
+        glowClass: '',
+        shimmerStyle: null,
+        showSparkles: false,
+        borderClass: 'border-4 border-orange-400 shadow-[0_0_30px_rgba(251,146,60,0.5)]',
+      };
+    } else {
+      return {
+        containerClass: '',
+        glowClass: '',
+        shimmerStyle: null,
+        showSparkles: false,
+        borderClass: 'border-4 border-white/70',
+      };
+    }
+  };
 
   const leader = useMemo(() => {
     if (!frame?.lanes?.length) {
@@ -286,8 +412,44 @@ export default function RaceStage({
     return polylineToPath(offsetPolylinePoints(geometry, -trackStroke / 2));
   }, [geometry, trackStroke]);
 
+  // Calculate parallax offset based on camera position
+  const parallaxOffset = useMemo(() => {
+    if (!cameraCenter || !overallBounds) return { x: 0, y: 0 };
+    
+    // Calculate progress through the track based on camera x position
+    const trackWidth = overallBounds.width || 1;
+    const trackHeight = overallBounds.height || 1;
+    
+    // Normalize camera position relative to track bounds
+    const normalizedX = (cameraCenter.x - overallBounds.minX) / trackWidth;
+    const normalizedY = (cameraCenter.y - overallBounds.minY) / trackHeight;
+    
+    // Parallax factors (lower = slower movement, creates depth)
+    const parallaxFactorX = 0.3;
+    const parallaxFactorY = 0.2;
+    
+    return {
+      x: normalizedX * 100 * parallaxFactorX,
+      y: normalizedY * 100 * parallaxFactorY,
+    };
+  }, [cameraCenter, overallBounds]);
+
   return (
-    <div className="relative w-full h-screen bg-linear-to-br from-indigo-200 via-purple-200 to-pink-200 overflow-hidden">
+    <div className="relative w-full h-screen overflow-hidden">
+      {/* Parallax Background */}
+      <div
+        className="absolute inset-0 w-full h-full"
+        style={{
+          backgroundImage: 'url(/sperm_kingdom.png)',
+          backgroundSize: 'cover',
+          backgroundPosition: `${50 - parallaxOffset.x}% ${50 - parallaxOffset.y}%`,
+          transition: 'background-position 0.1s ease-out',
+        }}
+      />
+      
+      {/* Semi-transparent overlay for better track visibility */}
+      <div className="absolute inset-0 bg-linear-to-br from-indigo-100/30 via-purple-100/30 to-pink-100/30" />
+      
       <svg
         width="100%"
         height="100%"
@@ -316,6 +478,104 @@ export default function RaceStage({
             <circle cx="20" cy="20" r="6" fill="rgba(255,255,255,0.18)" />
             <circle cx="45" cy="35" r="4" fill="rgba(255,255,255,0.12)" />
             <circle cx="15" cy="50" r="3" fill="rgba(255,255,255,0.1)" />
+          </pattern>
+          <pattern
+            id="liquid-flow"
+            x="0"
+            y="0"
+            width="80"
+            height="100"
+            patternUnits="userSpaceOnUse"
+          >
+            <animateTransform
+              attributeName="patternTransform"
+              type="translate"
+              from="0 0"
+              to="80 100"
+              dur="25s"
+              repeatCount="indefinite"
+            />
+            {/* Subtle squiggly lines for liquid effect - made more prominent with better colors */}
+            <path
+              d="M10,20 Q15,15 20,20 T30,20 T40,20"
+              stroke="rgba(255,255,255,0.7)"
+              strokeWidth="4"
+              fill="none"
+              strokeLinecap="round"
+            />
+            <path
+              d="M50,35 Q55,30 60,35 T70,35"
+              stroke="rgba(255,255,255,0.6)"
+              strokeWidth="3.5"
+              fill="none"
+              strokeLinecap="round"
+            />
+            <path
+              d="M15,55 Q20,50 25,55 T35,55 T45,55"
+              stroke="rgba(255,255,255,0.65)"
+              strokeWidth="3.8"
+              fill="none"
+              strokeLinecap="round"
+            />
+            <path
+              d="M5,75 Q10,70 15,75 T25,75"
+              stroke="rgba(255,255,255,0.62)"
+              strokeWidth="3.6"
+              fill="none"
+              strokeLinecap="round"
+            />
+            <path
+              d="M55,85 Q60,80 65,85 T75,85"
+              stroke="rgba(255,255,255,0.68)"
+              strokeWidth="4.2"
+              fill="none"
+              strokeLinecap="round"
+            />
+            {/* Enhanced wavy forms with pink/purple tints */}
+            <path
+              d="M70,15 Q75,10 80,15"
+              stroke="rgba(251,207,232,0.6)"
+              strokeWidth="4"
+              fill="none"
+              strokeLinecap="round"
+            />
+            <path
+              d="M30,65 Q35,60 40,65"
+              stroke="rgba(251,207,232,0.55)"
+              strokeWidth="3.5"
+              fill="none"
+              strokeLinecap="round"
+            />
+            {/* Additional flowing lines with compatible colors */}
+            <path
+              d="M0,10 Q5,5 10,10 T20,10"
+              stroke="rgba(224,242,254,0.6)"
+              strokeWidth="3.2"
+              fill="none"
+              strokeLinecap="round"
+            />
+            <path
+              d="M40,45 Q45,40 50,45 T60,45"
+              stroke="rgba(224,242,254,0.58)"
+              strokeWidth="3.4"
+              fill="none"
+              strokeLinecap="round"
+            />
+            {/* Purple/lavender accents */}
+            <path
+              d="M25,30 Q30,25 35,30"
+              stroke="rgba(233,213,255,0.55)"
+              strokeWidth="3"
+              fill="none"
+              strokeLinecap="round"
+            />
+            <path
+              d="M60,60 Q65,55 70,60"
+              stroke="rgba(233,213,255,0.52)"
+              strokeWidth="3.2"
+              fill="none"
+              strokeLinecap="round"
+            />
           </pattern>
           <radialGradient id="lane-glow" r="65%" cx="50%" cy="50%">
             <stop offset="0%" stopColor="rgba(255,255,255,0.8)" />
@@ -435,6 +695,16 @@ export default function RaceStage({
           strokeWidth={trackStroke}
           strokeLinecap="round"
           fill="none"
+        />
+
+        {/* Liquid pattern overlay */}
+        <path
+          d={centerPath}
+          stroke="url(#liquid-flow)"
+          strokeWidth={trackStroke * 0.98}
+          strokeLinecap="round"
+          fill="none"
+          opacity={0.95}
         />
 
         {geometry.controlPoints && (() => {
@@ -637,8 +907,8 @@ export default function RaceStage({
               stroke="rgba(255,255,255,0.4)"
               strokeWidth={(geometry.width ?? 80) * 0.3}
               fill="none"
-            />
-            {frame?.lanes?.map((lane) => (
+          />
+          {frame?.lanes?.map((lane) => (
               <circle
                 key={`map-${lane.id}`}
                 cx={lane.x}
@@ -672,12 +942,163 @@ export default function RaceStage({
             <div className="flex items-baseline">
               <span className="text-3xl font-black text-white drop-shadow-[0_4px_8px_rgba(0,0,0,0.5)]" style={{ fontFamily: 'Impact, fantasy' }}>
                 {((leader?.velocity ?? 0) / 100).toFixed(1)}
-              </span>
+          </span>
             </div>
             <div className="text-[10px] font-bold text-white/90">m/s</div>
           </div>
         </div>
       </div>
+
+      {/* End Screen */}
+      {showEndScreen && (
+        <div className="absolute inset-0 backdrop-blur-xl bg-black/40 flex items-center justify-center animate-[fadeIn_0.5s_ease-out]">
+          <div className="max-w-2xl w-full px-8">
+            {/* Title with bouncing animation */}
+            <div className="text-center mb-8 animate-[bounceIn_0.8s_ease-out]">
+              <h1 className="text-6xl font-black text-white drop-shadow-[0_8px_16px_rgba(0,0,0,0.8)] mb-2" style={{ fontFamily: 'Impact, fantasy' }}>
+                RACE COMPLETE!
+              </h1>
+              <div className="flex items-center justify-center gap-2 text-2xl font-bold text-yellow-300 drop-shadow">
+                ⏱️ {frame?.t?.toFixed(2)}s
+              </div>
+            </div>
+
+            {/* Player Result - Big and prominent */}
+            {playerPosition && (
+              <div className="mb-8 animate-[scaleIn_0.6s_ease-out_0.3s_both]">
+                <div className={`bg-linear-to-br ${positionGradient} rounded-3xl p-6 shadow-2xl ${getPositionEffects(playerPosition).borderClass} ${getPositionEffects(playerPosition).containerClass} transform hover:scale-105 transition-transform overflow-hidden`}>
+                  {/* Shimmer effect for 1st place */}
+                  {getPositionEffects(playerPosition).shimmerStyle && (
+                    <div
+                      className="absolute inset-0 pointer-events-none"
+                      style={getPositionEffects(playerPosition).shimmerStyle}
+                    />
+                  )}
+                  
+                  {/* Sparkles for 1st place */}
+                  {getPositionEffects(playerPosition).showSparkles && (
+                    <>
+                      <div className="absolute top-4 left-4 text-4xl animate-[sparkle_4s_ease-in-out_infinite]">✨</div>
+                      <div className="absolute top-4 right-4 text-4xl animate-[sparkle_4s_ease-in-out_infinite_1s]">✨</div>
+                      <div className="absolute bottom-4 left-8 text-3xl animate-[sparkle_4s_ease-in-out_infinite_2s]">⭐</div>
+                      <div className="absolute bottom-4 right-8 text-3xl animate-[sparkle_4s_ease-in-out_infinite_3s]">⭐</div>
+                    </>
+                  )}
+                  
+                  <div className={`text-center relative z-10 ${getPositionEffects(playerPosition).glowClass}`}>
+                    <div className="text-sm font-bold text-white/90 uppercase tracking-widest mb-2">Your Result</div>
+                    <div className="flex items-center justify-center gap-4">
+                      <div className="text-7xl font-black text-white drop-shadow-[0_8px_16px_rgba(0,0,0,0.8)]" style={{ fontFamily: 'Impact, fantasy' }}>
+                        {playerPosition === 1 ? '🥇' : playerPosition === 2 ? '🥈' : playerPosition === 3 ? '🥉' : ''}
+                        {playerPosition}
+                      </div>
+                      <div className="text-4xl font-bold text-white/90">
+                        / {frame?.lanes?.length}
+                      </div>
+                    </div>
+                    
+                    {/* Placement-specific messages */}
+                    {(() => {
+                      const placementMsg = getPlacementMessage(playerPosition, frame?.lanes?.length);
+                      return (
+                        <div className="mt-4 space-y-2">
+                          <div className={`font-black drop-shadow-lg ${
+                            playerPosition === 1 ? 'text-2xl text-yellow-200 animate-pulse' :
+                            playerPosition === 2 ? 'text-xl text-slate-200' :
+                            playerPosition === 3 ? 'text-lg text-orange-200' :
+                            'text-base text-white/90'
+                          }`}>
+                            {placementMsg.title}
+                          </div>
+                          <div className="text-sm font-semibold text-white/90 leading-relaxed px-2">
+                            {placementMsg.message}
+                          </div>
+                          {placementMsg.secondaryMessage && (
+                            <div className="text-xs font-medium text-white/80 italic px-2 mt-1">
+                              {placementMsg.secondaryMessage}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Leaderboard */}
+            <div className="bg-slate-900/80 rounded-2xl p-6 shadow-2xl border-2 border-white/30 backdrop-blur">
+              <h2 className="text-xl font-black text-white mb-4 text-center uppercase tracking-wider" style={{ fontFamily: 'Impact, fantasy' }}>
+                Final Standings
+              </h2>
+              <div className="space-y-2">
+                {finishOrder.map((racer, index) => {
+                  const effects = getPositionEffects(racer.place);
+                  const isFirst = racer.place === 1;
+                  const isSecond = racer.place === 2;
+                  const isThird = racer.place === 3;
+                  
+                  return (
+                    <div
+                      key={racer.id}
+                      className={`flex items-center gap-3 rounded-xl px-4 py-3 transform transition-all hover:scale-102 animate-[slideInRight_0.5s_ease-out] backdrop-blur relative overflow-hidden ${
+                        isFirst ? 'bg-yellow-600/40 border-2 border-yellow-400 shadow-[0_0_30px_rgba(234,179,8,0.6)]' :
+                        isSecond ? 'bg-slate-700/50 border-2 border-slate-400 shadow-[0_0_20px_rgba(203,213,225,0.4)]' :
+                        isThird ? 'bg-orange-700/40 border-2 border-orange-400 shadow-[0_0_15px_rgba(251,146,60,0.3)]' :
+                        'bg-slate-800/60'
+                      } ${effects.containerClass}`}
+                      style={{ animationDelay: `${0.5 + index * 0.1}s`, animationFillMode: 'both' }}
+                    >
+                      {/* Shimmer for 1st place */}
+                      {isFirst && effects.shimmerStyle && (
+                        <div
+                          className="absolute inset-0 pointer-events-none"
+                          style={effects.shimmerStyle}
+                        />
+                      )}
+                      
+                      <div className={`flex items-center justify-center w-8 h-8 rounded-full text-white font-black text-sm ${
+                        isFirst ? 'bg-linear-to-br from-yellow-400 to-yellow-600 shadow-lg' :
+                        isSecond ? 'bg-linear-to-br from-slate-300 to-slate-500 shadow-md' :
+                        isThird ? 'bg-linear-to-br from-orange-400 to-orange-600 shadow-md' :
+                        'bg-linear-to-br from-purple-500 to-pink-500'
+                      }`}>
+                        {racer.place}
+                      </div>
+                      <div
+                        className={`w-10 h-10 rounded-full shadow-lg ${
+                          isFirst ? 'border-3 border-yellow-300 shadow-[0_0_15px_rgba(234,179,8,0.5)]' :
+                          isSecond ? 'border-3 border-slate-300 shadow-[0_0_10px_rgba(203,213,225,0.4)]' :
+                          isThird ? 'border-3 border-orange-400 shadow-[0_0_8px_rgba(251,146,60,0.3)]' :
+                          'border-3 border-white'
+                        }`}
+                        style={{ backgroundColor: racer.tint }}
+                      />
+                      <div className="flex-1 relative z-10">
+                        <div className={`font-bold text-lg ${
+                          isFirst ? 'text-yellow-100' :
+                          isSecond ? 'text-slate-100' :
+                          'text-white'
+                        }`}>
+                          {racer.name}
+                        </div>
+                      </div>
+                      {racer.place === 1 && <span className="text-3xl animate-pulse">👑</span>}
+                      {racer.place === 2 && <span className="text-2xl">🥈</span>}
+                      {racer.place === 3 && <span className="text-2xl">🥉</span>}
+                      
+                      {/* Sparkle for 1st in leaderboard */}
+                      {isFirst && (
+                        <div className="absolute -right-2 -top-2 text-2xl animate-[sparkle_4s_ease-in-out_infinite]">✨</div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
