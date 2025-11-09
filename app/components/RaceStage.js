@@ -222,6 +222,27 @@ const DIALOGUE = {
     "Champions breed champions!",
     "Genetic superiority!",
   ],
+  overtake: {
+    overtaker: [
+      "Later, slowpoke!",
+      "Passing through!",
+      "See ya!",
+      "On your left!",
+      "Eat my tail!",
+      "Better luck next time!",
+      "Too fast for you!",
+      "Nice try!",
+    ],
+    overtaken: [
+      "No way!",
+      "Come back here!",
+      "Not for long!",
+      "I'll catch you!",
+      "Dang it!",
+      "This isn't over!",
+      "Lucky swim!",
+    ],
+  },
 };
 
 function getRandomDialogue(category, subcategory = null) {
@@ -323,6 +344,12 @@ export default function RaceStage({
             responseLaneId = event.otherRacerId;
           }
           duration = 2000;
+          break;
+
+        case 'overtake':
+          const overtakeSubcategory = event.isOvertaker ? 'overtaker' : 'overtaken';
+          dialogue = getRandomDialogue('overtake', overtakeSubcategory);
+          duration = 1800;
           break;
 
         case 'hyperburst:start':
@@ -1067,16 +1094,38 @@ export default function RaceStage({
           const opacity = remaining < 500 ? remaining / 500 : 1;
 
           // Position above the racer
-          const offsetY = -35;
-          const padding = 8;
-          const fontSize = 11;
-          const maxWidth = 120;
+          const offsetY = -40;
+          const padding = 10;
+          const fontSize = 10;
+          const maxCharsPerLine = 18;
+          
+          // Simple word wrapping
+          const words = bubble.text.split(' ');
+          const lines = [];
+          let currentLine = '';
+          
+          words.forEach(word => {
+            const testLine = currentLine ? `${currentLine} ${word}` : word;
+            if (testLine.length <= maxCharsPerLine) {
+              currentLine = testLine;
+            } else {
+              if (currentLine) lines.push(currentLine);
+              currentLine = word;
+            }
+          });
+          if (currentLine) lines.push(currentLine);
+          
+          // Limit to 2 lines max
+          const displayLines = lines.slice(0, 2);
+          if (lines.length > 2) {
+            displayLines[1] = displayLines[1].substring(0, 15) + '...';
+          }
 
-          // Estimate text width (rough approximation)
-          const charWidth = fontSize * 0.55;
-          const textWidth = Math.min(bubble.text.length * charWidth, maxWidth);
-          const bubbleWidth = textWidth + padding * 2;
-          const bubbleHeight = fontSize + padding * 1.5;
+          const lineHeight = fontSize * 1.3;
+          const charWidth = fontSize * 0.6;
+          const maxLineWidth = Math.max(...displayLines.map(line => line.length * charWidth));
+          const bubbleWidth = maxLineWidth + padding * 2;
+          const bubbleHeight = displayLines.length * lineHeight + padding * 1.5;
 
           return (
             <g
@@ -1091,37 +1140,40 @@ export default function RaceStage({
                 y={offsetY - bubbleHeight}
                 width={bubbleWidth}
                 height={bubbleHeight}
-                rx={6}
+                rx={7}
                 fill="white"
                 stroke="#374151"
-                strokeWidth={1.5}
+                strokeWidth={1.8}
                 filter="url(#tube-shadow)"
               />
               
               {/* Speech bubble tail */}
               <path
-                d={`M ${-6} ${offsetY} L ${0} ${offsetY + 8} L ${6} ${offsetY}`}
+                d={`M ${-7} ${offsetY - 2} L ${0} ${offsetY + 8} L ${7} ${offsetY - 2}`}
                 fill="white"
                 stroke="#374151"
-                strokeWidth={1.5}
+                strokeWidth={1.8}
                 strokeLinejoin="round"
               />
 
-              {/* Text */}
-              <text
-                x={0}
-                y={offsetY - bubbleHeight / 2 + fontSize / 3}
-                textAnchor="middle"
-                fontSize={fontSize}
-                fontWeight="600"
-                fill="#1f2937"
-                style={{ 
-                  fontFamily: 'Arial, sans-serif',
-                  pointerEvents: 'none',
-                }}
-              >
-                {bubble.text.length > 20 ? bubble.text.substring(0, 20) + '...' : bubble.text}
-              </text>
+              {/* Text lines */}
+              {displayLines.map((line, idx) => (
+                <text
+                  key={idx}
+                  x={0}
+                  y={offsetY - bubbleHeight + padding + (idx + 0.7) * lineHeight}
+                  textAnchor="middle"
+                  fontSize={fontSize}
+                  fontWeight="600"
+                  fill="#1f2937"
+                  style={{ 
+                    fontFamily: 'Arial, sans-serif',
+                    pointerEvents: 'none',
+                  }}
+                >
+                  {line}
+                </text>
+              ))}
             </g>
           );
         })}
