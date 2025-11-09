@@ -103,6 +103,7 @@ export async function POST(request, { params }) {
     if (lastCheckIn === today) {
       // Already checked in today, don't update streak
       currentStreak = playerData.currentStreak || 0;
+      longestStreak = playerData.longestStreak || 0;
     } else if (lastCheckIn === yesterday) {
       // Continuing streak
       currentStreak += 1;
@@ -131,6 +132,7 @@ export async function POST(request, { params }) {
     } else {
       // Streak broken or first check-in
       currentStreak = 1;
+      longestStreak = Math.max(longestStreak, 1);
     }
     
     // Process habits and update stats

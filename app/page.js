@@ -223,6 +223,15 @@ export default function Home() {
     setSperm(data.sperm);
     setDerived(data.derived);
     setLatestCheckIn(data.latestCheckIn ?? null);
+    
+    // Load shop items from sperm data
+    if (data.sperm) {
+      if (data.sperm.ownedClothing) setOwnedClothing(data.sperm.ownedClothing);
+      if (data.sperm.equippedClothing !== undefined) setEquippedClothing(data.sperm.equippedClothing);
+      if (data.sperm.ownedBackgrounds) setOwnedBackgrounds(data.sperm.ownedBackgrounds);
+      if (data.sperm.equippedBackground !== undefined) setEquippedBackground(data.sperm.equippedBackground);
+    }
+    
     return data;
   }, []);
 
@@ -232,7 +241,8 @@ export default function Home() {
       const data = await fetchHistoryData(id, limit);
       setHistory(data.history ?? []);
     } catch (err) {
-      console.error(err);
+      // Silently fail - history is optional
+      console.log('History not available (expected for new system)');
       setHistory([]);
     } finally {
       setHistoryLoading(false);
@@ -243,61 +253,7 @@ export default function Home() {
     return createRemoteSpermApi(name);
   }, []);
 
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-      return;
-    }
-    try {
-      const stored = window.localStorage.getItem(WARDROBE_STATE_KEY);
-      if (!stored) {
-        return;
-      }
-      const parsed = JSON.parse(stored);
-      if (Array.isArray(parsed?.ownedIds)) {
-        setOwnedClothing(
-          parsed.ownedIds.filter((value) => typeof value === 'string'),
-        );
-      }
-      if (typeof parsed?.equippedId === 'string') {
-        setEquippedClothing(parsed.equippedId);
-      } else if (parsed?.equippedId === null) {
-        setEquippedClothing(null);
-      }
-      if (typeof parsed?.coins === 'number' && Number.isFinite(parsed.coins)) {
-        setCoins(parsed.coins);
-      }
-      if (Array.isArray(parsed?.ownedBackgroundIds)) {
-        setOwnedBackgrounds(
-          parsed.ownedBackgroundIds.filter((value) => typeof value === 'string'),
-        );
-      }
-      if (typeof parsed?.equippedBackgroundId === 'string') {
-        setEquippedBackground(parsed.equippedBackgroundId);
-      } else if (parsed?.equippedBackgroundId === null) {
-        setEquippedBackground(null);
-      }
-    } catch (storageError) {
-      console.error('Failed to load wardrobe state', storageError);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-      return;
-    }
-    try {
-      const payload = JSON.stringify({
-        coins,
-        ownedIds: ownedClothing,
-        equippedId: equippedClothing,
-        ownedBackgroundIds: ownedBackgrounds,
-        equippedBackgroundId: equippedBackground,
-      });
-      window.localStorage.setItem(WARDROBE_STATE_KEY, payload);
-    } catch (storageError) {
-      console.error('Failed to persist wardrobe state', storageError);
-    }
-  }, [coins, ownedClothing, equippedClothing, ownedBackgrounds, equippedBackground]);
+  // Shop items now stored in player data JSON file instead of localStorage
 
   useEffect(() => {
     if (ownedClothing.includes('sixty-seven') || equippedClothing === 'sixty-seven') {
@@ -413,6 +369,12 @@ export default function Home() {
           history: [],
         });
         
+        // Load shop items
+        if (playerData.ownedClothing) setOwnedClothing(playerData.ownedClothing);
+        if (playerData.equippedClothing !== undefined) setEquippedClothing(playerData.equippedClothing);
+        if (playerData.ownedBackgrounds) setOwnedBackgrounds(playerData.ownedBackgrounds);
+        if (playerData.equippedBackground !== undefined) setEquippedBackground(playerData.equippedBackground);
+        
         // Calculate derived stats
         const derivedStats = {
           overallHealthScore: (
@@ -467,6 +429,7 @@ export default function Home() {
   }, [sperm?.spermPoints]);
 
   // Reload player data when page gains focus (returns from race)
+  // Uses optimistic update - keeps existing data
   useEffect(() => {
     const handleFocus = async () => {
       if (spermId && typeof window !== 'undefined') {
@@ -474,17 +437,24 @@ export default function Home() {
           const res = await fetch(`/api/player?name=${encodeURIComponent(spermId)}`);
           const data = await res.json();
           if (data?.player) {
-            setSperm({
+            const playerData = data.player;
+            
+            // Optimistic update - merge with existing
+            setSperm(prev => ({
+              ...prev,
               id: spermId,
-              name: data.player.name,
-              stats: data.player.stats,
-              elo: data.player.elo,
-              spermPoints: data.player.spermPoints,
-              raceHistory: data.player.raceHistory,
-              currentDayIndex: 1,
-              createdAt: data.player.createdAt,
-              history: [],
-            });
+              name: playerData.name,
+              stats: playerData.stats,
+              elo: playerData.elo,
+              spermPoints: playerData.spermPoints,
+              raceHistory: playerData.raceHistory,
+              currentStreak: playerData.currentStreak || 0,
+              longestStreak: playerData.longestStreak || 0,
+              lastCheckInDate: playerData.lastCheckInDate,
+            }));
+            
+            // Update coins
+            setCoins(Math.max(0, Math.round(playerData.spermPoints ?? 0)));
           }
         } catch (err) {
           console.error('Failed to refresh player data:', err);
@@ -511,15 +481,20 @@ export default function Home() {
   }, [activeTab]);
 
   // Refresh player data when opening shop or home (to get updated points/stats after racing)
+  // Uses optimistic updates - keeps existing data while fetching, debounced to prevent flashing
   useEffect(() => {
     if ((activeTab === 'shop' || activeTab === 'home') && spermId) {
-      const refreshPlayerData = async () => {
+      // Debounce the refresh to avoid rapid calls
+      const timeoutId = setTimeout(async () => {
         try {
           const res = await fetch(`/api/player?name=${encodeURIComponent(spermId)}`);
           const data = await res.json();
           if (data?.player) {
             const playerData = data.player;
-            setSperm({
+            
+            // Update sperm state (keep existing data, only update what changed)
+            setSperm(prev => ({
+              ...prev,
               id: spermId,
               name: playerData.name,
               stats: playerData.stats,
@@ -532,40 +507,38 @@ export default function Home() {
               currentDayIndex: 1,
               createdAt: playerData.createdAt,
               history: [],
-            });
+            }));
+            
+            // Update coins
             setCoins(Math.max(0, Math.round(playerData.spermPoints ?? 0)));
+            
+            // Update shop items (but preserve preview selections)
+            if (playerData.ownedClothing) setOwnedClothing(playerData.ownedClothing);
+            if (playerData.equippedClothing !== undefined && !previewClothing) {
+              setEquippedClothing(playerData.equippedClothing);
+            }
+            if (playerData.ownedBackgrounds) setOwnedBackgrounds(playerData.ownedBackgrounds);
+            if (playerData.equippedBackground !== undefined && !previewBackground) {
+              setEquippedBackground(playerData.equippedBackground);
+            }
           }
         } catch (err) {
           console.error('Failed to refresh player data:', err);
         }
-      };
-      refreshPlayerData();
+      }, 100); // 100ms debounce
+      
+      return () => clearTimeout(timeoutId);
     }
-  }, [activeTab, spermId]);
+  }, [activeTab, spermId, previewClothing, previewBackground]);
 
+  // Initialize preview when switching shop tabs
   useEffect(() => {
-    if (shopTab === 'outfits') {
-      setPreviewBackground((prev) =>
-        prev && prev !== equippedBackground ? equippedBackground ?? null : prev,
-      );
-      if (!previewClothing && equippedClothing) {
-        setPreviewClothing(equippedClothing);
-      }
-    } else if (shopTab === 'backgrounds') {
-      setPreviewClothing((prev) =>
-        prev && prev !== equippedClothing ? equippedClothing ?? null : prev,
-      );
-      if (!previewBackground && equippedBackground) {
-        setPreviewBackground(equippedBackground);
-      }
+    if (shopTab === 'backgrounds' && !previewBackground && equippedBackground) {
+      setPreviewBackground(equippedBackground);
+    } else if (shopTab === 'outfits' && !previewClothing && equippedClothing) {
+      setPreviewClothing(equippedClothing);
     }
-  }, [
-    shopTab,
-    equippedBackground,
-    previewBackground,
-    equippedClothing,
-    previewClothing,
-  ]);
+  }, [shopTab]);
 
   useEffect(() => {
     if (previewBackground) {
@@ -826,24 +799,57 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
   );
 
   const handleEquipOwned = useCallback(
-    (item) => {
+    async (item) => {
       setError(null);
       setEquippedClothing(item.id);
       setPreviewClothing(item.id);
+      
+      // Save to player data
+      if (spermId) {
+        try {
+          await fetch('/api/player', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: spermId,
+              data: { equippedClothing: item.id },
+            }),
+          });
+        } catch (err) {
+          console.error('Failed to save equipped clothing:', err);
+        }
+      }
     },
-    [scheduleFeedbackClear],
+    [spermId],
   );
 
-  const handleUnequipOutfit = useCallback(() => {
+  const handleUnequipOutfit = useCallback(async () => {
     setError(null);
     setEquippedClothing(null);
     setPreviewClothing(null);
-  }, [scheduleFeedbackClear]);
+    
+    // Save to player data
+    if (spermId) {
+      try {
+        await fetch('/api/player', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: spermId,
+            data: { equippedClothing: null },
+          }),
+        });
+      } catch (err) {
+        console.error('Failed to save unequip:', err);
+      }
+    }
+  }, [spermId]);
 
   const handleSelectBackground = useCallback(
     (item) => {
       setError(null);
       setPreviewBackground(item.id);
+      setPreviewBackgroundLoaded(false); // Trigger reload
       if (ownedBackgrounds.includes(item.id)) {
         setEquippedBackground(item.id);
       }
@@ -852,21 +858,53 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
   );
 
   const handleEquipBackground = useCallback(
-    (item) => {
+    async (item) => {
       setError(null);
       setEquippedBackground(item.id);
       setPreviewBackground(item.id);
+      
+      // Save to player data
+      if (spermId) {
+        try {
+          await fetch('/api/player', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: spermId,
+              data: { equippedBackground: item.id },
+            }),
+          });
+        } catch (err) {
+          console.error('Failed to save equipped background:', err);
+        }
+      }
       scheduleFeedbackClear(`${item.name} applied!`);
     },
-    [scheduleFeedbackClear],
+    [scheduleFeedbackClear, spermId],
   );
 
-  const handleClearBackground = useCallback(() => {
+  const handleClearBackground = useCallback(async () => {
     setError(null);
     setEquippedBackground(null);
     setPreviewBackground(null);
+    
+    // Save to player data
+    if (spermId) {
+      try {
+        await fetch('/api/player', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: spermId,
+            data: { equippedBackground: null },
+          }),
+        });
+      } catch (err) {
+        console.error('Failed to save background reset:', err);
+      }
+    }
     scheduleFeedbackClear('Background reset.');
-  }, [scheduleFeedbackClear]);
+  }, [scheduleFeedbackClear, spermId]);
 
   const handleOpenPurchaseModal = useCallback((item, category) => {
     setError(null);
@@ -896,44 +934,61 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
     }
 
     const newCoins = Math.max(0, currentCoins - price);
+    
+    // Optimistic update - update UI immediately
     setCoins(newCoins);
 
-    // Save new points to player data
-    if (spermId && typeof window !== 'undefined') {
-      try {
-        await fetch('/api/player', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: spermId,
-            data: { spermPoints: newCoins },
-          }),
-        });
-      } catch (err) {
-        console.error('Failed to save sperm points:', err);
-      }
-    }
-
     if (category === 'background') {
-      setOwnedBackgrounds((prev) => {
-        if (prev.includes(id)) {
-          return prev;
-        }
-        return [...prev, id];
-      });
+      const newOwnedBackgrounds = ownedBackgrounds.includes(id) ? ownedBackgrounds : [...ownedBackgrounds, id];
+      setOwnedBackgrounds(newOwnedBackgrounds);
       setEquippedBackground(id);
       setPreviewBackground(id);
+      
+      // Save to player data
+      if (spermId) {
+        try {
+          await fetch('/api/player', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: spermId,
+              data: {
+                spermPoints: newCoins,
+                ownedBackgrounds: newOwnedBackgrounds,
+                equippedBackground: id,
+              },
+            }),
+          });
+        } catch (err) {
+          console.error('Failed to save purchase:', err);
+        }
+      }
       scheduleFeedbackClear(`Background "${name}" unlocked!`);
     } else {
-      setOwnedClothing((prev) => {
-        if (prev.includes(id)) {
-          return prev;
-        }
-        return [...prev, id];
-      });
-
+      const newOwnedClothing = ownedClothing.includes(id) ? ownedClothing : [...ownedClothing, id];
+      setOwnedClothing(newOwnedClothing);
       setEquippedClothing(id);
       setPreviewClothing(id);
+      
+      // Save to player data
+      if (spermId) {
+        try {
+          await fetch('/api/player', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: spermId,
+              data: {
+                spermPoints: newCoins,
+                ownedClothing: newOwnedClothing,
+                equippedClothing: id,
+              },
+            }),
+          });
+        } catch (err) {
+          console.error('Failed to save purchase:', err);
+        }
+      }
       scheduleFeedbackClear(`Fresh drip! ${name} unlocked.`);
     }
     setPurchaseCandidate(null);
@@ -944,6 +999,8 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
     purchaseCandidate,
     scheduleFeedbackClear,
     spermId,
+    ownedClothing,
+    ownedBackgrounds,
   ]);
 
   const homeDisplayOutfit = equippedOutfitItem;
@@ -983,18 +1040,26 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
         <div className="absolute inset-0 -z-10 bg-white" />
       )}
       <header className="relative z-10 flex flex-col items-center px-6 pt-6 pb-4">
-        {/* Streak Indicator Button */}
-        {sperm?.currentStreak > 0 && (
+        {/* Streak Indicator Button - Always show */}
+        {sperm && (
           <button
             type="button"
             onClick={() => setShowStreakModal(true)}
             className="absolute right-6 top-6 group"
           >
-            <div className="flex items-center gap-2 rounded-full border-2 border-orange-300 bg-gradient-to-r from-orange-100 to-amber-100 px-4 py-2 shadow-lg transition hover:scale-105 hover:shadow-xl">
-              <span className="text-2xl animate-pulse">🔥</span>
+            <div className={`flex items-center gap-2 rounded-full border-2 px-4 py-2 shadow-lg transition hover:scale-105 hover:shadow-xl ${
+              (sperm.currentStreak || 0) > 0
+                ? 'border-orange-300 bg-gradient-to-r from-orange-100 to-amber-100'
+                : 'border-slate-300 bg-gradient-to-r from-slate-100 to-slate-200'
+            }`}>
+              <span className="text-2xl">{(sperm.currentStreak || 0) > 0 ? '🔥' : '📅'}</span>
               <div className="text-left">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-orange-600">Streak</p>
-                <p className="text-xl font-black text-orange-700">{sperm.currentStreak}</p>
+                <p className={`text-[10px] font-bold uppercase tracking-wider ${
+                  (sperm.currentStreak || 0) > 0 ? 'text-orange-600' : 'text-slate-500'
+                }`}>Streak</p>
+                <p className={`text-xl font-black ${
+                  (sperm.currentStreak || 0) > 0 ? 'text-orange-700' : 'text-slate-600'
+                }`}>{sperm.currentStreak || 0}</p>
               </div>
             </div>
             <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition whitespace-nowrap rounded-full bg-slate-800 px-3 py-1 text-xs font-semibold text-white shadow-lg">
@@ -1197,26 +1262,33 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
               {sperm?.name ?? 'Buddy'}
             </div>
             
-            {/* Streak Display */}
-            {sperm?.currentStreak > 0 && (
-              <div className="mt-3 flex items-center justify-center gap-3">
-                <div className="rounded-full border-2 border-orange-200 bg-gradient-to-r from-orange-50 to-amber-50 px-4 py-2 shadow-md">
-                  <div className="flex items-center gap-2">
-                    <span className="text-2xl">🔥</span>
-                    <div className="text-left">
-                      <p className="text-xs font-semibold uppercase tracking-wider text-orange-600">Streak</p>
-                      <p className="text-xl font-black text-orange-700">{sperm.currentStreak} Days</p>
-                    </div>
+            {/* Streak Display - Smaller and more subtle */}
+            {sperm && (
+              <div className="mt-2">
+                <div className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 shadow-sm ${
+                  (sperm.currentStreak || 0) > 0 
+                    ? 'border-orange-200 bg-orange-50'
+                    : 'border-slate-200 bg-slate-50'
+                }`}>
+                  <span className="text-sm">{(sperm.currentStreak || 0) > 0 ? '🔥' : '📅'}</span>
+                  <div className="flex items-baseline gap-1">
+                    <p className={`text-base font-black ${
+                      (sperm.currentStreak || 0) > 0 ? 'text-orange-600' : 'text-slate-500'
+                    }`}>{sperm.currentStreak || 0}</p>
+                    <p className={`text-[10px] font-semibold uppercase ${
+                      (sperm.currentStreak || 0) > 0 ? 'text-orange-500' : 'text-slate-400'
+                    }`}>day{(sperm.currentStreak || 0) !== 1 ? 's' : ''}</p>
                   </div>
+                  {(sperm.longestStreak || 0) > (sperm.currentStreak || 0) && (
+                    <>
+                      <div className="h-3 w-px bg-slate-300" />
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-xs">👑</span>
+                        <p className="text-sm font-bold text-purple-600">{sperm.longestStreak}</p>
+                      </div>
+                    </>
+                  )}
                 </div>
-                {sperm.longestStreak > sperm.currentStreak && (
-                  <div className="rounded-full border-2 border-purple-200 bg-gradient-to-r from-purple-50 to-pink-50 px-4 py-2 shadow-md">
-                    <div className="text-center">
-                      <p className="text-xs font-semibold uppercase tracking-wider text-purple-600">Best</p>
-                      <p className="text-lg font-black text-purple-700">{sperm.longestStreak}</p>
-                    </div>
-                  </div>
-                )}
               </div>
             )}
             
@@ -1255,17 +1327,14 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
 
     const isBackgroundTab = shopTab === 'backgrounds';
     
-    // Calculate background preview
+    // Calculate background preview - use previewBackground if it exists
     const selectedBackgroundId = previewBackground ?? equippedBackground ?? null;
-    const selectedBackground =
-      SHOP_BACKGROUND_ITEMS.find((item) => item.id === selectedBackgroundId) ?? null;
-    const overlayBackgroundItem = selectedBackground;
-    const previewBackgroundImage = overlayBackgroundItem?.imagePath ?? DEFAULT_PREVIEW_BACKGROUND;
-    const backgroundAlt = overlayBackgroundItem
-      ? `${overlayBackgroundItem.name} background`
-      : 'Default background';
+    const overlayBackgroundItem = selectedBackgroundId 
+      ? SHOP_BACKGROUND_ITEMS.find((item) => item.id === selectedBackgroundId) 
+      : null;
 
     const sidebarItems = isBackgroundTab ? SHOP_BACKGROUND_ITEMS : SHOP_CLOTHING_ITEMS;
+    const selectedBackground = overlayBackgroundItem;
 
     const selectedItem = isBackgroundTab ? selectedBackground : previewOutfitItem ?? null;
     const selectedOwned = selectedItem
@@ -1363,7 +1432,8 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
                   : previewClothing === item.id || (!previewClothing && selectedOutfitId === item.id);
                 const affordable = coinsDisplay >= item.price;
 
-                return (
+                return isBackgroundTab ? (
+                  // Background cards - vertical layout with large preview
                   <div
                     key={item.id}
                     className={`flex flex-col gap-3 rounded-2xl border p-3 transition ${
@@ -1372,45 +1442,30 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
                   >
                     <button
                       type="button"
-                      onClick={() =>
-                        (isBackgroundTab ? handleSelectBackground : handleSelectOutfit)(item)
-                      }
+                      onClick={() => handleSelectBackground(item)}
                       className="flex items-center gap-3 text-left"
                     >
-                      {isBackgroundTab ? (
-                        <div className="relative h-20 w-full overflow-hidden rounded-xl border border-slate-200 shadow-sm">
-                          <Image
-                            src={item.imagePath}
-                            alt={`${item.name} background thumbnail`}
-                            fill
-                            className="object-cover"
-                            sizes="280px"
-                            priority={isSelected}
-                            unoptimized
-                          />
-                          <div className="absolute inset-0 bg-black/5" />
-                          {isEquipped && (
-                            <div className="absolute top-2 right-2 rounded-full bg-indigo-500 px-2 py-1 text-[10px] font-bold text-white shadow-lg">
-                              ✓ Applied
-                            </div>
-                          )}
-                        </div>
-                      ) : null}
+                      <div className="relative h-20 w-full overflow-hidden rounded-xl border border-slate-200 shadow-sm">
+                        <Image
+                          src={item.imagePath}
+                          alt={`${item.name} background thumbnail`}
+                          fill
+                          className="object-cover"
+                          sizes="280px"
+                          priority={isSelected}
+                          unoptimized
+                        />
+                        <div className="absolute inset-0 bg-black/5" />
+                        {isEquipped && (
+                          <div className="absolute top-2 right-2 rounded-full bg-indigo-500 px-2 py-1 text-[10px] font-bold text-white shadow-lg">
+                            ✓ Applied
+                          </div>
+                        )}
+                      </div>
                     </button>
                     
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-semibold text-slate-700">{item.name}</span>
-                      {isOwned && !isBackgroundTab && (
-                        <span
-                          className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-xs ${
-                            isEquipped
-                              ? 'bg-indigo-500 text-white'
-                              : 'bg-slate-200 text-slate-600'
-                          }`}
-                        >
-                          {isEquipped ? '✓' : '•'}
-                        </span>
-                      )}
                     </div>
                     
                     <div className="flex gap-2">
@@ -1419,7 +1474,7 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
                           type="button"
                           onClick={(event) => {
                             event.stopPropagation();
-                            (isBackgroundTab ? handleEquipBackground : handleEquipOwned)(item);
+                            handleEquipBackground(item);
                           }}
                           className={`flex-1 rounded-full px-4 py-2 text-xs font-bold transition ${
                             isEquipped
@@ -1428,20 +1483,14 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
                           }`}
                           disabled={isEquipped}
                         >
-                          {isBackgroundTab
-                            ? isEquipped
-                              ? '✓ Applied'
-                              : 'Apply'
-                            : isEquipped
-                            ? '✓ Equipped'
-                            : 'Equip'}
+                          {isEquipped ? '✓ Applied' : 'Apply'}
                         </button>
                       ) : (
                         <button
                           type="button"
                           onClick={(event) => {
                             event.stopPropagation();
-                            handleOpenPurchaseModal(item, isBackgroundTab ? 'background' : 'outfit');
+                            handleOpenPurchaseModal(item, 'background');
                           }}
                           className={`flex flex-1 items-center justify-center gap-2 rounded-full px-4 py-2 text-xs font-bold transition ${
                             affordable
@@ -1455,6 +1504,66 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
                         </button>
                       )}
                     </div>
+                  </div>
+                ) : (
+                  // Outfit cards - original horizontal layout
+                  <div
+                    key={item.id}
+                    className={`flex items-center gap-3 rounded-2xl border px-3 py-3 transition ${
+                      isSelected ? 'border-indigo-200 bg-indigo-50' : 'border-slate-200 bg-white hover:border-slate-300'
+                    }`}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => handleSelectOutfit(item)}
+                      className="flex flex-1 items-center gap-3 text-left"
+                    >
+                      <span className="text-sm font-semibold text-slate-700">{item.name}</span>
+                      {isOwned ? (
+                        <span
+                          className={`ml-auto inline-flex h-6 w-6 items-center justify-center rounded-full text-xs ${
+                            isEquipped
+                              ? 'bg-indigo-500 text-white'
+                              : 'bg-slate-200 text-slate-600'
+                          }`}
+                          aria-label={isEquipped ? 'Equipped' : 'Owned'}
+                        >
+                          {isEquipped ? '✓' : '•'}
+                        </span>
+                      ) : null}
+                    </button>
+                    {isOwned ? (
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          handleEquipOwned(item);
+                        }}
+                        className={`inline-flex min-w-[104px] items-center justify-center gap-2 rounded-full px-3 py-1 text-xs font-semibold transition ${
+                          isEquipped
+                            ? 'bg-indigo-500 text-white'
+                            : 'border border-indigo-200 text-indigo-600 hover:bg-indigo-50'
+                        }`}
+                      >
+                        <span>{isEquipped ? 'Equipped' : 'Equip'}</span>
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          handleOpenPurchaseModal(item, 'outfit');
+                        }}
+                        className={`flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold transition ${
+                          affordable
+                            ? 'bg-emerald-500 text-white hover:bg-emerald-600'
+                            : 'bg-slate-100 text-slate-400 hover:bg-slate-200'
+                        }`}
+                      >
+                        {renderCoinValue(item.price, 'h-4 w-4')}
+                        <span>Buy</span>
+                      </button>
+                    )}
                   </div>
                 );
               })}
@@ -1513,7 +1622,8 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
         </div>
 
           <div className="relative mx-auto flex h-[520px] -mt-5 my-auto w-full max-w-[520px] items-center justify-center">
-            {isBackgroundTab && overlayBackgroundItem ? (
+            {/* Background Layer - show selected background or equipped background */}
+            {overlayBackgroundItem?.imagePath ? (
               <div className="absolute inset-0 -z-10 overflow-hidden rounded-[40px] border border-slate-200/70 shadow-[0_40px_80px_rgba(63,61,86,0.18)]">
                 {!previewBackgroundLoaded ? (
                   <div className="absolute inset-0 animate-pulse bg-slate-200/60" />
@@ -1530,40 +1640,50 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
                 />
                 <div className="absolute inset-0 bg-linear-to-t from-black/40 via-transparent to-white/25 backdrop-blur-[1px]" />
               </div>
-            ) : previewBackgroundImage ? (
-              <div className="absolute inset-0 -z-10 overflow-hidden rounded-[40px] border border-slate-200/70 shadow-[0_40px_80px_rgba(63,61,86,0.18)]">
-                {!previewBackgroundLoaded ? (
-                  <div className="absolute inset-0 animate-pulse bg-slate-200/60" />
-                ) : null}
+            ) : (
+              <div className="absolute inset-0 -z-10 rounded-[40px] border border-slate-200/70 bg-white shadow-[0_40px_80px_rgba(63,61,86,0.18)]" />
+            )}
+            {/* Show background preview when in backgrounds tab */}
+            {isBackgroundTab && overlayBackgroundItem ? (
+              <>
                 <Image
-                  key={overlayBackgroundItem?.id ?? 'default-background'}
-                  src={previewBackgroundImage}
-                  alt={backgroundAlt}
+                  key={overlayBackgroundItem.id}
+                  src={overlayBackgroundItem.imagePath}
+                  alt={overlayBackgroundItem.name}
                   fill
-                  className="object-cover"
+                  className="object-cover rounded-[40px]"
                   priority
                   unoptimized
                   onLoadingComplete={() => setPreviewBackgroundLoaded(true)}
                 />
-                <div className="absolute inset-0 bg-linear-to-t from-black/40 via-transparent to-white/25 backdrop-blur-[1px]" />
-              </div>
+                {/* Show sperm character on top of background */}
+                <div className="relative z-10 flex h-full w-full items-center justify-center">
+                  <Image
+                    src={activeBuddyState.asset}
+                    alt={activeBuddyState.alt}
+                    width={380}
+                    height={380}
+                    priority
+                    className="animate-float object-contain drop-shadow-[0_25px_70px_rgba(0,0,0,0.5)]"
+                  />
+                </div>
+              </>
             ) : (
-              <div className="absolute inset-0 -z-10 rounded-[40px] border border-slate-200/70 bg-white shadow-[0_40px_80px_rgba(63,61,86,0.18)]" />
+              <div className="relative z-10 flex h-full w-full items-center justify-center px-6 py-8">
+                <Image
+                  src={overlayOutfit ? overlayOutfit.imagePath : activeBuddyState.asset}
+                  alt={
+                    overlayOutfit
+                      ? `${overlayOutfit.name} preview`
+                      : activeBuddyState.alt
+                  }
+                  width={520}
+                  height={520}
+                  priority
+                  className="h-full w-full animate-float object-contain drop-shadow-[0_25px_70px_rgba(63,61,86,0.25)]"
+                />
+              </div>
             )}
-            <div className="relative z-10 flex h-full w-full items-center justify-center px-6 py-8">
-              <Image
-                src={overlayOutfit ? overlayOutfit.imagePath : activeBuddyState.asset}
-                alt={
-                  overlayOutfit
-                    ? `${overlayOutfit.name} preview`
-                    : activeBuddyState.alt
-                }
-                width={520}
-                height={520}
-                priority
-                className="h-full w-full animate-float object-contain drop-shadow-[0_25px_70px_rgba(63,61,86,0.25)]"
-              />
-            </div>
           </div>
         </section>
       </main>

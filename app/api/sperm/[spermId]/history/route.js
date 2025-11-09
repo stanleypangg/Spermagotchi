@@ -16,7 +16,7 @@ function readStore() {
 // Bridge old history API to new player store
 export async function GET(request, { params }) {
   try {
-    const { spermId } = await params;
+    const { spermId } = params;
     const store = readStore();
     const playerData = store[spermId];
     

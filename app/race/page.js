@@ -50,7 +50,7 @@ export default function RacePage() {
   }, [loading, playerData, phase]);
 
   const clearFinishTimer = () => {
-    finishTimerRef.current = null;
+      finishTimerRef.current = null;
   };
 
   const handleRaceStart = useCallback(async () => {
@@ -76,7 +76,7 @@ export default function RacePage() {
     setRacers(allRacers);
 
     // Initialize race engine
-    await initRapier();
+      await initRapier();
     const engine = await createRaceEngine(
       allRacers,
       track,
@@ -84,16 +84,16 @@ export default function RacePage() {
       MOCK_BALANCE
     );
 
-    engineRef.current = engine;
-    setEngineBundle({
-      engine,
-      geometry: engine.track,
-      trackMeta: trackBounds(engine.track),
-    });
+      engineRef.current = engine;
+      setEngineBundle({
+        engine,
+        geometry: engine.track,
+        trackMeta: trackBounds(engine.track),
+      });
 
-    const initial = engine.step(0);
-    frameRef.current = initial;
-    setFrame(initial);
+      const initial = engine.step(0);
+      frameRef.current = initial;
+      setFrame(initial);
     setPhase('racing');
     
     // Start countdown before racing
@@ -107,9 +107,9 @@ export default function RacePage() {
         setCountdown(null);
         clearInterval(countdownInterval);
         // Start the race after countdown
-        setIsRunning(true);
-        isRunningRef.current = true;
-      }
+      setIsRunning(true);
+      isRunningRef.current = true;
+    }
     }, 1000);
   }, [playerData]);
 
@@ -147,19 +147,19 @@ export default function RacePage() {
       if (nextFrame) {
         frameRef.current = nextFrame;
         setFrame(nextFrame);
-
+        
         // Update finish order continuously as racers finish
         if (nextFrame.isFinished) {
           const ordered = [...nextFrame.lanes]
             .filter((lane) => lane.finished)
             .sort((a, b) => a.place - b.place);
           setFinishOrder(ordered);
-
+          
           // Stop race and show results immediately
           if (!finishTimerRef.current) {
             finishTimerRef.current = true; // Mark as finished to prevent re-triggering
-            setIsRunning(false);
-            isRunningRef.current = false;
+              setIsRunning(false);
+              isRunningRef.current = false;
             handleRaceFinish(ordered);
           }
         }
@@ -290,15 +290,15 @@ export default function RacePage() {
   }
 
   if ((phase === 'racing' || phase === 'finished') && engineBundle && frame) {
-    return (
+  return (
       <main className="flex h-screen w-screen flex-col overflow-hidden bg-white p-4">
         <div className="relative flex-1 overflow-hidden rounded-3xl border-4 border-slate-200 shadow-2xl">
-          <RaceStage
-            geometry={engineBundle.geometry}
-            frame={frame}
-            cameraSpan={cameraSpan}
-            isFinished={frame.isFinished && finishOrder.length > 0}
-            finishOrder={finishOrder}
+        <RaceStage
+          geometry={engineBundle.geometry}
+          frame={frame}
+          cameraSpan={cameraSpan}
+          isFinished={frame.isFinished && finishOrder.length > 0}
+          finishOrder={finishOrder}
             eloGained={eloGained}
             pointsEarned={pointsEarned}
             onReturnHome={handleReturnHome}
@@ -316,51 +316,51 @@ export default function RacePage() {
                   Get Ready!
                 </p>
               </div>
-            </div>
-          )}
-
+          </div>
+        )}
+        
           {/* Race Controls - Hide when finished */}
           {!finishOrder.length && (
             <div className="pointer-events-auto absolute bottom-4 left-1/2 z-40 flex -translate-x-1/2 flex-wrap items-center justify-center gap-2 rounded-full border-2 border-slate-200 bg-white/90 px-4 py-2 shadow-lg backdrop-blur-md">
-              <button
-                type="button"
+          <button
+            type="button"
                 onClick={() => setIsRunning((prev) => !prev)}
-                className="rounded-full bg-gradient-to-r from-purple-500 to-pink-500 px-4 py-1.5 text-xs font-bold text-white shadow-md transition hover:from-purple-600 hover:to-pink-600"
-              >
+            className="rounded-full bg-gradient-to-r from-purple-500 to-pink-500 px-4 py-1.5 text-xs font-bold text-white shadow-md transition hover:from-purple-600 hover:to-pink-600"
+          >
                 {isRunning ? 'Pause' : 'Resume'}
-              </button>
-              <button
-                type="button"
+          </button>
+          <button
+            type="button"
                 onClick={() => setSpeedMultiplier((prev) => (prev === 1 ? 2 : 1))}
-                className={`rounded-full px-4 py-1.5 text-xs font-bold text-white shadow-md transition ${
-                  speedMultiplier === 2
-                    ? 'bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600'
-                    : 'bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600'
-                }`}
-              >
-                {speedMultiplier}x
-              </button>
-              <a
-                href="/"
-                className="rounded-full bg-gradient-to-r from-red-500 to-rose-500 px-4 py-1.5 text-xs font-bold text-white shadow-md transition hover:from-red-600 hover:to-rose-600"
-              >
-                Forfeit
-              </a>
-              <label className="flex items-center gap-2 text-xs font-semibold text-slate-600">
-                Zoom
-                <input
-                  type="range"
-                  min={300}
-                  max={800}
-                  step={20}
-                  value={cameraSpan}
-                  onChange={(event) => setCameraSpan(Number(event.target.value))}
-                  className="w-20"
-                />
-              </label>
-            </div>
-          )}
+            className={`rounded-full px-4 py-1.5 text-xs font-bold text-white shadow-md transition ${
+              speedMultiplier === 2
+                ? 'bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600'
+                : 'bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600'
+            }`}
+          >
+            {speedMultiplier}x
+          </button>
+            <a
+              href="/"
+              className="rounded-full bg-gradient-to-r from-red-500 to-rose-500 px-4 py-1.5 text-xs font-bold text-white shadow-md transition hover:from-red-600 hover:to-rose-600"
+            >
+              Forfeit
+            </a>
+          <label className="flex items-center gap-2 text-xs font-semibold text-slate-600">
+            Zoom
+            <input
+              type="range"
+              min={300}
+              max={800}
+              step={20}
+              value={cameraSpan}
+              onChange={(event) => setCameraSpan(Number(event.target.value))}
+              className="w-20"
+            />
+          </label>
         </div>
+          )}
+      </div>
       </main>
     );
   }

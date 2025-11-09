@@ -27,11 +27,15 @@ function getDefaultPlayerData(name) {
       signals: 50,
     },
     elo: 1000,
-    spermPoints: 0,
+    spermPoints: 250, // Starting coins
     raceHistory: [],
     currentStreak: 0,
     longestStreak: 0,
     lastCheckInDate: null,
+    ownedClothing: [],
+    equippedClothing: null,
+    ownedBackgrounds: [],
+    equippedBackground: null,
     createdAt: new Date().toISOString(),
   };
 }
