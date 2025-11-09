@@ -173,53 +173,68 @@ export default function RaceMatchmaking({
 
   if (phase === 'matching') {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-6">
-        <div className="w-full max-w-3xl space-y-6 text-center">
-          <div className="animate-[fadeIn_0.3s_ease-out] rounded-3xl border-2 border-slate-200 bg-white p-12 shadow-2xl">
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-purple-100 via-pink-100 to-slate-100 p-6">
+        <div className="w-full max-w-4xl space-y-8 text-center">
+          <div className="animate-[fadeIn_0.3s_ease-out] rounded-3xl border-2 border-purple-300 bg-white p-12 shadow-2xl">
+            {/* Loading Animation */}
             <div className="mb-8">
-              <div className="mx-auto mb-4 h-20 w-20 animate-spin rounded-full border-4 border-slate-200 border-t-purple-500" />
-              <h2 className="animate-pulse text-4xl font-bold text-slate-800">Finding Opponents...</h2>
-              <p className="mt-3 text-lg text-slate-500">Matching you with racers at your skill level</p>
+              <div className="relative mx-auto mb-6 h-24 w-24">
+                <div className="absolute inset-0 animate-spin rounded-full border-4 border-purple-200 border-t-purple-500" />
+                <div className="absolute inset-2 animate-spin rounded-full border-4 border-pink-200 border-t-pink-500" style={{ animationDuration: '1.5s' }} />
+                <div className="absolute inset-4 animate-ping rounded-full bg-purple-500/20" />
+              </div>
+              <h2 className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 animate-pulse" style={{ fontFamily: 'Impact, fantasy' }}>
+                FINDING OPPONENTS
+              </h2>
+              <p className="mt-3 text-xl font-semibold text-slate-600">Scanning for worthy challengers...</p>
             </div>
 
-            {/* Animated Track Carousel */}
-            <div className="overflow-hidden rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100 p-8 shadow-inner">
-              <p className="mb-4 text-sm font-bold uppercase tracking-wider text-slate-400">
-                🗺️ Selecting Track
+            {/* Animated Track Carousel - Enhanced */}
+            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 p-8 shadow-inner">
+              <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAwIDEwIEwgNDAgMTAgTSAxMCAwIEwgMTAgNDAgTSAwIDIwIEwgNDAgMjAgTSAyMCAwIEwgMjAgNDAgTSAwIDMwIEwgNDAgMzAgTSAzMCAwIEwgMzAgNDAiIGZpbGw9Im5vbmUiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS1vcGFjaXR5PSIwLjA1IiBzdHJva2Utd2lkdGg9IjEiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')] opacity-50" />
+              <p className="relative z-10 mb-6 text-sm font-black uppercase tracking-widest text-yellow-400">
+                🎰 Track Roulette
               </p>
-              <div className="flex items-center justify-center gap-3 overflow-x-auto pb-2">
+              <div className="relative z-10 flex items-center justify-center gap-4 overflow-x-auto pb-2">
                 {TRACK_PRESETS.map((track, idx) => {
                   const isSelected = idx === trackScrollIndex % TRACK_PRESETS.length;
                   return (
                     <div
                       key={track.id}
-                      className={`relative transform rounded-xl px-6 py-3 text-base font-bold transition-all duration-200 ${
+                      className={`relative transform rounded-2xl px-8 py-4 text-lg font-black transition-all duration-150 ${
                         isSelected
-                          ? 'scale-125 bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500 text-white'
-                          : 'scale-90 bg-white text-slate-400 opacity-60'
+                          ? 'scale-125 bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-500 text-white'
+                          : 'scale-85 bg-slate-700 text-slate-400 opacity-40'
                       }`}
                       style={{
                         boxShadow: isSelected 
-                          ? '0 0 30px rgba(168, 85, 247, 0.6), 0 0 60px rgba(236, 72, 153, 0.4), 0 10px 40px rgba(0, 0, 0, 0.3)'
-                          : '0 4px 6px rgba(0, 0, 0, 0.1)',
+                          ? '0 0 40px rgba(251, 191, 36, 0.8), 0 0 80px rgba(249, 115, 22, 0.5), 0 0 120px rgba(236, 72, 153, 0.3), 0 15px 50px rgba(0, 0, 0, 0.4)'
+                          : '0 4px 8px rgba(0, 0, 0, 0.2)',
                       }}
                     >
                       {isSelected && (
                         <>
-                          {/* Animated glowing border */}
-                          <div className="absolute inset-0 rounded-xl border-2 border-white/50 animate-pulse" />
-                          {/* Shimmer effect */}
+                          {/* Triple animated border layers */}
+                          <div className="absolute inset-0 rounded-2xl border-3 border-yellow-300 animate-pulse" />
+                          <div className="absolute -inset-1 rounded-2xl border-2 border-orange-400/50 animate-ping" style={{ animationDuration: '1s' }} />
+                          <div className="absolute -inset-2 rounded-2xl border border-pink-500/30 animate-ping" style={{ animationDuration: '1.5s' }} />
+                          
+                          {/* Shimmer sweep */}
                           <div 
-                            className="absolute inset-0 rounded-xl opacity-50"
+                            className="absolute inset-0 rounded-2xl opacity-60"
                             style={{
-                              background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)',
+                              background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent)',
                               backgroundSize: '200% 100%',
-                              animation: 'shimmer 1.5s infinite',
+                              animation: 'shimmer 1s infinite',
                             }}
                           />
+                          
+                          {/* Sparkles */}
+                          <div className="absolute -top-1 -right-1 text-xl animate-pulse">✨</div>
+                          <div className="absolute -top-1 -left-1 text-xl animate-pulse" style={{ animationDelay: '0.5s' }}>✨</div>
                         </>
                       )}
-                      <span className="relative z-10">{track.name}</span>
+                      <span className="relative z-10 drop-shadow-lg">{track.name}</span>
                     </div>
                   );
                 })}
@@ -235,51 +250,67 @@ export default function RaceMatchmaking({
     const selectedTrack = selectedTrackData || TRACK_PRESETS[trackScrollIndex % TRACK_PRESETS.length];
     
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-emerald-50 via-teal-50 to-slate-50 p-6">
-        <div className="w-full max-w-4xl space-y-8">
-          {/* Match Found Header with Animation */}
-          <div className="animate-[bounceIn_0.6s_ease-out] rounded-3xl border-4 border-emerald-300 bg-gradient-to-r from-emerald-100 via-teal-100 to-emerald-100 p-10 text-center shadow-2xl">
-            <div className="mb-3 text-6xl animate-bounce">🎉</div>
-            <h2 className="text-5xl font-black text-emerald-700 drop-shadow-sm">
-              MATCH FOUND!
-            </h2>
-            <p className="mt-3 text-xl font-semibold text-emerald-600">Preparing race...</p>
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-emerald-100 via-teal-100 to-cyan-100 p-6">
+        <div className="w-full max-w-4xl space-y-6">
+          {/* Match Found Header - More Exciting */}
+          <div className="relative animate-[bounceIn_0.6s_ease-out] overflow-hidden rounded-3xl border-4 border-emerald-400 bg-gradient-to-r from-emerald-200 via-teal-200 to-emerald-200 p-10 text-center shadow-2xl">
+            <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAwIDEwIEwgNDAgMTAgTSAxMCAwIEwgMTAgNDAgTSAwIDIwIEwgNDAgMjAgTSAyMCAwIEwgMjAgNDAgTSAwIDMwIEwgNDAgMzAgTSAzMCAwIEwgMzAgNDAiIGZpbGw9Im5vbmUiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS1vcGFjaXR5PSIwLjMiIHN0cm9rZS13aWR0aD0iMSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNncmlkKSIvPjwvc3ZnPg==')] opacity-50" />
+            <div className="relative z-10">
+              <div className="mb-4 flex items-center justify-center gap-3">
+                <span className="text-6xl animate-bounce">🎉</span>
+                <span className="text-6xl animate-bounce" style={{ animationDelay: '0.1s' }}>🎊</span>
+                <span className="text-6xl animate-bounce" style={{ animationDelay: '0.2s' }}>🎉</span>
+              </div>
+              <h2 className="text-6xl font-black text-emerald-800 drop-shadow-lg" style={{ fontFamily: 'Impact, fantasy' }}>
+                MATCH FOUND!
+              </h2>
+              <p className="mt-3 text-2xl font-bold text-emerald-700">Get ready to race!</p>
+            </div>
           </div>
 
-          {/* Selected Track Display */}
-          <div className="animate-[slideUp_0.5s_ease-out] rounded-3xl border-2 border-purple-200 bg-white p-10 text-center shadow-2xl">
-            <p className="mb-4 text-sm font-bold uppercase tracking-wider text-slate-400">
-              🗺️ Race Track
+          {/* Selected Track Display - More Exciting */}
+          <div className="animate-[slideUp_0.5s_ease-out] rounded-3xl border-2 border-purple-300 bg-white p-8 text-center shadow-2xl">
+            <p className="mb-4 text-sm font-black uppercase tracking-widest text-slate-400">
+              🏁 Selected Track
             </p>
-            <div className="mb-6 flex items-center justify-center">
-              <div className="transform animate-pulse rounded-2xl bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500 px-12 py-6 shadow-2xl shadow-purple-500/50">
-                <h3 className="text-4xl font-black text-white drop-shadow-lg">
+            <div className="relative mb-6 flex items-center justify-center">
+              {/* Glow rings */}
+              <div className="absolute h-32 w-80 animate-pulse rounded-full bg-gradient-to-r from-purple-500/20 via-pink-500/20 to-purple-500/20 blur-xl" />
+              <div className="absolute h-24 w-72 animate-pulse rounded-full bg-gradient-to-r from-purple-500/30 via-pink-500/30 to-purple-500/30 blur-lg" style={{ animationDelay: '0.5s' }} />
+              
+              <div className="relative transform rounded-2xl bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500 px-16 py-8 shadow-2xl shadow-purple-500/50">
+                <h3 className="text-5xl font-black text-white drop-shadow-2xl" style={{ fontFamily: 'Impact, fantasy' }}>
                   {selectedTrack.name}
                 </h3>
               </div>
             </div>
-            <p className="text-lg font-semibold text-slate-600">
-              Track Width: {selectedTrack.width}m
-            </p>
-            <div className="mt-4 flex items-center justify-center gap-8 text-sm">
+            
+            <div className="mt-6 flex items-center justify-center gap-6 text-sm">
               {selectedTrack.zones.map((zone, idx) => (
                 <div key={idx} className="text-center">
-                  <div className={`mx-auto mb-1 h-3 w-12 rounded-full ${
-                    zone.kind === 'flow' ? 'bg-blue-400' :
-                    zone.kind === 'gradient' ? 'bg-pink-400' :
-                    'bg-yellow-400'
+                  <div className={`mx-auto mb-2 h-4 w-16 rounded-full shadow-lg ${
+                    zone.kind === 'flow' ? 'bg-gradient-to-r from-blue-400 to-cyan-400' :
+                    zone.kind === 'gradient' ? 'bg-gradient-to-r from-pink-400 to-rose-400' :
+                    'bg-gradient-to-r from-yellow-400 to-orange-400'
                   }`} />
-                  <p className="font-semibold capitalize text-slate-600">{zone.kind}</p>
+                  <p className="text-xs font-bold capitalize text-slate-700">{zone.kind}</p>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Teleporting Message */}
-          <div className="animate-[fadeIn_1s_ease-out] text-center">
-            <p className="text-2xl font-bold text-slate-700">
-              ✨ Teleporting to race track...
-            </p>
+          {/* Teleporting Message - More Dynamic */}
+          <div className="animate-[fadeIn_0.8s_ease-out] text-center">
+            <div className="inline-flex items-center gap-3 rounded-full border-2 border-purple-300 bg-white px-8 py-4 shadow-xl">
+              <div className="flex gap-1">
+                <span className="text-2xl animate-bounce">✨</span>
+                <span className="text-2xl animate-bounce" style={{ animationDelay: '0.2s' }}>✨</span>
+                <span className="text-2xl animate-bounce" style={{ animationDelay: '0.4s' }}>✨</span>
+              </div>
+              <p className="text-xl font-black text-slate-800">
+                Teleporting to track...
+              </p>
+            </div>
           </div>
         </div>
       </div>
