@@ -94,7 +94,9 @@ export default function RaceStage({
   );
 
   const leader =
-    (playerLane && !playerLane.finished ? playerLane : unfinishedLeaderboard[0]) ??
+    (playerLane && (!playerLane.finished || !playerLane.parked)
+      ? playerLane
+      : unfinishedLeaderboard[0]) ??
     frame?.lanes?.reduce(
       (best, lane) => (lane.progress > (best?.progress ?? -Infinity) ? lane : best),
       frame?.lanes?.[0],
@@ -105,6 +107,7 @@ export default function RaceStage({
     y: leader?.y ?? 0,
     t: frame?.t ?? 0,
     initialized: false,
+    leaderId: leader?.id ?? null,
   });
   const [cameraCenter, setCameraCenter] = useState({
     x: leader?.x ?? 0,
@@ -123,8 +126,9 @@ export default function RaceStage({
     const targetY = leader.y + tangent.y * lookahead;
     const dt = Math.max(1 / 120, frame.t - (prev.t ?? frame.t));
     const smoothing = 1 - Math.exp(-dt * 3.5);
-    const baseX = prev.initialized ? prev.x : targetX;
-    const baseY = prev.initialized ? prev.y : targetY;
+    const sameLeader = prev.leaderId === leader.id;
+    const baseX = sameLeader && prev.initialized ? prev.x : targetX;
+    const baseY = sameLeader && prev.initialized ? prev.y : targetY;
     const nextX = baseX + (targetX - baseX) * smoothing;
     const nextY = baseY + (targetY - baseY) * smoothing;
     cameraRef.current = {
@@ -132,6 +136,7 @@ export default function RaceStage({
       y: nextY,
       t: frame.t,
       initialized: true,
+      leaderId: leader.id,
     };
     setCameraCenter({ x: nextX, y: nextY });
   }, [frame, leader]);
