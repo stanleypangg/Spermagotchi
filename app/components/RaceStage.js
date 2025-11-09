@@ -498,9 +498,9 @@ export default function RaceStage({
             <circle
               cx={0}
               cy={0}
-              r={SPRITE_SIZE.width / 2 + 4}
+              r={SPRITE_SIZE.width / 2 + 6}
               fill={lane.tint ?? '#38bdf8'}
-              opacity={0.6}
+              opacity={0.75}
               filter="url(#player-glow)"
             />
             <circle
