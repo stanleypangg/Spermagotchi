@@ -53,11 +53,20 @@ export default function RacePage() {
       finishTimerRef.current = null;
   };
 
+  // Pre-select track when entering matchmaking phase
+  useEffect(() => {
+    if (phase === 'matchmaking' && !selectedTrack) {
+      // Select random track for matchmaking
+      const track = TRACK_PRESETS[Math.floor(Math.random() * TRACK_PRESETS.length)];
+      setSelectedTrack(track);
+    }
+  }, [phase, selectedTrack]);
+
   const handleRaceStart = useCallback(async () => {
     if (!playerData) return;
 
-    // Select random track
-    const track = TRACK_PRESETS[Math.floor(Math.random() * TRACK_PRESETS.length)];
+    // Use pre-selected track or select a random one
+    const track = selectedTrack || TRACK_PRESETS[Math.floor(Math.random() * TRACK_PRESETS.length)];
     setSelectedTrack(track);
 
     // Convert player stats to race format
@@ -221,6 +230,7 @@ export default function RacePage() {
 
   const handleRaceAgain = useCallback(() => {
     setPhase('matchmaking');
+    setSelectedTrack(null); // Clear track so a new one gets selected
     setEngineBundle(null);
     setFrame(null);
     setFinishOrder([]);

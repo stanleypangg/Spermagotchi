@@ -79,25 +79,94 @@ export const MOCK_RACERS = Object.freeze([
   },
 ]);
 
-const LINEAR_LOOP = [
+// DRIFTWAY: Aggressive alternating S-curves - DRIFT HEAVEN
+const DRIFTWAY_PATH = [
   { x: 0, y: 0 },
-  { x: 5, y: -6 },
   { x: 10, y: -18 },
-  { x: 15, y: -32 },
-  { x: 20, y: -12 },
-  { x: 25, y: 10 },
-  { x: 30, y: 26 },
-  { x: 35, y: 38 },
-  { x: 40, y: 18 },
-  { x: 45, y: -8 },
-  { x: 50, y: -28 },
-  { x: 55, y: -38 },
-  { x: 60, y: -16 },
-  { x: 65, y: 12 },
-  { x: 70, y: 30 },
-  { x: 75, y: 40 },
-  { x: 80, y: 18 },
+  { x: 20, y: -38 },
+  { x: 30, y: -42 },
+  { x: 40, y: -28 },
+  { x: 50, y: 0 },
+  { x: 60, y: 28 },
+  { x: 70, y: 42 },
+  { x: 80, y: 38 },
+  { x: 90, y: 18 },
+  { x: 100, y: 0 },
 ];
+
+// GULF STREAM: Wide gentle flowing river with long sweeping bends
+const GULFSTREAM_PATH = [
+  { x: 0, y: 0 },
+  { x: 15, y: -2 },
+  { x: 30, y: -6 },
+  { x: 45, y: -12 },
+  { x: 60, y: -14 },
+  { x: 75, y: -12 },
+  { x: 90, y: -6 },
+  { x: 105, y: 2 },
+  { x: 120, y: 8 },
+  { x: 135, y: 12 },
+  { x: 150, y: 10 },
+];
+
+// RAPIDS: Extreme zigzag chaos - TECHNICAL NIGHTMARE
+const RAPIDS_PATH = [
+  { x: 0, y: 0 },
+  { x: 5, y: -20 },
+  { x: 10, y: 5 },
+  { x: 15, y: -18 },
+  { x: 20, y: 8 },
+  { x: 25, y: -25 },
+  { x: 30, y: 12 },
+  { x: 35, y: -15 },
+  { x: 40, y: 18 },
+  { x: 45, y: -10 },
+  { x: 50, y: 22 },
+  { x: 55, y: -5 },
+  { x: 60, y: 15 },
+  { x: 65, y: -12 },
+  { x: 70, y: 8 },
+  { x: 75, y: 0 },
+];
+
+// SPIRAL: Tight inward spiral - GETS CLAUSTROPHOBIC
+const SPIRAL_PATH = [];
+for (let i = 0; i <= 20; i++) {
+  const angle = (i / 20) * Math.PI * 3.5; // 1.75 rotations
+  const radius = 45 - (i * 2); // Tightening faster
+  SPIRAL_PATH.push({
+    x: i * 5,
+    y: Math.sin(angle) * radius,
+  });
+}
+
+// CANYON: Sharp hairpin switchbacks like a mountain road
+const CANYON_PATH = [
+  { x: 0, y: 0 },
+  { x: 15, y: -8 },
+  { x: 25, y: -20 },
+  { x: 28, y: -35 },
+  { x: 25, y: -50 },
+  { x: 15, y: -62 },
+  { x: 0, y: -68 },
+  { x: -15, y: -70 },
+  { x: -25, y: -60 },
+  { x: -28, y: -45 },
+  { x: -25, y: -30 },
+  { x: -10, y: -15 },
+  { x: 5, y: -5 },
+];
+
+// VORTEX: Figure-8 with dynamic radius - DISORIENTING
+const VORTEX_PATH = [];
+for (let i = 0; i <= 24; i++) {
+  const t = (i / 24) * Math.PI * 2;
+  const radius = 35 + Math.cos(t * 3) * 12; // Oscillating radius
+  VORTEX_PATH.push({
+    x: i * 4,
+    y: Math.sin(t) * radius * Math.cos(t * 0.5),
+  });
+}
 
 function transformPoints(points, options = {}) {
   const {
@@ -129,7 +198,7 @@ export const TRACK_PRESETS = Object.freeze([
   {
     id: 'driftway',
     name: 'Driftway',
-    controlPoints: transformPoints(LINEAR_LOOP, {
+    controlPoints: transformPoints(DRIFTWAY_PATH, {
       scaleX: 185,
       scaleY: 38,
       rotate: -2.2,
@@ -147,7 +216,7 @@ export const TRACK_PRESETS = Object.freeze([
   {
     id: 'gulfstream',
     name: 'Gulf Stream',
-    controlPoints: transformPoints(LINEAR_LOOP, {
+    controlPoints: transformPoints(GULFSTREAM_PATH, {
       scaleX: 210,
       scaleY: 43,
       rotate: 4.8,
@@ -165,7 +234,7 @@ export const TRACK_PRESETS = Object.freeze([
   {
     id: 'rapids',
     name: 'Rapids',
-    controlPoints: transformPoints(LINEAR_LOOP, {
+    controlPoints: transformPoints(RAPIDS_PATH, {
       scaleX: 195,
       scaleY: 52,
       rotate: -6.5,
@@ -183,7 +252,7 @@ export const TRACK_PRESETS = Object.freeze([
   {
     id: 'spiral',
     name: 'Spiral',
-    controlPoints: transformPoints(LINEAR_LOOP, {
+    controlPoints: transformPoints(SPIRAL_PATH, {
       scaleX: 178,
       scaleY: 48,
       rotate: 8.2,
@@ -201,7 +270,7 @@ export const TRACK_PRESETS = Object.freeze([
   {
     id: 'canyon',
     name: 'Canyon',
-    controlPoints: transformPoints(LINEAR_LOOP, {
+    controlPoints: transformPoints(CANYON_PATH, {
       scaleX: 202,
       scaleY: 35,
       rotate: 1.8,
@@ -219,7 +288,7 @@ export const TRACK_PRESETS = Object.freeze([
   {
     id: 'vortex',
     name: 'Vortex',
-    controlPoints: transformPoints(LINEAR_LOOP, {
+    controlPoints: transformPoints(VORTEX_PATH, {
       scaleX: 188,
       scaleY: 56,
       rotate: -11.3,
