@@ -1060,7 +1060,7 @@
       "signals": 50
     },
     "elo": 1000,
-    "spermPoints": 250,
+    "spermPoints": 185,
     "raceHistory": [],
     "currentStreak": 0,
     "longestStreak": 0,
@@ -1068,8 +1068,10 @@
     "todayHabits": {},
     "ownedClothing": [],
     "equippedClothing": null,
-    "ownedBackgrounds": [],
-    "equippedBackground": null,
+    "ownedBackgrounds": [
+      "sperm-kingdom"
+    ],
+    "equippedBackground": "sperm-kingdom",
     "ownedBeds": [],
     "equippedBed": null,
     "createdAt": "2025-11-09T18:42:16.557Z"

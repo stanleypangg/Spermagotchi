@@ -1,42 +1,6 @@
 @import "tailwindcss";
 
-:root {
-  --scrollbar-track: rgba(47, 42, 68, 0.06);
-  --scrollbar-thumb: rgba(47, 42, 68, 0.28);
-  --scrollbar-thumb-hover: rgba(47, 42, 68, 0.45);
-}
-
-* {
-  scrollbar-width: thin;
-  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
-}
-
-html,
-body {
-  scrollbar-gutter: stable both-edges;
-}
-
-*::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-*::-webkit-scrollbar-track {
-  background: var(--scrollbar-track);
-  border-radius: 9999px;
-}
-
-*::-webkit-scrollbar-thumb {
-  background-color: var(--scrollbar-thumb);
-  border-radius: 9999px;
-  border: 2px solid transparent;
-  background-clip: content-box;
-  transition: background-color 180ms ease;
-}
-
-*::-webkit-scrollbar-thumb:hover {
-  background-color: var(--scrollbar-thumb-hover);
-}
+/* Custom scrollbar styles removed to avoid reserved gutter spacing */
 
 @keyframes float {
   0%,
