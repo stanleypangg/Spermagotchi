@@ -23,6 +23,16 @@ function getTomorrowDateString() {
   return today.toISOString().split('T')[0];
 }
 
+function getNextDayFromDate(dateString) {
+  if (!dateString) {
+    // If no date provided, use tomorrow
+    return getTomorrowDateString();
+  }
+  const date = new Date(dateString);
+  date.setDate(date.getDate() + 1);
+  return date.toISOString().split('T')[0];
+}
+
 function processHabits(habits) {
   const delta = {
     motility: 0,
@@ -104,10 +114,13 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Player not found' }, { status: 404 });
     }
     
-    const tomorrow = getTomorrowDateString();
+    const lastCheckIn = playerData.lastCheckInDate;
+    
+    // Calculate the next day based on player's last check-in, not system date
+    // This allows the "skip day" feature to work correctly for demo purposes
+    const tomorrow = getNextDayFromDate(lastCheckIn);
     const today = getTodayDateString();
     const yesterday = getYesterdayDateString();
-    const lastCheckIn = playerData.lastCheckInDate;
     
     // Process current habits if provided
     const habitDelta = habits ? processHabits(habits) : { motility: 0, linearity: 0, flow: 0, signals: 0 };
@@ -121,9 +134,9 @@ export async function POST(request) {
       completedHabitsToday,
       currentStreak: playerData.currentStreak,
       lastCheckIn: playerData.lastCheckInDate,
+      calculatedTomorrow: tomorrow,
       today,
       yesterday,
-      tomorrow,
     });
     
     // Calculate streak based on check-in consistency
@@ -223,7 +236,7 @@ export async function POST(request) {
     
     writeStore(store);
     
-    let message = `⏭️ Advanced to tomorrow! ${streakMessage}`;
+    let message = `⏭️ Advanced to ${tomorrow}! ${streakMessage}`;
     if (streakBonus > 0) message += ` ✨ +${streakBonus} to all stats!`;
     if (streakPoints > 0) message += ` 💰 +${streakPoints} points!`;
     
