@@ -202,7 +202,7 @@ export const SHOP_CLOTHING_ITEMS = Object.freeze([
     name: 'Sus Capsule Suit',
     price: 55,
     rarity: 'Legendary',
-    imagePath: '/among-us.png',
+    imagePath: '/amongus.png',
     description: 'Task: look adorable. Venting optional.',
   },
   {
@@ -218,7 +218,7 @@ export const SHOP_CLOTHING_ITEMS = Object.freeze([
     name: 'Chromed Plug Fin',
     price: 48,
     rarity: 'Rare',
-    imagePath: '/plug.jpg',
+    imagePath: '/plug.png',
     description: 'Hydrodynamics? Questionable. Confidence? Unshakable.',
   },
   {
