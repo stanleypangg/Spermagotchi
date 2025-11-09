@@ -230,6 +230,11 @@ export default function Home() {
       if (data.sperm.equippedClothing !== undefined) setEquippedClothing(data.sperm.equippedClothing);
       if (data.sperm.ownedBackgrounds) setOwnedBackgrounds(data.sperm.ownedBackgrounds);
       if (data.sperm.equippedBackground !== undefined) setEquippedBackground(data.sperm.equippedBackground);
+      
+      // Load today's habit form
+      if (data.sperm.todayHabits) {
+        setHabitForm({ ...DEFAULT_HABIT_FORM, ...data.sperm.todayHabits });
+      }
     }
     
     return data;

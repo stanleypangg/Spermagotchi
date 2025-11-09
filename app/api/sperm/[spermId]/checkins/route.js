@@ -163,6 +163,7 @@ export async function POST(request, { params }) {
       longestStreak,
       lastCheckInDate: today,
       spermPoints: newPoints,
+      todayHabits: playerData.todayHabits || {}, // Keep today's habit selections
     };
     
     writeStore(store);

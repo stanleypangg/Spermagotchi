@@ -37,6 +37,7 @@ export async function GET(request, { params }) {
         currentStreak: playerData.currentStreak || 0,
         longestStreak: playerData.longestStreak || 0,
         lastCheckInDate: playerData.lastCheckInDate,
+        todayHabits: playerData.todayHabits || {},
         ownedClothing: playerData.ownedClothing || [],
         equippedClothing: playerData.equippedClothing,
         ownedBackgrounds: playerData.ownedBackgrounds || [],
