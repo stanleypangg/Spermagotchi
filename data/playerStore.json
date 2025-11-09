@@ -7,8 +7,8 @@
       "flow": 70.90000000000003,
       "signals": 71.5
     },
-    "elo": 1090,
-    "spermPoints": 295,
+    "elo": 1095,
+    "spermPoints": 302,
     "raceHistory": [
       {
         "place": 1,
@@ -223,13 +223,39 @@
         "eloChange": 10,
         "eloAfter": 1090,
         "pointsEarned": 63
+      },
+      {
+        "place": 3,
+        "totalRacers": 4,
+        "trackId": "canyon",
+        "raceTime": 31.58333333333282,
+        "opponents": [
+          {
+            "name": "FastTrack",
+            "place": 1
+          },
+          {
+            "name": "HyperDrive",
+            "place": 2
+          },
+          {
+            "name": "SwiftCell",
+            "place": 4
+          }
+        ],
+        "timestamp": "2025-11-09T12:29:48.211Z",
+        "eloChange": 5,
+        "eloAfter": 1095,
+        "pointsEarned": 43
       }
     ],
     "currentStreak": 1,
     "longestStreak": 0,
     "lastCheckInDate": "2025-11-09",
-    "ownedClothing": [],
-    "equippedClothing": null,
+    "ownedClothing": [
+      "67"
+    ],
+    "equippedClothing": "67",
     "ownedBackgrounds": [
       "sperm-kingdom",
       "th16"
