@@ -13,17 +13,19 @@ export default function NavigationBar({ items, activeTab, onSelect }) {
               onClick={() => onSelect(item.id)}
               className={`group relative flex flex-1 flex-col items-center justify-center overflow-hidden rounded-2xl px-3 py-2 text-xs font-semibold transition-all duration-300 ${
                 isActive
-                  ? 'text-white shadow-[0_-4px_24px_rgba(99,102,241,0.35)]'
-                  : 'text-[#8c87a6] hover:text-white'
+                  ? 'bg-black text-white shadow-[0_8px_24px_rgba(15,23,42,0.35)]'
+                  : 'text-[#8c87a6] hover:text-slate-900'
               }`}
             >
               <span
-                className={`absolute inset-0 -z-10 rounded-2xl bg-gradient-to-br from-indigo-500 via-indigo-400 to-purple-400 opacity-0 transition duration-300 group-hover:opacity-80 ${
-                  isActive ? 'opacity-90' : ''
+                className={`absolute inset-0 -z-10 rounded-2xl transition duration-300 ${
+                  isActive
+                    ? 'bg-black opacity-100'
+                    : 'bg-slate-900/5 opacity-0 group-hover:opacity-100'
                 }`}
               />
               <span
-                className={`absolute inset-x-8 top-0 -z-20 h-[2px] origin-center scale-x-0 transform bg-gradient-to-r from-indigo-400 via-purple-300 to-transparent transition duration-300 group-hover:scale-x-100 ${
+                className={`absolute inset-x-8 top-0 -z-20 h-[2px] origin-center scale-x-0 transform bg-white/40 transition duration-300 group-hover:scale-x-100 ${
                   isActive ? 'scale-x-100' : ''
                 }`}
               />

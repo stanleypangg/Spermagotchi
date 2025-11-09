@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import Image from 'next/image';
 import petriDish from '@/public/petri.png';
+import speechBubble from '@/public/speech.webp';
 import LandingScreen from './components/LandingScreen';
 import HabitPanel from './components/HabitPanel';
 import HistoryPanel from './components/HistoryPanel';
@@ -64,6 +65,7 @@ export default function Home() {
   const [showTodos, setShowTodos] = useState(false);
   const [shopTab, setShopTab] = useState('outfits');
   const [previewBackgroundLoaded, setPreviewBackgroundLoaded] = useState(true);
+  const currentBackgroundPreviewId = previewBackground ?? equippedBackground ?? null;
 
   useEffect(() => {
     if (!showTodos || typeof window === 'undefined') {
@@ -80,7 +82,7 @@ export default function Home() {
     };
   }, [showTodos]);
 
-  const panelHeight = `calc(100vh - ${BOTTOM_NAV_HEIGHT}px)`;
+  const panelHeight = '100vh';
 
   const renderCoinValue = useCallback(
     (value, sizeClass = 'h-4 w-4') => (
@@ -238,6 +240,42 @@ export default function Home() {
       }
     }
   }, [ownedClothing, equippedClothing, previewClothing]);
+
+  useEffect(() => {
+    if (activeTab === 'shop') {
+      return;
+    }
+    setPreviewClothing(null);
+    setPreviewBackground(null);
+    setPreviewBackgroundLoaded(true);
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (activeTab !== 'shop') {
+      return;
+    }
+    if (!currentBackgroundPreviewId) {
+      setPreviewBackgroundLoaded(true);
+      return;
+    }
+    setPreviewBackgroundLoaded(false);
+  }, [activeTab, currentBackgroundPreviewId]);
+
+  useEffect(() => {
+    if (activeTab !== 'home') {
+      return;
+    }
+    const override = selectOverrideFromHabits(habitForm);
+    setBuddyOverride((current) => {
+      if (!override && !current) {
+        return current;
+      }
+      if (override && current && override.key === current.key) {
+        return current;
+      }
+      return override ?? null;
+    });
+  }, [activeTab, habitForm, selectOverrideFromHabits]);
 
   useEffect(() => {
     let isCancelled = false;
@@ -556,6 +594,7 @@ export default function Home() {
   const previewBackgroundItem = previewBackground
     ? SHOP_BACKGROUND_ITEMS.find((item) => item.id === previewBackground) ?? null
     : null;
+const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackgroundItem ?? null;
 
   const handleSelectOutfit = useCallback(
     (item) => {
@@ -587,7 +626,6 @@ export default function Home() {
     (item) => {
       setError(null);
       setPreviewBackground(item.id);
-      setPreviewBackgroundLoaded(false);
       if (ownedBackgrounds.includes(item.id)) {
         setEquippedBackground(item.id);
       }
@@ -600,7 +638,6 @@ export default function Home() {
       setError(null);
       setEquippedBackground(item.id);
       setPreviewBackground(item.id);
-      setPreviewBackgroundLoaded(false);
       scheduleFeedbackClear(`${item.name} applied!`);
     },
     [scheduleFeedbackClear],
@@ -742,53 +779,52 @@ export default function Home() {
           onClick={() => setShowTodos((previous) => !previous)}
           aria-expanded={showTodos}
           aria-controls="daily-todos-panel"
-          className="absolute left-6 top-6 inline-flex min-h-[36px] min-w-[136px] items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-600 transition hover:border-indigo-200 hover:text-indigo-600"
+          className={`absolute left-6 top-6 inline-flex min-h-[36px] min-w-[136px] items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-600 transition hover:border-indigo-200 hover:text-indigo-600 ${
+            showTodos ? 'opacity-0 pointer-events-none' : 'opacity-100'
+          }`}
+          tabIndex={showTodos ? -1 : undefined}
         >
-          {showTodos ? (
-            <>
-              <span className="sr-only">Close daily todos</span>
-              <span aria-hidden>✕</span>
-            </>
-          ) : (
-            <>
-              <span className="sr-only">Open daily todos</span>
-              <span aria-hidden>Daily Todos</span>
-            </>
-          )}
+          <span className="sr-only">
+            {showTodos ? 'Close daily todos' : 'Open daily todos'}
+          </span>
+          <span aria-hidden>Daily Todos</span>
         </button>
       </header>
 
       <div className="relative mt-8 flex flex-1 items-stretch overflow-hidden px-6">
         <aside
           id="daily-todos-panel"
-          className="fixed left-0 top-0 z-40 flex flex-col rounded-3xl border border-slate-200 bg-white px-5 pb-6 pt-16 shadow-lg transition-all duration-500 ease-out"
+          className="fixed left-0 top-0 z-40 flex flex-col rounded-3xl border border-slate-200 bg-white px-6 pb-6 pt-10 shadow-lg transition-all duration-500 ease-out"
           style={{
             width: TODO_PANEL_WIDTH,
             height: panelHeight,
             maxHeight: panelHeight,
             transform: `translateX(${showTodos ? 0 : -(TODO_PANEL_WIDTH + TODO_PANEL_GAP)}px)`,
-            opacity: showTodos ? 1 : 0,
             pointerEvents: showTodos ? 'auto' : 'none',
+            visibility: showTodos ? 'visible' : 'hidden',
           }}
         >
           <div className="absolute inset-0 -z-10 rounded-3xl bg-white" />
-          <button
-            type="button"
-            onClick={() => setShowTodos(false)}
-            className="absolute left-6 top-6 inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-sm font-semibold text-slate-500 transition hover:border-indigo-200 hover:text-indigo-600"
-            aria-label="Close daily todos"
-          >
-            ✕
-          </button>
-          <div className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
-              Do Your Quick Daily Check-ins
-            </p>
-            <p className="text-xs text-slate-400">
-              Toggle today’s habits to keep your swimmer in peak form.
-            </p>
+          <div className="flex items-start gap-4">
+            <button
+              type="button"
+              onClick={() => setShowTodos(false)}
+              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 text-sm font-semibold text-slate-500 transition hover:border-indigo-200 hover:text-indigo-600"
+              aria-label="Close daily todos"
+            >
+              ✕
+            </button>
+            <div className="space-y-2">
+              <p className="text-[0.65rem] font-semibold uppercase tracking-[0.3em] text-slate-500">
+                Daily Todos
+              </p>
+              <p className="text-sm font-semibold text-slate-700">Do Your Quick Daily Check-ins</p>
+              <p className="text-xs text-slate-400">
+                Toggle today’s habits to keep your swimmer in peak form.
+              </p>
+            </div>
           </div>
-          <div className="mt-4 flex-1 min-h-0 overflow-y-auto pr-1">
+          <div className="mt-6 flex-1 min-h-0 overflow-y-auto pr-1">
             <HabitPanel habitForm={habitForm} onToggle={handleHabitToggle} submitting={submitting} />
           </div>
         </aside>
@@ -809,6 +845,21 @@ export default function Home() {
         >
           <div className="flex w-full max-w-xl flex-col items-center justify-center px-4 text-center">
             <div className="relative mt-8 flex h-[360px] w-full max-w-[360px] flex-col items-center justify-center">
+              <div className="pointer-events-none absolute -top-24 right-0 z-30 w-48 sm:w-56">
+                <div className="animate-float relative w-full">
+                  <Image
+                    src={speechBubble}
+                    alt="Buddy speech bubble"
+                    width={160}
+                    height={120}
+                    priority
+                    className="h-auto w-full object-contain"
+                  />
+                  <span className="absolute inset-0 flex items-center justify-center px-6 text-center text-sm font-semibold leading-snug text-slate-700">
+                    Placeholder speech text
+                  </span>
+                </div>
+              </div>
               <Image
                 src={petriDish}
                 alt="Petri dish backdrop"
@@ -873,12 +924,12 @@ export default function Home() {
     const selectedOutfitId = previewClothing ?? equippedClothing ?? null;
     const selectedOutfit =
       SHOP_CLOTHING_ITEMS.find((item) => item.id === selectedOutfitId) ?? null;
-    const overlayOutfit = previewOutfitItem ?? selectedOutfit ?? null;
+    const overlayOutfit = previewOutfitItem ?? null;
 
     const selectedBackgroundId = previewBackground ?? equippedBackground ?? null;
     const selectedBackground =
       SHOP_BACKGROUND_ITEMS.find((item) => item.id === selectedBackgroundId) ?? null;
-    const overlayBackgroundItem = previewBackgroundItem ?? equippedBackgroundItem ?? null;
+    const overlayBackgroundItem = currentBackgroundPreviewItem;
     const previewBackgroundImage = overlayBackgroundItem?.imagePath ?? DEFAULT_PREVIEW_BACKGROUND;
     const backgroundAlt = overlayBackgroundItem
       ? `${overlayBackgroundItem.name} background`
@@ -887,7 +938,7 @@ export default function Home() {
     const isBackgroundTab = shopTab === 'backgrounds';
     const sidebarItems = isBackgroundTab ? SHOP_BACKGROUND_ITEMS : SHOP_CLOTHING_ITEMS;
 
-    const selectedItem = isBackgroundTab ? selectedBackground : selectedOutfit;
+    const selectedItem = isBackgroundTab ? selectedBackground : previewOutfitItem ?? null;
     const selectedOwned = selectedItem
       ? isBackgroundTab
         ? ownedBackgrounds.includes(selectedItem.id)
@@ -898,11 +949,21 @@ export default function Home() {
         ? equippedBackground === selectedItem.id
         : equippedClothing === selectedItem.id
       : false;
-    const statusTitle = isBackgroundTab ? 'Featured Background' : 'Featured Fit';
-    const emptyTitle = isBackgroundTab ? 'Pick a background' : 'Pick an outfit';
+    const statusLabel = activeBuddyState?.label ?? 'Steady';
+    const statusTitle = selectedItem
+      ? isBackgroundTab
+        ? 'Featured Background'
+        : 'Featured Fit'
+      : isBackgroundTab
+      ? ''
+      : 'Current Status';
+    const currentFitLabel = equippedOutfitItem?.name ?? null;
+    const emptyTitle = isBackgroundTab ? 'Pick a background' : statusLabel;
     const emptyDescription = isBackgroundTab
       ? 'Choose a background from the sidebar to preview the environment.'
-      : 'Choose an outfit from the sidebar to see it on your swimmer.';
+      : currentFitLabel
+      ? `Your buddy is currently ${statusLabel.toLowerCase()} wearing the ${currentFitLabel}. Pick an outfit to preview a new look.`
+      : `Your buddy is currently ${statusLabel.toLowerCase()}. Pick an outfit to preview a new look.`;
 
     return (
       <main className="grid min-h-[calc(100vh-88px)] max-h-[calc(100vh-88px)] grid-rows-1 gap-6 overflow-hidden bg-white px-4 py-8 md:grid-cols-[320px_1fr] md:px-12">
@@ -971,7 +1032,7 @@ export default function Home() {
                   : equippedClothing === item.id;
                 const isSelected = isBackgroundTab
                   ? selectedBackgroundId === item.id
-                  : selectedOutfitId === item.id;
+                  : previewClothing === item.id || (!previewClothing && selectedOutfitId === item.id);
                 const affordable = coinsDisplay >= item.price;
 
                 return (
@@ -981,36 +1042,43 @@ export default function Home() {
                       isSelected ? 'border-indigo-200 bg-indigo-50' : 'border-slate-200 bg-white hover:border-slate-300'
                     }`}
                   >
-                      <button
-                        type="button"
-                        onClick={() =>
-                          (isBackgroundTab ? handleSelectBackground : handleSelectOutfit)(item)
-                        }
-                        className="flex flex-1 items-center gap-3 text-left"
-                      >
-                        {isBackgroundTab ? (
-                          <div className="relative h-14 w-20 overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
-                            <div
-                              className="absolute inset-0 bg-cover bg-center"
-                              style={{ backgroundImage: `url(${item.imagePath})` }}
-                            />
-                            <div className="absolute inset-0 bg-black/15" />
-                          </div>
-                        ) : null}
-                        <span className="text-sm font-semibold text-slate-700">{item.name}</span>
-                        {isOwned ? (
-                          <span
-                            className={`ml-auto inline-flex h-6 w-6 items-center justify-center rounded-full text-xs ${
-                              isEquipped
-                                ? 'bg-indigo-500 text-white'
-                                : 'bg-slate-200 text-slate-600'
-                            }`}
-                            aria-label={isBackgroundTab ? (isEquipped ? 'Applied' : 'Owned') : isEquipped ? 'Equipped' : 'Owned'}
-                          >
-                            {isEquipped ? '✓' : '•'}
-                          </span>
-                        ) : null}
-                      </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        (isBackgroundTab ? handleSelectBackground : handleSelectOutfit)(item)
+                      }
+                      className="flex flex-1 items-center gap-3 text-left"
+                    >
+                      {isBackgroundTab ? (
+                        <div className="relative h-16 w-28 overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
+                          <Image
+                            src={item.imagePath}
+                            alt={`${item.name} background thumbnail`}
+                            fill
+                            className="object-cover"
+                            sizes="112px"
+                            priority={isSelected}
+                            unoptimized
+                          />
+                          <div className="absolute inset-0 bg-black/10" />
+                        </div>
+                      ) : null}
+                      <span className="text-sm font-semibold text-slate-700">{item.name}</span>
+                      {isOwned ? (
+                        <span
+                          className={`ml-auto inline-flex h-6 w-6 items-center justify-center rounded-full text-xs ${
+                            isEquipped
+                              ? 'bg-indigo-500 text-white'
+                              : 'bg-slate-200 text-slate-600'
+                          }`}
+                          aria-label={
+                            isBackgroundTab ? (isEquipped ? 'Applied' : 'Owned') : isEquipped ? 'Equipped' : 'Owned'
+                          }
+                        >
+                          {isEquipped ? '✓' : '•'}
+                        </span>
+                      ) : null}
+                    </button>
                     {isOwned ? (
                       <button
                         type="button"
@@ -1076,9 +1144,6 @@ export default function Home() {
             <div className="flex flex-col items-end gap-3 text-right">
               {selectedItem ? (
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
-                    Status
-                  </p>
                   <p className="text-sm font-semibold text-slate-600">
                     {selectedEquipped
                       ? isBackgroundTab
@@ -1088,13 +1153,6 @@ export default function Home() {
                       ? 'Owned'
                       : `${selectedItem.price} Coins`}
                   </p>
-                  {!selectedOwned ? (
-                    <p className="mt-1 text-xs text-amber-600">
-                      {coinsDisplay >= selectedItem.price
-                        ? 'Buy from the sidebar to unlock.'
-                        : `Need ${Math.max(0, selectedItem.price - coinsDisplay)} more coins.`}
-                    </p>
-                  ) : null}
                 </div>
               ) : null}
               <button
@@ -1125,6 +1183,7 @@ export default function Home() {
                   <div className="absolute inset-0 animate-pulse bg-slate-200/60" />
                 ) : null}
                 <Image
+                  key={overlayBackgroundItem?.id ?? 'default-background'}
                   src={previewBackgroundImage}
                   alt={backgroundAlt}
                   fill
@@ -1139,25 +1198,18 @@ export default function Home() {
               <div className="absolute inset-0 -z-10 rounded-[40px] border border-slate-200/70 bg-white shadow-[0_40px_80px_rgba(63,61,86,0.18)]" />
             )}
             <div className="relative z-10 flex h-full w-full items-center justify-center px-6 py-8">
-              {overlayOutfit ? (
-                <Image
-                  src={overlayOutfit.imagePath}
-                  alt={`${overlayOutfit.name} preview`}
-                  width={520}
-                  height={520}
-                  priority
-                  className="h-full w-full animate-float object-contain drop-shadow-[0_25px_70px_rgba(63,61,86,0.25)]"
-                />
-              ) : (
-                <Image
-                  src={activeBuddyState.asset}
-                  alt={activeBuddyState.alt}
-                  width={520}
-                  height={520}
-                  priority
-                  className="h-full w-full animate-float object-contain drop-shadow-[0_25px_70px_rgba(63,61,86,0.25)]"
-                />
-              )}
+              <Image
+                src={overlayOutfit ? overlayOutfit.imagePath : activeBuddyState.asset}
+                alt={
+                  overlayOutfit
+                    ? `${overlayOutfit.name} preview`
+                    : activeBuddyState.alt
+                }
+                width={520}
+                height={520}
+                priority
+                className="h-full w-full animate-float object-contain drop-shadow-[0_25px_70px_rgba(63,61,86,0.25)]"
+              />
             </div>
           </div>
         </section>

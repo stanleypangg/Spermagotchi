@@ -238,41 +238,7 @@ export const SHOP_CLOTHING_ITEMS = Object.freeze([
     description: 'Latex sheen with maximum protective swagger.',
   },
 ]);
-
-const GRADIENT_ASSETS = Object.freeze({
-  nebula:
-    "data:image/svg+xml,%3Csvg xmlns%3D%22http://www.w3.org/2000/svg%22 viewBox%3D%220%200%20600%20600%22%3E%3Cdefs%3E%3CradialGradient id%3D%22g%22 cx%3D%2230%25%22 cy%3D%2230%25%22 r%3D%2280%25%22%3E%3Cstop offset%3D%220%25%22 stop-color%3D%22%23f9a8d4%22 stop-opacity%3D%220.6%22/%3E%3Cstop offset%3D%2260%25%22 stop-color%3D%22%236366f1%22 stop-opacity%3D%220.45%22/%3E%3Cstop offset%3D%22100%25%22 stop-color%3D%22%230f172a%22 stop-opacity%3D%220.7%22/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect width%3D%22600%22 height%3D%22600%22 fill%3D%22url(%23g)%22/%3E%3Ccircle cx%3D%22180%22 cy%3D%22100%22 r%3D%2280%22 fill%3D%22%23fde68a%22 fill-opacity%3D%220.15%22/%3E%3Ccircle cx%3D%22460%22 cy%3D%22440%22 r%3D%2290%22 fill%3D%22%23c084fc%22 fill-opacity%3D%220.15%22/%3E%3C/svg%3E",
-  thermal:
-    "data:image/svg+xml,%3Csvg xmlns%3D%22http://www.w3.org/2000/svg%22 viewBox%3D%220%200%20600%20600%22%3E%3Cdefs%3E%3ClinearGradient id%3D%22t%22 x1%3D%220%25%22 y1%3D%220%25%22 x2%3D%22100%25%22 y2%3D%22100%25%22%3E%3Cstop offset%3D%220%25%22 stop-color%3D%22%230e7490%22 stop-opacity%3D%220.35%22/%3E%3Cstop offset%3D%2250%25%22 stop-color%3D%22%2338bdf8%22 stop-opacity%3D%220.35%22/%3E%3Cstop offset%3D%22100%25%22 stop-color%3D%22%23fbbf24%22 stop-opacity%3D%220.4%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width%3D%22600%22 height%3D%22600%22 fill%3D%22url(%23t)%22/%3E%3Cpath d%3D%22M0 460Q150 360 300 420t300-60v240H0Z%22 fill%3D%22%23f59e0b%22 fill-opacity%3D%220.18%22/%3E%3C/svg%3E",
-  sterile:
-    "data:image/svg+xml,%3Csvg xmlns%3D%22http://www.w3.org/2000/svg%22 viewBox%3D%220%200%20600%20600%22%3E%3Cdefs%3E%3ClinearGradient id%3D%22s%22 x1%3D%220%25%22 y1%3D%220%25%22 x2%3D%22100%25%22 y2%3D%22100%25%22%3E%3Cstop offset%3D%220%25%22 stop-color%3D%22%23e2e8f0%22 stop-opacity%3D%220.95%22/%3E%3Cstop offset%3D%22100%25%22 stop-color%3D%22%2294a3b8%22 stop-opacity%3D%220.55%22/%3E%3C/linearGradient%3E%3Cpattern id%3D%22grid%22 width%3D%2230%22 height%3D%2230%22 patternUnits%3D%22userSpaceOnUse%22%3E%3Crect width%3D%2230%22 height%3D%2230%22 fill%3D%22none%22 stroke%3D%22%2394a3b8%22 stroke-opacity%3D%220.15%22 stroke-width%3D%221%22/%3E%3C/pattern%3E%3C/defs%3E%3Crect width%3D%22600%22 height%3D%22600%22 fill%3D%22url(%23s)%22/%3E%3Crect width%3D%22600%22 height%3D%22600%22 fill%3D%22url(%23grid)%22/%3E%3C/svg%3E",
-});
-
 export const SHOP_BACKGROUND_ITEMS = Object.freeze([
-  {
-    id: 'nebula-glow',
-    name: 'Nebula Glow',
-    price: 28,
-    rarity: 'Rare',
-    imagePath: GRADIENT_ASSETS.nebula,
-    description: 'Soft cosmic gradients swirling behind your swimmer.',
-  },
-  {
-    id: 'thermal-drift',
-    name: 'Thermal Drift',
-    price: 34,
-    rarity: 'Epic',
-    imagePath: GRADIENT_ASSETS.thermal,
-    description: 'Warm currents meeting cool tides for dramatic depth.',
-  },
-  {
-    id: 'sterile-lab',
-    name: 'Sterile Lab',
-    price: 18,
-    rarity: 'Common',
-    imagePath: GRADIENT_ASSETS.sterile,
-    description: 'Clinical clean vibes for peak focus on stats.',
-  },
   {
     id: 'sperm-kingdom',
     name: 'Sperm Kingdom',
@@ -280,6 +246,30 @@ export const SHOP_BACKGROUND_ITEMS = Object.freeze([
     rarity: 'Legendary',
     imagePath: '/sperm_kingdom.png',
     description: 'A candy-coated wonderland swarming with cheery swimmers.',
+  },
+  {
+    id: 'th16',
+    name: 'TH16',
+    price: 72,
+    rarity: 'Legendary',
+    imagePath: '/clash.jpg',
+    description: 'A Town Hall 16 battlefield backdrop buzzing with electric raids.',
+  },
+  {
+    id: 'meat-room',
+    name: 'Meat Room',
+    price: 38,
+    rarity: 'Rare',
+    imagePath: '/naruto.jpg',
+    description: 'Dimly lit ramen steam and kunai shadows set the tone for hungry sweeps.',
+  },
+  {
+    id: 'clash-royale',
+    name: 'Clash Royale',
+    price: 54,
+    rarity: 'Epic',
+    imagePath: '/royale.jpg',
+    description: 'Arena towers crackle as your swimmer charges across the river.',
   },
 ]);
 
