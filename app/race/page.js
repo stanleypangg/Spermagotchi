@@ -194,16 +194,18 @@ export default function RacePage() {
           finishOrder={finishOrder}
         />
         
-        {/* Return to Main button */}
-        <div className="pointer-events-auto absolute top-4 left-4">
-          <a
-            href="/"
-            className="flex items-center gap-2 rounded-full bg-white/90 backdrop-blur-md border-2 border-slate-200 px-4 py-2 text-xs font-bold text-slate-600 shadow-lg transition hover:bg-slate-50"
-          >
-            <span>←</span>
-            <span>Return to Main</span>
-          </a>
-        </div>
+        {/* Return to Main button - only show when race is finished */}
+        {frame.isFinished && finishOrder.length > 0 && (
+          <div className="pointer-events-auto absolute top-4 left-4 z-50">
+            <a
+              href="/"
+              className="flex items-center gap-2 rounded-full bg-white/90 backdrop-blur-md border-2 border-slate-200 px-4 py-2 text-xs font-bold text-slate-600 shadow-lg transition hover:bg-slate-50"
+            >
+              <span>←</span>
+              <span>Return to Main</span>
+            </a>
+          </div>
+        )}
         
         <div className="pointer-events-auto absolute bottom-4 left-1/2 -translate-x-1/2 flex flex-wrap items-center justify-center gap-2 bg-white/90 backdrop-blur-md px-4 py-2 rounded-full shadow-lg border-2 border-slate-200">
           <button

@@ -322,6 +322,9 @@ export default function RaceStage({
   // Handle race events and create speech bubbles
   useEffect(() => {
     if (!frame?.events || frame.events.length === 0) return;
+    
+    // Don't show speech bubbles in the first 1 second of the race
+    if (frame.t < 1.0) return;
 
     const newBubbles = [];
     const currentTime = Date.now();
@@ -1115,9 +1118,8 @@ export default function RaceStage({
           const remaining = bubble.duration - elapsed;
           const opacity = remaining < 800 ? remaining / 800 : 1;
 
-          // Position above the racer (scaled with bubbleScaleFactor)
-          const offsetY = -32 * bubbleScaleFactor;
-          const padding = 6 * bubbleScaleFactor;
+          // Base dimensions (scaled with bubbleScaleFactor)
+          const basePadding = 6 * bubbleScaleFactor;
           const fontSize = 8 * bubbleScaleFactor;
           const maxCharsPerLine = 18;
           
@@ -1146,9 +1148,31 @@ export default function RaceStage({
           const lineHeight = fontSize * 1.3;
           const charWidth = fontSize * 0.6;
           const maxLineWidth = Math.max(...displayLines.map(line => line.length * charWidth));
-          const bubbleWidth = maxLineWidth + padding * 2;
-          const bubbleHeight = displayLines.length * lineHeight + padding * 1.5;
+          const bubbleWidth = maxLineWidth + basePadding * 2;
+          const bubbleHeight = displayLines.length * lineHeight + basePadding * 1.5;
           const strokeWidth = 1.5 * bubbleScaleFactor;
+
+          // Smart positioning for player's sperm to avoid overflow
+          let offsetY = -32 * bubbleScaleFactor; // Default: above racer
+          let tailFlipped = false;
+          
+          if (bubble.laneId === 'player') {
+            const bubbleTopY = lane.y + offsetY - bubbleHeight;
+            const bubbleBottomY = lane.y + offsetY;
+            
+            // Check if bubble would overflow top of viewport
+            if (bubbleTopY < bounds.minY) {
+              // Position below the racer instead
+              offsetY = 32 * bubbleScaleFactor;
+              tailFlipped = true;
+            }
+            // Check if bubble would overflow bottom of viewport
+            else if (bubbleBottomY > bounds.maxY) {
+              // Keep above (or move further up)
+              offsetY = -32 * bubbleScaleFactor;
+              tailFlipped = false;
+            }
+          }
 
           return (
             <g
@@ -1160,7 +1184,7 @@ export default function RaceStage({
               {/* Speech bubble background */}
               <rect
                 x={-bubbleWidth / 2}
-                y={offsetY - bubbleHeight}
+                y={tailFlipped ? offsetY : offsetY - bubbleHeight}
                 width={bubbleWidth}
                 height={bubbleHeight}
                 rx={5 * bubbleScaleFactor}
@@ -1170,9 +1194,12 @@ export default function RaceStage({
                 filter="url(#tube-shadow)"
               />
               
-              {/* Speech bubble tail */}
+              {/* Speech bubble tail - flipped if below racer */}
               <path
-                d={`M ${-5 * bubbleScaleFactor} ${offsetY - 2 * bubbleScaleFactor} L ${0} ${offsetY + 6 * bubbleScaleFactor} L ${5 * bubbleScaleFactor} ${offsetY - 2 * bubbleScaleFactor}`}
+                d={tailFlipped 
+                  ? `M ${-5 * bubbleScaleFactor} ${offsetY + 2 * bubbleScaleFactor} L ${0} ${offsetY - 6 * bubbleScaleFactor} L ${5 * bubbleScaleFactor} ${offsetY + 2 * bubbleScaleFactor}`
+                  : `M ${-5 * bubbleScaleFactor} ${offsetY - 2 * bubbleScaleFactor} L ${0} ${offsetY + 6 * bubbleScaleFactor} L ${5 * bubbleScaleFactor} ${offsetY - 2 * bubbleScaleFactor}`
+                }
                 fill="white"
                 stroke="#374151"
                 strokeWidth={strokeWidth}
@@ -1184,7 +1211,7 @@ export default function RaceStage({
                 <text
                   key={idx}
                   x={0}
-                  y={offsetY - bubbleHeight + padding + (idx + 0.7) * lineHeight}
+                  y={(tailFlipped ? offsetY : offsetY - bubbleHeight) + basePadding + (idx + 0.7) * lineHeight}
                   textAnchor="middle"
                   fontSize={fontSize}
                   fontWeight="600"
