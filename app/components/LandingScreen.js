@@ -4,6 +4,9 @@ import petriDish from '@/public/petri.png';
 import happyBuddy from '@/public/happier.png';
 import splatGif from '@/public/splat.gif';
 
+const SPLAT_DISPLAY_DURATION = 4000;
+const SPLAT_FADE_DURATION = 600;
+
 export default function LandingScreen({
   name,
   onNameChange,
@@ -15,6 +18,7 @@ export default function LandingScreen({
   const [stage, setStage] = useState('intro'); // intro | fading | form | outro | splat | done
   const [formActive, setFormActive] = useState(false);
   const [showSplat, setShowSplat] = useState(false);
+  const [splatFading, setSplatFading] = useState(false);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -47,9 +51,13 @@ export default function LandingScreen({
     await delay(2000);
 
     setShowSplat(true);
+    setSplatFading(false);
     setStage('splat');
 
-    await delay(4000);
+    const fadeLeadTime = Math.max(0, SPLAT_DISPLAY_DURATION - SPLAT_FADE_DURATION);
+    await delay(fadeLeadTime);
+    setSplatFading(true);
+    await delay(SPLAT_FADE_DURATION);
 
     setShowSplat(false);
     setStage('done');
@@ -177,7 +185,13 @@ export default function LandingScreen({
       ) : null}
 
       {showSplat ? (
-        <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center bg-white/10 backdrop-blur-[2px]">
+        <div
+          className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center bg-white/10 backdrop-blur-[2px]"
+          style={{
+            opacity: splatFading ? 0 : 1,
+            transition: `opacity ${SPLAT_FADE_DURATION}ms ease-in-out`,
+          }}
+        >
           <Image
             src={splatGif}
             alt="Splat animation"

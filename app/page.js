@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import petriDish from '@/public/petri.png';
@@ -89,6 +89,10 @@ export default function Home() {
   const [chatBubbleIndex, setChatBubbleIndex] = useState(0);
   const [shopTab, setShopTab] = useState('outfits');
   const [showStreakModal, setShowStreakModal] = useState(false);
+  const [clickHearts, setClickHearts] = useState([]);
+  const [homeIntroVisible, setHomeIntroVisible] = useState(false);
+  const mainRef = useRef(null);
+  const heartIdRef = useRef(0);
   const currentBackgroundPreviewId = previewBackground ?? equippedBackground ?? null;
 
   useEffect(() => {
@@ -97,6 +101,19 @@ export default function Home() {
     }
     setChatBubbleIndex(Math.floor(Math.random() * CHAT_BUBBLE_IMAGES.length));
   }, []);
+
+  useEffect(() => {
+    if (!showLanding) {
+      if (typeof window === 'undefined') {
+        setHomeIntroVisible(true);
+        return undefined;
+      }
+      const frame = window.requestAnimationFrame(() => setHomeIntroVisible(true));
+      return () => window.cancelAnimationFrame(frame);
+    }
+    setHomeIntroVisible(false);
+    return undefined;
+  }, [showLanding]);
 
   useEffect(() => {
     if (!showTodos || typeof window === 'undefined') {
@@ -273,6 +290,58 @@ export default function Home() {
   const createRemoteSperm = useCallback(async (name) => {
     return createRemoteSpermApi(name);
   }, []);
+
+  const handleCreateHeart = useCallback((event) => {
+    if (!mainRef.current) {
+      return;
+    }
+    if (
+      event.target instanceof HTMLElement &&
+      event.target.closest('button, a, input, textarea')
+    ) {
+      return;
+    }
+
+    const rect = mainRef.current.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    const id = heartIdRef.current++;
+
+    setClickHearts((prev) => [...prev, { id, x, y }]);
+
+    window.setTimeout(() => {
+      setClickHearts((prev) => prev.filter((heart) => heart.id !== id));
+    }, 900);
+  }, []);
+
+  const handleSkipDayDemo = useCallback(async () => {
+    if (!spermId) {
+      return;
+    }
+    try {
+      const res = await fetch('/api/player/skip-day', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: spermId,
+          habits: habitForm,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data?.error || 'Failed to advance day.');
+      }
+      if (data.player) {
+        scheduleFeedbackClear(data.message || 'Day advanced!');
+        await fetchSpermState(spermId);
+        setHabitForm({ ...DEFAULT_HABIT_FORM });
+        setBuddyOverride(null);
+      }
+    } catch (err) {
+      console.error('Failed to advance day:', err);
+      setError(err instanceof Error ? err.message : 'Failed to advance day');
+    }
+  }, [fetchSpermState, habitForm, scheduleFeedbackClear, setError, spermId]);
 
   // Shop items now stored in player data JSON file instead of localStorage
 
@@ -1206,7 +1275,13 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
   }
 
   const renderHomeView = () => (
-    <main className="relative flex min-h-[calc(100vh-88px)] w-full flex-col pb-[88px]">
+    <main
+      ref={mainRef}
+      onClick={handleCreateHeart}
+      className={`relative flex min-h-screen w-full flex-col pb-[88px] transition-opacity duration-700 ease-out ${
+        homeIntroVisible ? 'opacity-100' : 'pointer-events-none opacity-0'
+      }`}
+    >
       <div
         className="absolute inset-0 -z-20 bg-center bg-no-repeat"
         style={{
@@ -1219,6 +1294,15 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
       {homeBackgroundImage ? (
         <div className={`absolute inset-0 -z-10 bg-linear-to-b ${homeBackgroundBlend}`} />
       ) : null}
+      {clickHearts.map((heart) => (
+        <span
+          key={heart.id}
+          className="pointer-events-none absolute z-30 text-3xl text-rose-500 heart-pop"
+          style={{ left: `${heart.x}px`, top: `${heart.y}px` }}
+        >
+          ❤️
+        </span>
+      ))}
       <header className="relative z-10 flex flex-col items-center px-6 pt-6 pb-4">
         {/* Streak Indicator Button - Always show */}
         {sperm && (
@@ -1336,7 +1420,7 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
           </span>
           <span
             aria-hidden
-            className="flex h-7 w-7 items-center justify-center rounded-full bg-indigo-500 text-white shadow-sm shadow-indigo-300/60"
+            className="flex h-4 w-4 items-center justify-center rounded-full bg-black text-white"
           >
             <svg
               viewBox="0 0 20 20"
@@ -1350,7 +1434,7 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
               <polyline points="4 11 8 15 16 6" />
             </svg>
           </span>
-          <span aria-hidden className="whitespace-nowrap tracking-wide">
+          <span aria-hidden className="whitespace-nowrap tracking-wide text-black">
             Daily Todos
           </span>
         </button>
@@ -1542,64 +1626,18 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
               </div>
             )}
             
-            <div className="mt-4 flex w-full max-w-sm flex-col items-stretch gap-2 text-left">
-              <label className="text-[0.65rem] font-semibold uppercase tracking-[0.3em] text-slate-500">
-                Debug Wellness
-              </label>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                step="1"
-                value={debugWellness ?? Math.round(combinedScore)}
-                onChange={(event) => setDebugWellness(Number(event.target.value))}
-                className="accent-[#8f54ff]"
-              />
-              <div className="flex items-center justify-between gap-2">
-              <button
-                type="button"
-                onClick={() => setDebugWellness(null)}
-                  className="text-xs font-semibold text-indigo-500 underline"
-              >
-                reset
-              </button>
-                <div className="flex flex-col items-center gap-1">
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      if (!spermId) return;
-                      try {
-                        const res = await fetch('/api/player/skip-day', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ 
-                            name: spermId,
-                            habits: habitForm, // Submit current habits
-                          }),
-                        });
-                        const data = await res.json();
-                        if (data.player) {
-                          scheduleFeedbackClear(data.message || 'Day advanced!');
-                          // Reload player data
-                          await fetchSpermState(spermId);
-                          setHabitForm({ ...DEFAULT_HABIT_FORM });
-                          setBuddyOverride(null);
-                        }
-                      } catch (err) {
-                        console.error('Failed to advance day:', err);
-                        setError('Failed to advance day');
-                      }
-                    }}
-                    className="rounded-full border-2 border-orange-300 bg-linear-to-r from-orange-100 to-amber-100 px-4 py-2 text-sm font-bold text-orange-700 shadow-md transition hover:from-orange-200 hover:to-amber-200 hover:scale-105"
-                  >
-                    ⏭️ Next Day (Demo)
-                  </button>
-                  <p className="text-[10px] text-slate-400 text-center max-w-[200px]">
-                    Advance to tomorrow & process check-in. Streaks only count when a day passes!
-                  </p>
-                </div>
+            {sperm && (
+              <div className="mt-6 flex flex-col items-center gap-2 text-center">
+                <button
+                  type="button"
+                  onClick={handleSkipDayDemo}
+                  className="rounded-full border-2 border-orange-300 bg-linear-to-r from-orange-100 to-amber-100 px-5 py-2 text-sm font-bold text-orange-700 shadow-md transition hover:from-orange-200 hover:to-amber-200 hover:scale-105"
+                >
+                  ⏭️ Next Day (Demo)
+                </button>
               </div>
-            </div>
+            )}
+
           </div>
         </section>
       </div>
@@ -2070,7 +2108,7 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
                         : 'Equipped'
                       : selectedOwned
                       ? 'Owned'
-                      : `${selectedItem.price} Coins`}
+                      : `${selectedItem.price} Sperm Count`}
                   </p>
                 </div>
               ) : null}
