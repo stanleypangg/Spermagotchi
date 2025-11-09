@@ -1069,26 +1069,43 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
         )}
         
         <div className="flex w-full max-w-3xl flex-wrap justify-center gap-4 text-left">
-          {headerStats.map((stat) => (
-            <div
-              key={stat.key}
-              className="flex min-w-[140px] flex-1 basis-[160px] flex-col rounded-3xl border border-white/70 bg-white/80 px-4 py-3 text-slate-600 shadow-sm backdrop-blur"
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-[0.65rem] font-semibold uppercase tracking-[0.3em] text-slate-400">
-                  {stat.abbr}
-                </span>
-                <span className={`flex items-center gap-1 text-xs font-semibold ${stat.trendColor}`}>
-                  <span aria-hidden>{stat.trendIcon}</span>
-                  <span>{stat.trendLabel}</span>
-                </span>
+          {headerStats.map((stat) => {
+            const tooltips = {
+              motility: 'Swimming speed and energy. Helps you move faster in races.',
+              linearity: 'Path efficiency. Better linearity = straighter swimming paths.',
+              flow: 'Adaptation to fluid environments. Reduces resistance in flow zones.',
+              signals: 'Chemical sensing and navigation. Boosts performance in gradient zones.',
+            };
+            
+            return (
+              <div
+                key={stat.key}
+                className="group relative flex min-w-[140px] flex-1 basis-[160px] flex-col rounded-3xl border border-white/70 bg-white/80 px-4 py-3 text-slate-600 shadow-sm backdrop-blur transition hover:shadow-md"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-[0.65rem] font-semibold uppercase tracking-[0.3em] text-slate-400">
+                    {stat.abbr}
+                  </span>
+                  <span className={`flex items-center gap-1 text-xs font-semibold ${stat.trendColor}`}>
+                    <span aria-hidden>{stat.trendIcon}</span>
+                    <span>{stat.trendLabel}</span>
+                  </span>
+                </div>
+                <p className="mt-2 text-2xl font-bold text-slate-800">{stat.value}</p>
+                <p className="mt-1 text-xs font-medium uppercase tracking-[0.25em] text-slate-400">
+                  {stat.label}
+                </p>
+                
+                {/* Tooltip on hover */}
+                <div className="pointer-events-none absolute -bottom-2 left-1/2 -translate-x-1/2 translate-y-full opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                  <div className="rounded-xl bg-slate-800 px-3 py-2 shadow-xl">
+                    <p className="text-xs text-white whitespace-nowrap">{tooltips[stat.key]}</p>
+                    <div className="absolute -top-1 left-1/2 -translate-x-1/2 h-2 w-2 rotate-45 bg-slate-800" />
+                  </div>
+                </div>
               </div>
-              <p className="mt-2 text-2xl font-bold text-slate-800">{stat.value}</p>
-              <p className="mt-1 text-xs font-medium uppercase tracking-[0.25em] text-slate-400">
-                {stat.label}
-              </p>
-            </div>
-          ))}
+            );
+          })}
         </div>
         <button
           type="button"

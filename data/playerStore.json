@@ -2,13 +2,13 @@
   "baka": {
     "name": "baka",
     "stats": {
-      "motility": 60.20000000000003,
-      "linearity": 73.09999999999997,
-      "flow": 70.90000000000003,
-      "signals": 71.5
+      "motility": 70.60000000000005,
+      "linearity": 80.29999999999995,
+      "flow": 80.70000000000005,
+      "signals": 85
     },
-    "elo": 1095,
-    "spermPoints": 270,
+    "elo": 1115,
+    "spermPoints": 387,
     "raceHistory": [
       {
         "place": 1,
@@ -271,6 +271,30 @@
         "eloChange": 0,
         "eloAfter": 1095,
         "pointsEarned": 23
+      },
+      {
+        "place": 1,
+        "totalRacers": 4,
+        "trackId": "canyon",
+        "raceTime": 34.733333333332645,
+        "opponents": [
+          {
+            "name": "LunarWave",
+            "place": 2
+          },
+          {
+            "name": "EclipseMaster",
+            "place": 3
+          },
+          {
+            "name": "FastLane",
+            "place": 4
+          }
+        ],
+        "timestamp": "2025-11-09T12:36:45.345Z",
+        "eloChange": 20,
+        "eloAfter": 1115,
+        "pointsEarned": 117
       }
     ],
     "currentStreak": 1,
