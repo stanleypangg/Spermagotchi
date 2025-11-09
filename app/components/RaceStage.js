@@ -94,7 +94,9 @@ export default function RaceStage({
   );
 
   const leader =
-    (playerLane && !playerLane.finished ? playerLane : unfinishedLeaderboard[0]) ??
+    (playerLane && (!playerLane.finished || !playerLane.parked)
+      ? playerLane
+      : unfinishedLeaderboard[0]) ??
     frame?.lanes?.reduce(
       (best, lane) => (lane.progress > (best?.progress ?? -Infinity) ? lane : best),
       frame?.lanes?.[0],
@@ -105,6 +107,7 @@ export default function RaceStage({
     y: leader?.y ?? 0,
     t: frame?.t ?? 0,
     initialized: false,
+    leaderId: leader?.id ?? null,
   });
   const [cameraCenter, setCameraCenter] = useState({
     x: leader?.x ?? 0,
@@ -118,11 +121,17 @@ export default function RaceStage({
     const prev = cameraRef.current;
     const tangent = leader.tangent ?? { x: 1, y: 0 };
     const speed = leader.velocity ?? 0;
-    const lookahead = Math.min(120, speed * 1.6);
-    const targetX = leader.x + tangent.x * lookahead;
-    const targetY = leader.y + tangent.y * lookahead;
+    const baseLookahead = Math.min(120, speed * 1.6);
+    const finishBias =
+      leader.finished && geometry
+        ? Math.max(baseLookahead, (geometry.width ?? 80) * 0.6)
+        : baseLookahead;
+    const targetX = leader.x + tangent.x * finishBias;
+    const targetY = leader.y + tangent.y * finishBias;
     const dt = Math.max(1 / 120, frame.t - (prev.t ?? frame.t));
-    const smoothing = 1 - Math.exp(-dt * 3.5);
+    const leaderChanged = prev.leaderId && prev.leaderId !== leader.id;
+    const smoothingRate = leaderChanged ? 6.2 : 3.5;
+    const smoothing = 1 - Math.exp(-dt * smoothingRate);
     const baseX = prev.initialized ? prev.x : targetX;
     const baseY = prev.initialized ? prev.y : targetY;
     const nextX = baseX + (targetX - baseX) * smoothing;
@@ -132,9 +141,10 @@ export default function RaceStage({
       y: nextY,
       t: frame.t,
       initialized: true,
+      leaderId: leader.id,
     };
     setCameraCenter({ x: nextX, y: nextY });
-  }, [frame, leader]);
+  }, [frame, leader, geometry]);
 
   const overallBounds = useMemo(
     () => (geometry ? trackBounds(geometry) : null),
@@ -146,7 +156,11 @@ export default function RaceStage({
   const halfH = cameraSpan * aspect;
 
   const bounds = useMemo(() => {
-    const pad = (geometry?.width ?? 80) * 1.5;
+    const trackWidth = geometry?.width ?? 80;
+    const pad = trackWidth * 1.5;
+    const allFinished = frame?.lanes?.every((lane) => lane.finished);
+    const finishPad = allFinished ? trackWidth * 2 : trackWidth * 0.6;
+    const leaderPad = leader?.finished ? trackWidth * 1.1 : 0;
     let minX = cameraCenter.x - halfW;
     let maxX = cameraCenter.x + halfW;
     let minY = cameraCenter.y - halfH;
@@ -154,7 +168,7 @@ export default function RaceStage({
 
     if (overallBounds) {
       const minLimitX = overallBounds.minX - pad;
-      const maxLimitX = overallBounds.maxX + pad;
+      const maxLimitX = overallBounds.maxX + pad + finishPad + leaderPad;
       const minLimitY = overallBounds.minY - pad;
       const maxLimitY = overallBounds.maxY + pad;
       const viewWidth = halfW * 2;
@@ -166,7 +180,7 @@ export default function RaceStage({
     }
 
     return { minX, maxX, minY, maxY };
-  }, [cameraCenter, halfW, halfH, overallBounds, geometry?.width]);
+  }, [cameraCenter, halfW, halfH, overallBounds, geometry?.width, frame?.lanes, leader]);
 
   const leaderboard = useMemo(() => {
     if (!frame?.lanes) return [];
