@@ -263,12 +263,13 @@ export default function RaceStage({
   }, [geometry, trackStroke]);
 
   return (
-    <div className="relative w-full">
+    <div className="relative w-full h-screen bg-linear-to-br from-indigo-200 via-purple-200 to-pink-200 overflow-hidden">
       <svg
         width="100%"
-        style={{ maxWidth: width, height }}
+        height="100%"
         viewBox={`${bounds.minX} ${bounds.minY} ${viewBoxWidth} ${viewBoxHeight}`}
-        className="rounded-[36px] bg-linear-to-br from-sky-100 via-purple-100 to-pink-100 shadow-[0_40px_90px_rgba(88,28,135,0.25)] ring-2 ring-sky-200"
+        className="absolute inset-0"
+        preserveAspectRatio="xMidYMid meet"
       >
         <defs>
           <linearGradient id="playground-track" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -563,56 +564,94 @@ export default function RaceStage({
         ))}
       </svg>
 
-      <div className="pointer-events-none absolute left-6 top-6 flex flex-col gap-3 text-xs font-semibold text-white drop-shadow-lg">
-        {leaderboard.slice(0, 3).map((lane) => (
+      {/* Top Progress Bar */}
+      <div className="pointer-events-none absolute top-0 left-0 right-0 px-8 pt-6">
+        <div className="relative h-8 bg-linear-to-r from-purple-900/40 via-pink-900/40 to-orange-900/40 rounded-full backdrop-blur-md shadow-2xl border-2 border-white/30 overflow-hidden">
           <div
-            key={`hud-${lane.id}`}
-            className="flex items-center gap-3 rounded-full bg-linear-to-r from-sky-500/90 via-fuchsia-500/80 to-rose-500/80 px-4 py-2 backdrop-blur-md shadow-lg"
-          >
-            <span
-              className="h-2 w-2 rounded-full"
-              style={{ backgroundColor: lane.tint ?? '#38bdf8' }}
-            />
-            <span>{lane.name}</span>
-            <span className="text-slate-300">
-              {((lane.velocity ?? 0) / 100).toFixed(1)} m/s
+            className="absolute inset-0 bg-linear-to-r from-cyan-400 via-pink-400 to-yellow-400 transition-all duration-300 ease-out shadow-[0_0_20px_rgba(251,146,60,0.6)]"
+            style={{ width: `${Math.max(...(frame?.lanes?.map(l => l.progress) ?? [0])) * 100}%` }}
+          />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="text-xs font-black text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] tracking-wider">
+              {(Math.max(...(frame?.lanes?.map(l => l.progress) ?? [0])) * 100).toFixed(1)}% COMPLETE
             </span>
-            {lane.hyperburst && <span className="text-amber-300">BURST!</span>}
           </div>
-        ))}
+        </div>
       </div>
 
-      <div className="pointer-events-none absolute bottom-5 right-5 flex items-center gap-3 rounded-2xl bg-linear-to-r from-indigo-500/90 via-violet-500/80 to-sky-500/90 px-5 py-3 text-xs font-semibold text-white backdrop-blur-md shadow-2xl">
-        <div className="relative h-14 w-14 rounded-full border border-white/40 bg-white/15 shadow-inner">
-          <div
-            className="absolute inset-[6px] rounded-full"
-            style={{
-              background:
-                'radial-gradient(circle at 30% 30%, rgba(255,255,255,0.55), transparent)',
-            }}
-          />
-          {frame?.lanes?.map((lane) => (
-            <div
-              key={`dot-${lane.id}`}
-              className="absolute h-2.5 w-2.5 rounded-full shadow-[0_0_15px_rgba(255,255,255,0.55)]"
-              style={{
-                backgroundColor: lane.tint ?? '#38bdf8',
-                left: `${50 + Math.cos(lane.heading ?? 0) * 30}%`,
-                top: `${50 + Math.sin(lane.heading ?? 0) * 30}%`,
-              }}
-            />
-          ))}
+      {/* Top Left: Position & Timer */}
+      <div className="pointer-events-none absolute top-20 left-8 flex flex-col gap-3">
+        <div className="bg-linear-to-br from-yellow-400 via-orange-400 to-red-500 rounded-3xl px-6 py-4 shadow-2xl border-4 border-white/50 -rotate-2">
+          <div className="flex items-baseline gap-2">
+            <span className="text-5xl font-black text-white drop-shadow-[0_4px_8px_rgba(0,0,0,0.5)]" style={{ fontFamily: 'Impact, fantasy' }}>
+              {playerLane?.place ?? '—'}
+            </span>
+            <span className="text-2xl font-bold text-white/90">/{frame?.lanes?.length ?? 4}</span>
+          </div>
+          <div className="text-xs font-bold text-white/80 uppercase tracking-wider mt-1">Position</div>
         </div>
-        <div className="flex flex-col text-[11px] leading-tight">
-          <span className="uppercase tracking-[0.15em] text-[10px] text-white/80">
-            Speed
-          </span>
-          <span className="text-lg font-black text-white drop-shadow">
-            {((leader?.velocity ?? 0) / 100).toFixed(1)} m/s
-          </span>
-          <span className="text-white/75">
-            Zone {leader?.zone ?? '--'}
-          </span>
+        
+        <div className="bg-linear-to-br from-cyan-400 via-blue-400 to-indigo-500 rounded-2xl px-5 py-3 shadow-xl border-3 border-white/40 rotate-1">
+          <div className="flex items-center gap-2">
+            <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd"/>
+            </svg>
+            <span className="text-2xl font-black text-white drop-shadow" style={{ fontFamily: 'Impact, fantasy' }}>
+              {frame?.t?.toFixed(1) ?? '0.0'}s
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Top Right: Mini Map */}
+      <div className="pointer-events-none absolute top-20 right-8">
+        <div className="bg-linear-to-br from-purple-500/90 via-pink-500/90 to-rose-500/90 rounded-3xl p-4 shadow-2xl border-4 border-white/50 backdrop-blur-md">
+          <div className="text-xs font-bold text-white/90 uppercase tracking-wider mb-2">Track Map</div>
+          <svg width="180" height="180" viewBox={`${overallBounds?.minX ?? 0} ${overallBounds?.minY ?? 0} ${overallBounds?.width ?? 100} ${overallBounds?.height ?? 100}`} className="bg-white/20 rounded-xl">
+            <path
+              d={centerPath}
+              stroke="rgba(255,255,255,0.4)"
+              strokeWidth={(geometry.width ?? 80) * 0.3}
+              fill="none"
+            />
+            {frame?.lanes?.map((lane) => (
+              <circle
+                key={`map-${lane.id}`}
+                cx={lane.x}
+                cy={lane.y}
+                r={(geometry.width ?? 80) * 0.15}
+                fill={lane.tint ?? '#38bdf8'}
+                stroke="white"
+                strokeWidth={(geometry.width ?? 80) * 0.05}
+              />
+            ))}
+            <rect
+              x={bounds.minX}
+              y={bounds.minY}
+              width={viewBoxWidth}
+              height={viewBoxHeight}
+              fill="none"
+              stroke="yellow"
+              strokeWidth={(geometry.width ?? 80) * 0.08}
+              strokeDasharray="5,5"
+              opacity={0.8}
+            />
+          </svg>
+        </div>
+      </div>
+
+      {/* Bottom Right: Speedometer */}
+      <div className="pointer-events-none absolute bottom-8 right-8">
+        <div className="bg-linear-to-br from-green-400 via-emerald-500 to-teal-600 rounded-full p-6 shadow-2xl border-4 border-white/60 rotate-3">
+          <div className="flex flex-col items-center">
+            <div className="text-xs font-bold text-white/80 uppercase tracking-widest">Speed</div>
+            <div className="flex items-baseline">
+              <span className="text-5xl font-black text-white drop-shadow-[0_4px_8px_rgba(0,0,0,0.5)]" style={{ fontFamily: 'Impact, fantasy' }}>
+                {((leader?.velocity ?? 0) / 100).toFixed(1)}
+              </span>
+            </div>
+            <div className="text-sm font-bold text-white/90">m/s</div>
+          </div>
         </div>
       </div>
     </div>
