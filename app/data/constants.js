@@ -87,6 +87,17 @@ export const GOOD_HABITS_CONFIG = Object.freeze([
       alt: 'Hydrated buddy',
     },
   },
+  {
+    key: 'workout',
+    title: 'Workout Session',
+    effect: '+1.5 MOT · +0.8 LIN',
+    look: 'Gym Pump',
+    category: 'good',
+    imageOverride: {
+      asset: '/workout.png',
+      alt: 'Gym pump buddy',
+    },
+  },
 ]);
 
 export const BAD_HABITS_CONFIG = Object.freeze([
@@ -239,6 +250,30 @@ export const SHOP_CLOTHING_ITEMS = Object.freeze([
     imagePath: '/condom.png',
     description: 'Latex sheen with maximum protective swagger.',
   },
+  {
+    id: 'maid-outfit',
+    name: 'Maid Service',
+    price: 44,
+    rarity: 'Epic',
+    imagePath: '/maid.png',
+    description: 'Frilly motivation to keep the petri dish spotless.',
+  },
+  {
+    id: 'cs-major',
+    name: 'CS Major',
+    price: 46,
+    rarity: 'Epic',
+    imagePath: '/csmajor.png',
+    description: 'Hoodie, headphones, and endless caffeine-fueled optimism.',
+  },
+  {
+    id: 'mini-pekka',
+    name: 'Mini P.E.K.K.A.',
+    price: 58,
+    rarity: 'Legendary',
+    imagePath: '/minipekka.png',
+    description: 'Steel-plated determination with a sweet tooth for pancakes.',
+  },
 ]);
 export const SHOP_BACKGROUND_ITEMS = Object.freeze([
   {
@@ -257,14 +292,14 @@ export const SHOP_BACKGROUND_ITEMS = Object.freeze([
     imagePath: '/clash.jpg',
     description: 'A Town Hall 16 battlefield backdrop buzzing with electric raids.',
   },
-  {
-    id: 'meat-room',
-    name: 'Meat Room',
-    price: 38,
-    rarity: 'Rare',
-    imagePath: '/naruto.jpg',
-    description: 'Dimly lit ramen steam and kunai shadows set the tone for hungry sweeps.',
-  },
+  // {
+  //   id: 'meat-room',
+  //   name: 'Meat Room',
+  //   price: 38,
+  //   rarity: 'Rare',
+  //   imagePath: '/naruto.jpg',
+  //   description: 'Dimly lit ramen steam and kunai shadows set the tone for hungry sweeps.',
+  // },
   {
     id: 'clash-royale',
     name: 'Clash Royale',
@@ -272,6 +307,41 @@ export const SHOP_BACKGROUND_ITEMS = Object.freeze([
     rarity: 'Epic',
     imagePath: '/royale.jpg',
     description: 'Arena towers crackle as your swimmer charges across the river.',
+  },
+  {
+    id: 'meat-canal',
+    name: 'Meat Canal',
+    price: 58,
+    rarity: 'Epic',
+    imagePath: '/meatcanal.png',
+    description: 'A warm, pulsing corridor that keeps your buddy moving down the line.',
+  },
+  {
+    id: 'labubuland',
+    name: 'Labubuland',
+    price: 62,
+    rarity: 'Legendary',
+    imagePath: '/labubuland.png',
+    description: 'Cotton-candy clouds and heart-shaped tunnels for sweet sprinting vibes.',
+  },
+]);
+
+export const SHOP_BED_ITEMS = Object.freeze([
+  {
+    id: 'sock',
+    name: 'Legendary Sock',
+    price: 42,
+    rarity: 'Epic',
+    imagePath: '/sock.png',
+    description: 'Hand-me-down softness that keeps your buddy extra toasty.',
+  },
+  {
+    id: 'peanut-butter',
+    name: 'Peanut Butter Tub',
+    price: 40,
+    rarity: 'Rare',
+    imagePath: '/peanutbutter.png',
+    description: 'Creamy cushioning with a sticky-sweet landing zone.',
   },
 ]);
 

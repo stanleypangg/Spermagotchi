@@ -42,6 +42,8 @@ export async function GET(request, { params }) {
         equippedClothing: playerData.equippedClothing,
         ownedBackgrounds: playerData.ownedBackgrounds || [],
         equippedBackground: playerData.equippedBackground,
+        ownedBeds: playerData.ownedBeds || [],
+        equippedBed: playerData.equippedBed,
         currentDayIndex: 1,
         createdAt: playerData.createdAt,
         history: [],

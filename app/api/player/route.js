@@ -37,6 +37,8 @@ function getDefaultPlayerData(name) {
     equippedClothing: null,
     ownedBackgrounds: [],
     equippedBackground: null,
+    ownedBeds: [],
+    equippedBed: null,
     createdAt: new Date().toISOString(),
   };
 }
@@ -52,10 +54,22 @@ export async function GET(request) {
     }
     
     const store = readStore();
-    const playerData = store[name] || getDefaultPlayerData(name);
-    
-    // Auto-create if doesn't exist
-    if (!store[name]) {
+    const existingPlayer = store[name];
+    let playerData;
+
+    if (existingPlayer) {
+      playerData = {
+        ...getDefaultPlayerData(name),
+        ...existingPlayer,
+      };
+      const existingString = JSON.stringify(existingPlayer);
+      const mergedString = JSON.stringify(playerData);
+      if (existingString !== mergedString) {
+        store[name] = playerData;
+        writeStore(store);
+      }
+    } else {
+      playerData = getDefaultPlayerData(name);
       store[name] = playerData;
       writeStore(store);
     }

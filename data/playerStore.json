@@ -408,5 +408,129 @@
     ],
     "equippedBackground": "sperm-kingdom",
     "createdAt": "2025-11-09T10:58:34.177Z"
+  },
+  "mnmnm": {
+    "name": "mnmnm",
+    "stats": {
+      "motility": 50,
+      "linearity": 50,
+      "flow": 50,
+      "signals": 50
+    },
+    "elo": 1000,
+    "spermPoints": 155,
+    "raceHistory": [],
+    "currentStreak": 0,
+    "longestStreak": 0,
+    "lastCheckInDate": null,
+    "todayHabits": {
+      "drinkMatcha": true,
+      "goon": true,
+      "sleep8Hours": true,
+      "drink2LWater": true,
+      "drinkAlcohol": true,
+      "smokeCigarettes": true,
+      "eatFastFood": true,
+      "hotLaptop": true
+    },
+    "ownedClothing": [
+      "condom-suit"
+    ],
+    "equippedClothing": "condom-suit",
+    "ownedBackgrounds": [
+      "sperm-kingdom"
+    ],
+    "equippedBackground": "sperm-kingdom",
+    "createdAt": "2025-11-09T16:06:21.630Z"
+  },
+  "gooner": {
+    "name": "gooner",
+    "stats": {
+      "motility": 50,
+      "linearity": 50,
+      "flow": 50,
+      "signals": 50
+    },
+    "elo": 1020,
+    "spermPoints": 169,
+    "raceHistory": [
+      {
+        "place": 1,
+        "totalRacers": 4,
+        "trackId": "rapids",
+        "raceTime": 42.633333333332196,
+        "opponents": [
+          {
+            "name": "NitroRacer",
+            "place": 2
+          },
+          {
+            "name": "ChampMax",
+            "place": 3
+          },
+          {
+            "name": "ZeusCell",
+            "place": 4
+          }
+        ],
+        "timestamp": "2025-11-09T16:58:00.911Z",
+        "eloChange": 20,
+        "eloAfter": 1020,
+        "pointsEarned": 114
+      }
+    ],
+    "currentStreak": 0,
+    "longestStreak": 0,
+    "lastCheckInDate": null,
+    "todayHabits": {
+      "drinkMatcha": false,
+      "goon": false,
+      "sleep8Hours": false,
+      "drink2LWater": false,
+      "drinkAlcohol": false,
+      "smokeCigarettes": false,
+      "eatFastFood": false,
+      "hotLaptop": false
+    },
+    "ownedClothing": [
+      "condom-suit"
+    ],
+    "equippedClothing": null,
+    "ownedBackgrounds": [
+      "sperm-kingdom",
+      "meat-canal"
+    ],
+    "equippedBackground": "meat-canal",
+    "ownedBeds": [
+      "sock"
+    ],
+    "equippedBed": null,
+    "createdAt": "2025-11-09T16:53:15.470Z"
+  },
+  "afd": {
+    "name": "afd",
+    "stats": {
+      "motility": 50,
+      "linearity": 50,
+      "flow": 50,
+      "signals": 50
+    },
+    "elo": 1000,
+    "spermPoints": 168,
+    "raceHistory": [],
+    "currentStreak": 0,
+    "longestStreak": 0,
+    "lastCheckInDate": null,
+    "todayHabits": {},
+    "ownedClothing": [],
+    "equippedClothing": null,
+    "ownedBackgrounds": [],
+    "equippedBackground": null,
+    "ownedBeds": [
+      "peanut-butter",
+      "sock"
+    ],
+    "equippedBed": "sock",
+    "createdAt": "2025-11-09T18:15:40.938Z"
   }
 }

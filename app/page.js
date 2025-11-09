@@ -24,6 +24,7 @@ import {
   HABIT_IMAGE_OVERRIDES,
   SHOP_CLOTHING_ITEMS,
   SHOP_BACKGROUND_ITEMS,
+  SHOP_BED_ITEMS,
   GOOD_HABITS_CONFIG,
   BAD_HABITS_CONFIG,
 } from './data/constants';
@@ -80,13 +81,22 @@ export default function Home() {
   const [ownedBackgrounds, setOwnedBackgrounds] = useState([]);
   const [equippedBackground, setEquippedBackground] = useState(null);
   const [previewBackground, setPreviewBackground] = useState(null);
+  const [ownedBeds, setOwnedBeds] = useState([]);
+  const [equippedBed, setEquippedBed] = useState(null);
+  const [previewBed, setPreviewBed] = useState(null);
   const [purchaseCandidate, setPurchaseCandidate] = useState(null);
   const [showTodos, setShowTodos] = useState(false);
   const [chatBubbleIndex, setChatBubbleIndex] = useState(0);
   const [shopTab, setShopTab] = useState('outfits');
-  const [previewBackgroundLoaded, setPreviewBackgroundLoaded] = useState(true);
   const [showStreakModal, setShowStreakModal] = useState(false);
   const currentBackgroundPreviewId = previewBackground ?? equippedBackground ?? null;
+
+  useEffect(() => {
+    if (CHAT_BUBBLE_IMAGES.length === 0) {
+      return;
+    }
+    setChatBubbleIndex(Math.floor(Math.random() * CHAT_BUBBLE_IMAGES.length));
+  }, []);
 
   useEffect(() => {
     if (!showTodos || typeof window === 'undefined') {
@@ -230,6 +240,12 @@ export default function Home() {
       if (data.sperm.equippedClothing !== undefined) setEquippedClothing(data.sperm.equippedClothing);
       if (data.sperm.ownedBackgrounds) setOwnedBackgrounds(data.sperm.ownedBackgrounds);
       if (data.sperm.equippedBackground !== undefined) setEquippedBackground(data.sperm.equippedBackground);
+      setOwnedBeds(Array.isArray(data.sperm.ownedBeds) ? data.sperm.ownedBeds : []);
+      if (data.sperm.equippedBed !== undefined) {
+        setEquippedBed(data.sperm.equippedBed);
+      } else {
+        setEquippedBed(null);
+      }
       
       // Load today's habit form
       if (data.sperm.todayHabits) {
@@ -280,19 +296,7 @@ export default function Home() {
     }
     setPreviewClothing(null);
     setPreviewBackground(null);
-    setPreviewBackgroundLoaded(true);
   }, [activeTab]);
-
-  useEffect(() => {
-    if (activeTab !== 'shop') {
-      return;
-    }
-    if (!currentBackgroundPreviewId) {
-      setPreviewBackgroundLoaded(true);
-      return;
-    }
-    setPreviewBackgroundLoaded(false);
-  }, [activeTab, currentBackgroundPreviewId]);
 
   useEffect(() => {
     if (activeTab !== 'home') {
@@ -379,6 +383,8 @@ export default function Home() {
         if (playerData.equippedClothing !== undefined) setEquippedClothing(playerData.equippedClothing);
         if (playerData.ownedBackgrounds) setOwnedBackgrounds(playerData.ownedBackgrounds);
         if (playerData.equippedBackground !== undefined) setEquippedBackground(playerData.equippedBackground);
+        if (playerData.ownedBeds) setOwnedBeds(playerData.ownedBeds);
+        if (playerData.equippedBed !== undefined) setEquippedBed(playerData.equippedBed);
         
         // Load today's habit form
         if (playerData.todayHabits) {
@@ -465,6 +471,12 @@ export default function Home() {
             
             // Update coins
             setCoins(Math.max(0, Math.round(playerData.spermPoints ?? 0)));
+            setOwnedBeds(playerData.ownedBeds ?? []);
+            if (playerData.equippedBed !== undefined) {
+              setEquippedBed(playerData.equippedBed);
+            } else {
+              setEquippedBed(null);
+            }
           }
         } catch (err) {
           console.error('Failed to refresh player data:', err);
@@ -486,7 +498,7 @@ export default function Home() {
     if (activeTab !== 'shop') {
       setPreviewClothing((prev) => (prev != null ? null : prev));
       setPreviewBackground((prev) => (prev != null ? null : prev));
-      setPreviewBackgroundLoaded(true);
+      setPreviewBed((prev) => (prev != null ? null : prev));
     }
   }, [activeTab]);
 
@@ -532,6 +544,10 @@ export default function Home() {
             if (playerData.equippedBackground !== undefined && !previewBackground) {
               setEquippedBackground(playerData.equippedBackground);
             }
+        setOwnedBeds(playerData.ownedBeds ?? []);
+        if (!previewBed) {
+          setEquippedBed(playerData.equippedBed ?? null);
+        }
             
             // Load today's habit form
             if (playerData.todayHabits) {
@@ -545,7 +561,7 @@ export default function Home() {
       
       return () => clearTimeout(timeoutId);
     }
-  }, [activeTab, spermId, previewClothing, previewBackground]);
+  }, [activeTab, spermId, previewClothing, previewBackground, previewBed]);
 
   // Initialize preview when switching shop tabs
   useEffect(() => {
@@ -553,16 +569,10 @@ export default function Home() {
       setPreviewBackground(equippedBackground);
     } else if (shopTab === 'outfits' && !previewClothing && equippedClothing) {
       setPreviewClothing(equippedClothing);
+    } else if (shopTab === 'beds' && !previewBed && equippedBed) {
+      setPreviewBed(equippedBed);
     }
-  }, [shopTab]);
-
-  useEffect(() => {
-    if (previewBackground) {
-      setPreviewBackgroundLoaded(false);
-    } else {
-      setPreviewBackgroundLoaded(true);
-    }
-  }, [previewBackground]);
+  }, [shopTab, equippedBackground, equippedClothing, equippedBed, previewBackground, previewClothing, previewBed]);
 
   const handleLandingNameChange = useCallback(
     (value) => {
@@ -739,6 +749,9 @@ export default function Home() {
     setOwnedBackgrounds([]);
     setEquippedBackground(null);
     setPreviewBackground(null);
+    setOwnedBeds([]);
+    setEquippedBed(null);
+    setPreviewBed(null);
   };
 
   const moodLabel =
@@ -864,6 +877,11 @@ export default function Home() {
     ? SHOP_BACKGROUND_ITEMS.find((item) => item.id === previewBackground) ?? null
     : null;
 const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackgroundItem ?? null;
+  const equippedBedItem =
+    SHOP_BED_ITEMS.find((item) => item.id === equippedBed) ?? null;
+  const previewBedItem = previewBed
+    ? SHOP_BED_ITEMS.find((item) => item.id === previewBed) ?? null
+    : null;
 
   const handleSelectOutfit = useCallback(
     (item) => {
@@ -927,7 +945,6 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
     (item) => {
       setError(null);
       setPreviewBackground(item.id);
-      setPreviewBackgroundLoaded(false); // Trigger reload
       if (ownedBackgrounds.includes(item.id)) {
         setEquippedBackground(item.id);
       }
@@ -984,11 +1001,70 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
     scheduleFeedbackClear('Background reset.');
   }, [scheduleFeedbackClear, spermId]);
 
+  const handleSelectBed = useCallback(
+    (item) => {
+      setError(null);
+      setPreviewBed(item.id);
+      if (ownedBeds.includes(item.id)) {
+        setEquippedBed(item.id);
+      }
+    },
+    [ownedBeds],
+  );
+
+  const handleEquipBed = useCallback(
+    async (item) => {
+      setError(null);
+      setEquippedBed(item.id);
+      setPreviewBed(item.id);
+
+      if (spermId) {
+        try {
+          await fetch('/api/player', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: spermId,
+              data: { equippedBed: item.id },
+            }),
+          });
+        } catch (err) {
+          console.error('Failed to save equipped bed:', err);
+        }
+      }
+      scheduleFeedbackClear(`${item.name} ready!`);
+    },
+    [scheduleFeedbackClear, spermId],
+  );
+
+  const handleClearBed = useCallback(async () => {
+    setError(null);
+    setEquippedBed(null);
+    setPreviewBed(null);
+
+    if (spermId) {
+      try {
+        await fetch('/api/player', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: spermId,
+            data: { equippedBed: null },
+          }),
+        });
+      } catch (err) {
+        console.error('Failed to reset bed:', err);
+      }
+    }
+    scheduleFeedbackClear('Bed reset.');
+  }, [scheduleFeedbackClear, spermId]);
+
   const handleOpenPurchaseModal = useCallback((item, category) => {
     setError(null);
     if (category === 'background') {
       setPreviewBackground(item.id);
-      setPreviewBackgroundLoaded(false);
+    } else if (category === 'bed') {
+      setPreviewBed(item.id);
     } else {
       setPreviewClothing(item.id);
     }
@@ -1042,6 +1118,31 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
         }
       }
       scheduleFeedbackClear(`Background "${name}" unlocked!`);
+    } else if (category === 'bed') {
+      const newOwnedBeds = ownedBeds.includes(id) ? ownedBeds : [...ownedBeds, id];
+      setOwnedBeds(newOwnedBeds);
+      setEquippedBed(id);
+      setPreviewBed(id);
+
+      if (spermId) {
+        try {
+          await fetch('/api/player', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: spermId,
+              data: {
+                spermPoints: newCoins,
+                ownedBeds: newOwnedBeds,
+                equippedBed: id,
+              },
+            }),
+          });
+        } catch (err) {
+          console.error('Failed to save bed purchase:', err);
+        }
+      }
+      scheduleFeedbackClear(`Bed "${name}" unlocked!`);
     } else {
       const newOwnedClothing = ownedClothing.includes(id) ? ownedClothing : [...ownedClothing, id];
       setOwnedClothing(newOwnedClothing);
@@ -1079,6 +1180,7 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
     spermId,
     ownedClothing,
     ownedBackgrounds,
+    ownedBeds,
   ]);
 
   const homeDisplayOutfit = equippedOutfitItem;
@@ -1086,6 +1188,8 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
   const homeBackgroundAlt = equippedBackgroundItem
     ? `${equippedBackgroundItem.name} background`
     : 'Default background';
+  const homeBedImage = equippedBedItem?.imagePath ?? petriDish;
+  const homeBedAlt = equippedBedItem ? `${equippedBedItem.name} bed` : 'Petri dish backdrop';
 
   if (showLanding) {
     return (
@@ -1127,8 +1231,8 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
           >
             <div className={`flex items-center gap-2 rounded-full border-2 px-4 py-2 shadow-lg transition hover:scale-105 hover:shadow-xl ${
               (sperm.currentStreak || 0) > 0
-                ? 'border-orange-300 bg-gradient-to-r from-orange-100 to-amber-100'
-                : 'border-slate-300 bg-gradient-to-r from-slate-100 to-slate-200'
+                ? 'border-orange-300 bg-linear-to-r from-orange-100 to-amber-100'
+                : 'border-slate-300 bg-linear-to-r from-slate-100 to-slate-200'
             }`}>
               <span className="text-2xl">{(sperm.currentStreak || 0) > 0 ? '🔥' : '📅'}</span>
               <div className="text-left">
@@ -1204,7 +1308,7 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
             </div>
                 
                 {/* Right side: Rank Badge */}
-                <div className={`flex-shrink-0 rounded-full bg-gradient-to-r ${rankInfo.color} px-3 py-1.5 shadow-lg ${rankInfo.glow}`}>
+                <div className={`shrink-0 rounded-full bg-linear-to-r ${rankInfo.color} px-3 py-1.5 shadow-lg ${rankInfo.glow}`}>
                   <p className="text-xs font-black text-white drop-shadow-md">{rankInfo.rank}</p>
                 </div>
                 
@@ -1224,7 +1328,7 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
           onClick={() => setShowTodos((previous) => !previous)}
           aria-expanded={showTodos}
           aria-controls="daily-todos-panel"
-          className={`absolute left-6 top-6 inline-flex min-h-[36px] min-w-[136px] items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-600 transition hover:border-indigo-200 hover:text-indigo-600 ${
+          className={`absolute left-6 top-6 inline-flex min-h-[40px] min-w-[118px] items-center justify-center gap-2 rounded-2xl border border-indigo-100/80 bg-white/95 px-3 py-2 text-[0.75rem] font-semibold text-indigo-600 shadow-sm shadow-indigo-200/60 backdrop-blur transition hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400 ${
             showTodos ? 'opacity-0 pointer-events-none' : 'opacity-100'
           }`}
           tabIndex={showTodos ? -1 : undefined}
@@ -1232,7 +1336,25 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
           <span className="sr-only">
             {showTodos ? 'Close daily todos' : 'Open daily todos'}
           </span>
-          <span aria-hidden>Daily Todos</span>
+          <span
+            aria-hidden
+            className="flex h-7 w-7 items-center justify-center rounded-full bg-indigo-500 text-white shadow-sm shadow-indigo-300/60"
+          >
+            <svg
+              viewBox="0 0 20 20"
+              className="h-3.5 w-3.5"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <polyline points="4 11 8 15 16 6" />
+            </svg>
+          </span>
+          <span aria-hidden className="whitespace-nowrap tracking-wide">
+            Daily Todos
+          </span>
         </button>
       </header>
 
@@ -1358,12 +1480,13 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
                 </button>
               </div>
               <Image
-                src={petriDish}
-                alt="Petri dish backdrop"
+                src={homeBedImage}
+                alt={homeBedAlt}
                 width={320}
                 height={320}
-                className="absolute bottom-0 left-1/2 z-10 h-[240px] w-[240px] -translate-x-1/2 translate-y-12 object-contain opacity-90"
+                className="absolute bottom-0 left-1/2 z-10 h-[280px] w-[280px] -translate-x-1/2 translate-y-12 object-contain opacity-90"
                 priority
+                unoptimized={typeof homeBedImage === 'string'}
               />
               <div className="absolute left-1/2 top-1/2 z-20 flex h-[320px] w-[320px] -translate-x-1/2 -translate-y-1/2 items-center justify-center">
                 {homeDisplayOutfit ? (
@@ -1469,7 +1592,7 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
                         setError('Failed to advance day');
                       }
                     }}
-                    className="rounded-full border-2 border-orange-300 bg-gradient-to-r from-orange-100 to-amber-100 px-4 py-2 text-sm font-bold text-orange-700 shadow-md transition hover:from-orange-200 hover:to-amber-200 hover:scale-105"
+                    className="rounded-full border-2 border-orange-300 bg-linear-to-r from-orange-100 to-amber-100 px-4 py-2 text-sm font-bold text-orange-700 shadow-md transition hover:from-orange-200 hover:to-amber-200 hover:scale-105"
                   >
                     ⏭️ Next Day (Demo)
                   </button>
@@ -1492,6 +1615,7 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
     const overlayOutfit = previewOutfitItem ?? null;
 
     const isBackgroundTab = shopTab === 'backgrounds';
+    const isBedTab = shopTab === 'beds';
     
     // Calculate background preview - use previewBackground if it exists
     const selectedBackgroundId = previewBackground ?? equippedBackground ?? null;
@@ -1499,35 +1623,148 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
       ? SHOP_BACKGROUND_ITEMS.find((item) => item.id === selectedBackgroundId) 
       : null;
 
-    const sidebarItems = isBackgroundTab ? SHOP_BACKGROUND_ITEMS : SHOP_CLOTHING_ITEMS;
+    const selectedBedId = previewBed ?? equippedBed ?? null;
+    const overlayBedItem = selectedBedId
+      ? SHOP_BED_ITEMS.find((item) => item.id === selectedBedId)
+      : null;
+
+    const sidebarItems = isBackgroundTab
+      ? SHOP_BACKGROUND_ITEMS
+      : isBedTab
+        ? SHOP_BED_ITEMS
+        : SHOP_CLOTHING_ITEMS;
     const selectedBackground = overlayBackgroundItem;
 
-    const selectedItem = isBackgroundTab ? selectedBackground : previewOutfitItem ?? null;
+    const selectedItem = isBackgroundTab
+      ? selectedBackground
+      : isBedTab
+        ? overlayBedItem
+        : previewOutfitItem ?? null;
     const selectedOwned = selectedItem
       ? isBackgroundTab
         ? ownedBackgrounds.includes(selectedItem.id)
-        : ownedClothing.includes(selectedItem.id)
+        : isBedTab
+          ? ownedBeds.includes(selectedItem.id)
+          : ownedClothing.includes(selectedItem.id)
       : false;
     const selectedEquipped = selectedItem
       ? isBackgroundTab
         ? equippedBackground === selectedItem.id
-        : equippedClothing === selectedItem.id
+        : isBedTab
+          ? equippedBed === selectedItem.id
+          : equippedClothing === selectedItem.id
       : false;
     const statusLabel = activeBuddyState?.label ?? 'Steady';
     const statusTitle = selectedItem
       ? isBackgroundTab
         ? 'Featured Background'
-        : 'Featured Fit'
+        : isBedTab
+          ? 'Featured Bed'
+          : 'Featured Fit'
       : isBackgroundTab
-      ? ''
-      : 'Current Status';
+        ? ''
+        : isBedTab
+          ? 'Featured Bed'
+          : 'Current Status';
     const currentFitLabel = equippedOutfitItem?.name ?? null;
-    const emptyTitle = isBackgroundTab ? 'Pick a background' : statusLabel;
+    const emptyTitle = isBackgroundTab
+      ? 'Pick a background'
+      : isBedTab
+        ? 'Pick a bed'
+        : statusLabel;
     const emptyDescription = isBackgroundTab
       ? 'Choose a background from the sidebar to preview the environment.'
-      : currentFitLabel
-      ? `Your buddy is currently ${statusLabel.toLowerCase()} wearing the ${currentFitLabel}. Pick an outfit to preview a new look.`
-      : `Your buddy is currently ${statusLabel.toLowerCase()}. Pick an outfit to preview a new look.`;
+      : isBedTab
+        ? 'Choose a bed to replace the petri dish and give your buddy a cozier base.'
+        : currentFitLabel
+        ? `Your buddy is currently ${statusLabel.toLowerCase()} wearing the ${currentFitLabel}. Pick an outfit to preview a new look.`
+        : `Your buddy is currently ${statusLabel.toLowerCase()}. Pick an outfit to preview a new look.`;
+    const clearAction = isBackgroundTab
+      ? handleClearBackground
+      : isBedTab
+        ? handleClearBed
+        : handleUnequipOutfit;
+    const canClear = isBackgroundTab
+      ? Boolean(equippedBackground)
+      : isBedTab
+        ? Boolean(equippedBed)
+        : Boolean(equippedClothing && ownedClothing.includes(equippedClothing));
+    const clearLabel = isBackgroundTab
+      ? 'Reset Background'
+      : isBedTab
+        ? 'Remove Bed'
+        : 'Unequip Outfit';
+    const buddyPreviewSrc =
+      overlayOutfit
+        ? overlayOutfit.imagePath
+        : activeBuddyState.asset;
+    const buddyPreviewAlt =
+      overlayOutfit
+        ? `${overlayOutfit.name} preview`
+        : activeBuddyState.alt;
+
+    const previewVisual = (() => {
+      if (isBackgroundTab) {
+        return (
+          <div className="relative mx-auto flex h-[520px] -mt-5 my-auto w-full max-w-[520px] items-center justify-center">
+            {overlayBackgroundItem?.imagePath ? (
+              <Image
+                key={overlayBackgroundItem.id}
+                src={overlayBackgroundItem.imagePath}
+                alt={overlayBackgroundItem.name}
+                fill
+                priority
+                className="rounded-[40px] object-cover"
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center rounded-[40px] border border-dashed border-slate-300 bg-slate-100 text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
+                Select a background
+              </div>
+            )}
+          </div>
+        );
+      }
+      if (isBedTab) {
+        return (
+          <div className="relative mx-auto flex h-[520px] -mt-5 my-auto w-full max-w-[520px] items-center justify-center">
+            <div className="absolute inset-0 -z-10 rounded-[40px] border border-slate-200/70 bg-white shadow-[0_40px_80px_rgba(63,61,86,0.18)]" />
+            <div className="relative z-10 flex h-full w-full items-center justify-center">
+              {overlayBedItem?.imagePath ? (
+                <Image
+                  key={overlayBedItem.id}
+                  src={overlayBedItem.imagePath}
+                  alt={overlayBedItem.name}
+                  width={360}
+                  height={360}
+                  priority
+                  className="h-[320px] w-[320px] object-contain"
+                  unoptimized
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
+                  Select a bed
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      }
+      return (
+        <div className="relative mx-auto flex h-[520px] -mt-5 my-auto w-full max-w-[520px] items-center justify-center">
+          <div className="absolute inset-0 -z-10 rounded-[40px] border border-slate-200/70 bg-white shadow-[0_40px_80px_rgba(63,61,86,0.18)]" />
+          <div className="relative z-10 flex h-full w-full items-center justify-center px-6 py-8">
+            <Image
+              src={buddyPreviewSrc}
+              alt={buddyPreviewAlt}
+              width={520}
+              height={520}
+              priority
+              className="h-full w-full animate-float object-contain drop-shadow-[0_25px_70px_rgba(63,61,86,0.25)]"
+            />
+          </div>
+        </div>
+      );
+    })();
 
     return (
       <main className="grid min-h-[calc(100vh-88px)] max-h-[calc(100vh-88px)] grid-rows-1 gap-6 overflow-hidden bg-white px-4 py-8 md:grid-cols-[320px_1fr] md:px-12">
@@ -1561,6 +1798,7 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
                 {[
                   { id: 'outfits', label: 'Outfits' },
                   { id: 'backgrounds', label: 'Backgrounds' },
+                  { id: 'beds', label: 'Beds' },
                 ].map((tab) => {
                   const isActive = shopTab === tab.id;
                   return (
@@ -1570,9 +1808,11 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
                       onClick={() => {
                         setShopTab(tab.id);
                         if (tab.id === 'outfits') {
-                          setPreviewBackground(equippedBackground ?? null);
-                        } else {
                           setPreviewClothing(equippedClothing ?? null);
+                        } else if (tab.id === 'backgrounds') {
+                          setPreviewBackground(equippedBackground ?? null);
+                        } else if (tab.id === 'beds') {
+                          setPreviewBed(equippedBed ?? null);
                         }
                       }}
                       className={`flex-1 rounded-full px-3 py-1 transition ${
@@ -1589,13 +1829,19 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
               {sidebarItems.map((item) => {
                 const isOwned = isBackgroundTab
                   ? ownedBackgrounds.includes(item.id)
-                  : ownedClothing.includes(item.id);
+                  : isBedTab
+                    ? ownedBeds.includes(item.id)
+                    : ownedClothing.includes(item.id);
                 const isEquipped = isBackgroundTab
                   ? equippedBackground === item.id
-                  : equippedClothing === item.id;
+                  : isBedTab
+                    ? equippedBed === item.id
+                    : equippedClothing === item.id;
                 const isSelected = isBackgroundTab
                   ? selectedBackgroundId === item.id
-                  : previewClothing === item.id || (!previewClothing && selectedOutfitId === item.id);
+                  : isBedTab
+                    ? selectedBedId === item.id
+                    : previewClothing === item.id || (!previewClothing && selectedOutfitId === item.id);
                 const affordable = coinsDisplay >= item.price;
 
                 return isBackgroundTab ? (
@@ -1670,6 +1916,70 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
                         </button>
                       )}
                     </div>
+                  </div>
+                ) : isBedTab ? (
+                  <div
+                    key={item.id}
+                    className={`flex items-center gap-3 rounded-2xl border px-3 py-3 transition ${
+                      isSelected ? 'border-amber-200 bg-amber-50 shadow-sm' : 'border-slate-200 bg-white hover:border-slate-300'
+                    }`}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => handleSelectBed(item)}
+                      className="flex flex-1 items-center gap-3 text-left"
+                    >
+                      <div className="relative h-14 w-14 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                        <Image
+                          src={item.imagePath}
+                          alt={`${item.name} bed preview`}
+                          fill
+                          className="object-contain"
+                          sizes="56px"
+                          unoptimized
+                        />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-sm font-semibold text-slate-700">{item.name}</span>
+                        {item.rarity ? (
+                          <span className="text-[11px] uppercase tracking-wide text-slate-400">{item.rarity}</span>
+                        ) : null}
+                      </div>
+                    </button>
+                    {isOwned ? (
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          handleEquipBed(item);
+                        }}
+                        className={`inline-flex min-w-[96px] items-center justify-center gap-2 rounded-full px-3 py-1 text-xs font-semibold transition ${
+                          isEquipped
+                            ? 'bg-amber-500 text-white'
+                            : 'border border-amber-200 text-amber-600 hover:bg-amber-50'
+                        }`}
+                        disabled={isEquipped}
+                      >
+                        <span>{isEquipped ? 'Equipped' : 'Equip'}</span>
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          handleOpenPurchaseModal(item, 'bed');
+                        }}
+                        className={`flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold transition ${
+                          affordable
+                            ? 'bg-emerald-500 text-white hover:bg-emerald-600'
+                            : 'cursor-not-allowed bg-slate-100 text-slate-400'
+                        }`}
+                        disabled={!affordable}
+                      >
+                        {renderCoinValue(item.price, 'h-4 w-4')}
+                        <span>Buy</span>
+                      </button>
+                    )}
                   </div>
                 ) : (
                   // Outfit cards - original horizontal layout
@@ -1768,89 +2078,20 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
               ) : null}
               <button
                 type="button"
-                onClick={isBackgroundTab ? handleClearBackground : handleUnequipOutfit}
-                disabled={
-                  isBackgroundTab
-                    ? !equippedBackground
-                    : !equippedClothing || !ownedClothing.includes(equippedClothing)
-                }
+                onClick={clearAction}
+                disabled={!canClear}
                 className={`rounded-full border px-4 py-2 text-xs font-semibold transition ${
-                  (isBackgroundTab
-                    ? equippedBackground
-                    : equippedClothing && ownedClothing.includes(equippedClothing))
+                  canClear
                     ? 'border-rose-200 text-rose-600 hover:bg-rose-50'
                     : 'cursor-not-allowed border-slate-200 text-slate-300'
                 }`}
               >
-                {isBackgroundTab ? 'Reset Background' : 'Unequip Outfit'}
+                {clearLabel}
               </button>
             </div>
         </div>
 
-          <div className="relative mx-auto flex h-[520px] -mt-5 my-auto w-full max-w-[520px] items-center justify-center">
-            {/* Background Layer - show selected background or equipped background */}
-            {overlayBackgroundItem?.imagePath ? (
-              <div className="absolute inset-0 -z-10 overflow-hidden rounded-[40px] border border-slate-200/70 shadow-[0_40px_80px_rgba(63,61,86,0.18)]">
-                {!previewBackgroundLoaded ? (
-                  <div className="absolute inset-0 animate-pulse bg-slate-200/60" />
-                ) : null}
-                <Image
-                  key={overlayBackgroundItem.id}
-                  src={overlayBackgroundItem.imagePath}
-                  alt={overlayBackgroundItem.name}
-                  fill
-                  className="object-cover"
-                  priority
-                  unoptimized
-                  onLoadingComplete={() => setPreviewBackgroundLoaded(true)}
-                />
-                <div className="absolute inset-0 bg-linear-to-t from-black/40 via-transparent to-white/25 backdrop-blur-[1px]" />
-              </div>
-            ) : (
-              <div className="absolute inset-0 -z-10 rounded-[40px] border border-slate-200/70 bg-white shadow-[0_40px_80px_rgba(63,61,86,0.18)]" />
-            )}
-            {/* Show background preview when in backgrounds tab */}
-            {isBackgroundTab && overlayBackgroundItem ? (
-              <>
-                <Image
-                  key={overlayBackgroundItem.id}
-                  src={overlayBackgroundItem.imagePath}
-                  alt={overlayBackgroundItem.name}
-                  fill
-                  className="object-cover rounded-[40px]"
-                  priority
-                  unoptimized
-                  onLoadingComplete={() => setPreviewBackgroundLoaded(true)}
-                />
-                {/* Show sperm character on top of background */}
-                <div className="relative z-10 flex h-full w-full items-center justify-center">
-                  <Image
-                    src={activeBuddyState.asset}
-                    alt={activeBuddyState.alt}
-                    width={380}
-                    height={380}
-                    priority
-                    className="animate-float object-contain drop-shadow-[0_25px_70px_rgba(0,0,0,0.5)]"
-                  />
-                </div>
-              </>
-            ) : (
-            <div className="relative z-10 flex h-full w-full items-center justify-center px-6 py-8">
-              <Image
-                src={overlayOutfit ? overlayOutfit.imagePath : activeBuddyState.asset}
-                alt={
-                  overlayOutfit
-                    ? `${overlayOutfit.name} preview`
-                    : activeBuddyState.alt
-                }
-                width={520}
-                height={520}
-                priority
-                className="h-full w-full animate-float object-contain drop-shadow-[0_25px_70px_rgba(63,61,86,0.25)]"
-              />
-            </div>
-            )}
-          </div>
+          {previewVisual}
         </section>
       </main>
     );
