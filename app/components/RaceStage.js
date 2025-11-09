@@ -116,6 +116,8 @@ export default function RaceStage({
   width = 900,
   height = 520,
   cameraSpan = 360,
+  isFinished = false,
+  finishOrder = [],
 }) {
   const centerPath = useMemo(
     () => svgPathFromGeometry(geometry),
@@ -134,6 +136,28 @@ export default function RaceStage({
     () => frame?.lanes?.find((lane) => lane.id === 'player'),
     [frame?.lanes],
   );
+
+  const playerPosition = useMemo(() => {
+    if (!frame?.lanes || !playerLane) return null;
+    const sortedLanes = [...frame.lanes].sort((a, b) => b.progress - a.progress);
+    return sortedLanes.findIndex(lane => lane.id === 'player') + 1;
+  }, [frame?.lanes, playerLane]);
+
+  const positionGradient = useMemo(() => {
+    if (!playerPosition || !frame?.lanes) return 'from-yellow-400 via-orange-400 to-red-500';
+    const totalRacers = frame.lanes.length;
+    if (playerPosition === 1) {
+      return 'from-yellow-300 via-amber-400 to-yellow-500';
+    } else if (playerPosition === 2) {
+      return 'from-slate-300 via-gray-400 to-slate-500';
+    } else if (playerPosition === 3) {
+      return 'from-orange-400 via-amber-600 to-orange-700';
+    } else if (playerPosition <= totalRacers / 2) {
+      return 'from-green-400 via-emerald-500 to-green-600';
+    } else {
+      return 'from-red-500 via-rose-600 to-red-700';
+    }
+  }, [playerPosition, frame?.lanes]);
 
   const leader = useMemo(() => {
     if (!frame?.lanes?.length) {
@@ -565,14 +589,14 @@ export default function RaceStage({
       </svg>
 
       {/* Top Progress Bar */}
-      <div className="pointer-events-none absolute top-0 left-0 right-0 px-8 pt-6">
-        <div className="relative h-8 bg-linear-to-r from-purple-900/40 via-pink-900/40 to-orange-900/40 rounded-full backdrop-blur-md shadow-2xl border-2 border-white/30 overflow-hidden">
+      <div className="pointer-events-none absolute top-0 left-0 right-0 px-4 pt-3">
+        <div className="relative h-6 bg-linear-to-r from-purple-900/40 via-pink-900/40 to-orange-900/40 rounded-full backdrop-blur-md shadow-2xl border-2 border-white/30 overflow-hidden">
           <div
             className="absolute inset-0 bg-linear-to-r from-cyan-400 via-pink-400 to-yellow-400 transition-all duration-300 ease-out shadow-[0_0_20px_rgba(251,146,60,0.6)]"
             style={{ width: `${Math.max(...(frame?.lanes?.map(l => l.progress) ?? [0])) * 100}%` }}
           />
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-xs font-black text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] tracking-wider">
+            <span className="text-[10px] font-black text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] tracking-wider">
               {(Math.max(...(frame?.lanes?.map(l => l.progress) ?? [0])) * 100).toFixed(1)}% COMPLETE
             </span>
           </div>
@@ -580,23 +604,23 @@ export default function RaceStage({
       </div>
 
       {/* Top Left: Position & Timer */}
-      <div className="pointer-events-none absolute top-20 left-8 flex flex-col gap-3">
-        <div className="bg-linear-to-br from-yellow-400 via-orange-400 to-red-500 rounded-3xl px-6 py-4 shadow-2xl border-4 border-white/50 -rotate-2">
-          <div className="flex items-baseline gap-2">
-            <span className="text-5xl font-black text-white drop-shadow-[0_4px_8px_rgba(0,0,0,0.5)]" style={{ fontFamily: 'Impact, fantasy' }}>
-              {playerLane?.place ?? '—'}
+      <div className="pointer-events-none absolute top-12 left-4 flex flex-col gap-2">
+        <div className={`bg-linear-to-br ${positionGradient} rounded-2xl px-4 py-2 shadow-2xl border-3 border-white/50 -rotate-2 transition-all duration-300`}>
+          <div className="flex items-baseline gap-1">
+            <span className="text-3xl font-black text-white drop-shadow-[0_4px_8px_rgba(0,0,0,0.5)]" style={{ fontFamily: 'Impact, fantasy' }}>
+              {playerPosition ?? '—'}
             </span>
-            <span className="text-2xl font-bold text-white/90">/{frame?.lanes?.length ?? 4}</span>
+            <span className="text-lg font-bold text-white/90">/{frame?.lanes?.length ?? 4}</span>
           </div>
-          <div className="text-xs font-bold text-white/80 uppercase tracking-wider mt-1">Position</div>
+          <div className="text-[9px] font-bold text-white/80 uppercase tracking-wider mt-0.5">Position</div>
         </div>
         
-        <div className="bg-linear-to-br from-cyan-400 via-blue-400 to-indigo-500 rounded-2xl px-5 py-3 shadow-xl border-3 border-white/40 rotate-1">
-          <div className="flex items-center gap-2">
-            <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+        <div className="bg-linear-to-br from-cyan-400 via-blue-400 to-indigo-500 rounded-xl px-3 py-2 shadow-xl border-2 border-white/40 rotate-1">
+          <div className="flex items-center gap-1.5">
+            <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd"/>
             </svg>
-            <span className="text-2xl font-black text-white drop-shadow" style={{ fontFamily: 'Impact, fantasy' }}>
+            <span className="text-lg font-black text-white drop-shadow" style={{ fontFamily: 'Impact, fantasy' }}>
               {frame?.t?.toFixed(1) ?? '0.0'}s
             </span>
           </div>
@@ -604,10 +628,10 @@ export default function RaceStage({
       </div>
 
       {/* Top Right: Mini Map */}
-      <div className="pointer-events-none absolute top-20 right-8">
-        <div className="bg-linear-to-br from-purple-500/90 via-pink-500/90 to-rose-500/90 rounded-3xl p-4 shadow-2xl border-4 border-white/50 backdrop-blur-md">
-          <div className="text-xs font-bold text-white/90 uppercase tracking-wider mb-2">Track Map</div>
-          <svg width="180" height="180" viewBox={`${overallBounds?.minX ?? 0} ${overallBounds?.minY ?? 0} ${overallBounds?.width ?? 100} ${overallBounds?.height ?? 100}`} className="bg-white/20 rounded-xl">
+      <div className="pointer-events-none absolute top-12 right-4">
+        <div className="bg-linear-to-br from-purple-500/90 via-pink-500/90 to-rose-500/90 rounded-2xl p-2 shadow-2xl border-3 border-white/50 backdrop-blur-md">
+          <div className="text-[9px] font-bold text-white/90 uppercase tracking-wider mb-1">Track Map</div>
+          <svg width="120" height="120" viewBox={`${overallBounds?.minX ?? 0} ${overallBounds?.minY ?? 0} ${overallBounds?.width ?? 100} ${overallBounds?.height ?? 100}`} className="bg-white/20 rounded-lg">
             <path
               d={centerPath}
               stroke="rgba(255,255,255,0.4)"
@@ -641,16 +665,16 @@ export default function RaceStage({
       </div>
 
       {/* Bottom Right: Speedometer */}
-      <div className="pointer-events-none absolute bottom-8 right-8">
-        <div className="bg-linear-to-br from-green-400 via-emerald-500 to-teal-600 rounded-full p-6 shadow-2xl border-4 border-white/60 rotate-3">
+      <div className="pointer-events-none absolute bottom-16 right-4">
+        <div className="bg-linear-to-br from-green-400 via-emerald-500 to-teal-600 rounded-full p-4 shadow-2xl border-3 border-white/60 rotate-3">
           <div className="flex flex-col items-center">
-            <div className="text-xs font-bold text-white/80 uppercase tracking-widest">Speed</div>
+            <div className="text-[9px] font-bold text-white/80 uppercase tracking-widest">Speed</div>
             <div className="flex items-baseline">
-              <span className="text-5xl font-black text-white drop-shadow-[0_4px_8px_rgba(0,0,0,0.5)]" style={{ fontFamily: 'Impact, fantasy' }}>
+              <span className="text-3xl font-black text-white drop-shadow-[0_4px_8px_rgba(0,0,0,0.5)]" style={{ fontFamily: 'Impact, fantasy' }}>
                 {((leader?.velocity ?? 0) / 100).toFixed(1)}
               </span>
             </div>
-            <div className="text-sm font-bold text-white/90">m/s</div>
+            <div className="text-[10px] font-bold text-white/90">m/s</div>
           </div>
         </div>
       </div>

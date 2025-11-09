@@ -21,6 +21,7 @@ export default function RacePage() {
   const [isRunning, setIsRunning] = useState(false);
   const [finishOrder, setFinishOrder] = useState([]);
   const [cameraSpan, setCameraSpan] = useState(400);
+  const [speedMultiplier, setSpeedMultiplier] = useState(1);
 
   const engineRef = useRef(null);
   const rafRef = useRef(null);
@@ -95,7 +96,7 @@ export default function RacePage() {
       if (!engineRef.current) return;
       if (!lastRef.current) lastRef.current = time;
 
-      accRef.current += (time - lastRef.current) / 1000;
+      accRef.current += ((time - lastRef.current) / 1000) * speedMultiplier;
       lastRef.current = time;
       accRef.current = Math.min(accRef.current, 0.25);
 
@@ -134,7 +135,7 @@ export default function RacePage() {
         rafRef.current = null;
       }
     };
-  }, [isRunning]);
+  }, [isRunning, speedMultiplier]);
 
   const handleReset = async () => {
     setIsRunning(false);
@@ -177,15 +178,15 @@ export default function RacePage() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col bg-slate-900">
-      <div className="relative flex-1">
+    <main className="h-screen w-screen overflow-hidden flex flex-col bg-slate-900 p-4">
+      <div className="relative flex-1 rounded-3xl overflow-hidden shadow-2xl border-4 border-white/10">
         <RaceStage
           geometry={engineBundle.geometry}
           frame={frame}
           cameraSpan={cameraSpan}
         />
         
-        <div className="pointer-events-auto absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-wrap items-center gap-3 bg-slate-900/90 backdrop-blur-md px-6 py-3 rounded-full shadow-2xl border-2 border-white/20">
+        <div className="pointer-events-auto absolute bottom-4 left-1/2 -translate-x-1/2 flex flex-wrap items-center justify-center gap-2 bg-slate-900/90 backdrop-blur-md px-4 py-2 rounded-full shadow-2xl border-2 border-white/20">
           <button
             type="button"
             onClick={() => {
@@ -195,10 +196,10 @@ export default function RacePage() {
                 setIsRunning((prev) => !prev);
               }
             }}
-            className="rounded-full bg-gradient-to-r from-purple-500 to-pink-500 px-5 py-2 text-sm font-bold text-white shadow-lg transition hover:from-purple-600 hover:to-pink-600"
+            className="rounded-full bg-gradient-to-r from-purple-500 to-pink-500 px-4 py-1.5 text-xs font-bold text-white shadow-lg transition hover:from-purple-600 hover:to-pink-600"
           >
             {finishOrder.length
-              ? 'Replay Race'
+              ? 'Replay'
               : isRunning
               ? 'Pause'
               : 'Resume'}
@@ -206,12 +207,23 @@ export default function RacePage() {
           <button
             type="button"
             onClick={handleReset}
-            className="rounded-full border-2 border-white/40 px-5 py-2 text-sm font-bold text-white transition hover:bg-white/10"
+            className="rounded-full border-2 border-white/40 px-4 py-1.5 text-xs font-bold text-white transition hover:bg-white/10"
           >
-            Reset Race
+            Reset
+          </button>
+          <button
+            type="button"
+            onClick={() => setSpeedMultiplier(prev => prev === 1 ? 2 : 1)}
+            className={`rounded-full px-4 py-1.5 text-xs font-bold text-white shadow-lg transition ${
+              speedMultiplier === 2
+                ? 'bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600'
+                : 'bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600'
+            }`}
+          >
+            {speedMultiplier}x
           </button>
           <label className="flex items-center gap-2 text-xs font-semibold text-white/90">
-            Camera
+            Zoom
             <input
               type="range"
               min={300}
@@ -219,7 +231,7 @@ export default function RacePage() {
               step={20}
               value={cameraSpan}
               onChange={(event) => setCameraSpan(Number(event.target.value))}
-              className="w-24"
+              className="w-20"
             />
           </label>
         </div>
