@@ -97,11 +97,11 @@ export const TRACK_PRESETS = Object.freeze([
     id: 'driftway',
     name: 'Driftway',
     controlPoints: transformPoints(LINEAR_LOOP, {
-      scaleX: 198,
-      scaleY: 40,
-      rotate: -2.4,
-      translateX: -38,
-      translateY: -9,
+      scaleX: 185,
+      scaleY: 38,
+      rotate: -2.2,
+      translateX: -36,
+      translateY: -8,
     }),
     zones: [
       { kind: 'flow', start: 0, end: 0.25 },
@@ -115,11 +115,11 @@ export const TRACK_PRESETS = Object.freeze([
     id: 'gulfstream',
     name: 'Gulf Stream',
     controlPoints: transformPoints(LINEAR_LOOP, {
-      scaleX: 224,
-      scaleY: 45,
-      rotate: 4.6,
-      translateX: -18,
-      translateY: 5,
+      scaleX: 210,
+      scaleY: 43,
+      rotate: 4.8,
+      translateX: -16,
+      translateY: 8,
     }),
     zones: [
       { kind: 'gradient', start: 0, end: 0.2 },

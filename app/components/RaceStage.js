@@ -121,16 +121,22 @@ export default function RaceStage({
     const prev = cameraRef.current;
     const tangent = leader.tangent ?? { x: 1, y: 0 };
     const speed = leader.velocity ?? 0;
-    const baseLookahead = Math.min(120, speed * 1.6);
+    const baseLookahead = Math.min(120, speed * 1.5);
     const finishBias =
       leader.finished && geometry
         ? Math.max(baseLookahead, (geometry.width ?? 80) * 0.6)
         : baseLookahead;
-    const targetX = leader.x + tangent.x * finishBias;
-    const targetY = leader.y + tangent.y * finishBias;
+    const filteredTangent = prev.tangent
+      ? {
+          x: prev.tangent.x + (tangent.x - prev.tangent.x) * 0.35,
+          y: prev.tangent.y + (tangent.y - prev.tangent.y) * 0.35,
+        }
+      : tangent;
+    const targetX = leader.x + filteredTangent.x * finishBias;
+    const targetY = leader.y + filteredTangent.y * finishBias;
     const dt = Math.max(1 / 120, frame.t - (prev.t ?? frame.t));
     const leaderChanged = prev.leaderId && prev.leaderId !== leader.id;
-    const smoothingRate = leaderChanged ? 6.2 : 3.5;
+    const smoothingRate = leaderChanged ? 4.2 : 2.4;
     const smoothing = 1 - Math.exp(-dt * smoothingRate);
     const baseX = prev.initialized ? prev.x : targetX;
     const baseY = prev.initialized ? prev.y : targetY;
@@ -142,6 +148,7 @@ export default function RaceStage({
       t: frame.t,
       initialized: true,
       leaderId: leader.id,
+      tangent: filteredTangent,
     };
     setCameraCenter({ x: nextX, y: nextY });
   }, [frame, leader, geometry]);
@@ -157,10 +164,10 @@ export default function RaceStage({
 
   const bounds = useMemo(() => {
     const trackWidth = geometry?.width ?? 80;
-    const pad = trackWidth * 1.5;
+    const pad = trackWidth * 2.1;
     const allFinished = frame?.lanes?.every((lane) => lane.finished);
-    const finishPad = allFinished ? trackWidth * 2 : trackWidth * 0.6;
-    const leaderPad = leader?.finished ? trackWidth * 1.1 : 0;
+    const finishPad = allFinished ? trackWidth * 6.5 : trackWidth * 1.6;
+    const leaderPad = leader?.finished ? trackWidth * 2.6 : 0;
     let minX = cameraCenter.x - halfW;
     let maxX = cameraCenter.x + halfW;
     let minY = cameraCenter.y - halfH;
