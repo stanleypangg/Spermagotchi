@@ -375,6 +375,11 @@ export default function Home() {
         if (playerData.ownedBackgrounds) setOwnedBackgrounds(playerData.ownedBackgrounds);
         if (playerData.equippedBackground !== undefined) setEquippedBackground(playerData.equippedBackground);
         
+        // Load today's habit form
+        if (playerData.todayHabits) {
+          setHabitForm({ ...DEFAULT_HABIT_FORM, ...playerData.todayHabits });
+        }
+        
         // Calculate derived stats
         const derivedStats = {
           overallHealthScore: (
@@ -520,6 +525,11 @@ export default function Home() {
             if (playerData.ownedBackgrounds) setOwnedBackgrounds(playerData.ownedBackgrounds);
             if (playerData.equippedBackground !== undefined && !previewBackground) {
               setEquippedBackground(playerData.equippedBackground);
+            }
+            
+            // Load today's habit form
+            if (playerData.todayHabits) {
+              setHabitForm({ ...DEFAULT_HABIT_FORM, ...playerData.todayHabits });
             }
           }
         } catch (err) {
@@ -676,8 +686,20 @@ export default function Home() {
       } else if (!value && buddyOverride?.key === key) {
         setBuddyOverride(selectOverrideFromHabits(nextHabits));
       }
+      
+      // Save habit form to player store
+      if (spermId) {
+        fetch('/api/player', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: spermId,
+            data: { todayHabits: nextHabits },
+          }),
+        }).catch(err => console.error('Failed to save habits:', err));
+      }
     },
-    [habitForm, buddyOverride, selectOverrideFromHabits, syncHabitForm],
+    [habitForm, buddyOverride, selectOverrideFromHabits, syncHabitForm, spermId],
   );
 
   const handleReset = () => {

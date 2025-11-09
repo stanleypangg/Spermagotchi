@@ -32,6 +32,7 @@ function getDefaultPlayerData(name) {
     currentStreak: 0,
     longestStreak: 0,
     lastCheckInDate: null,
+    todayHabits: {}, // Today's habit selections
     ownedClothing: [],
     equippedClothing: null,
     ownedBackgrounds: [],
