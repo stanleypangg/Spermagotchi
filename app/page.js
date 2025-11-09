@@ -29,7 +29,12 @@ const TODO_PANEL_WIDTH = 360;
 const TODO_PANEL_GAP = 24;
 
 export default function Home() {
-  const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  const today = useMemo(() => {
+    const now = new Date();
+    const offsetInMs = now.getTimezoneOffset() * 60 * 1000;
+    const local = new Date(now.getTime() - offsetInMs);
+    return local.toISOString().slice(0, 10);
+  }, []);
   const [loading, setLoading] = useState(true);
   const [spermId, setSpermId] = useState(null);
   const [sperm, setSperm] = useState(null);
@@ -55,6 +60,22 @@ export default function Home() {
   const [previewClothing, setPreviewClothing] = useState(null);
   const [purchaseCandidate, setPurchaseCandidate] = useState(null);
   const [showTodos, setShowTodos] = useState(false);
+
+  const submissionDate = useMemo(() => {
+    if (!sperm?.createdAt) {
+      return today;
+    }
+    try {
+      const createdAt = new Date(sperm.createdAt);
+      if (Number.isNaN(createdAt.getTime())) {
+        return today;
+      }
+      const createdDate = createdAt.toISOString().slice(0, 10);
+      return createdDate > today ? createdDate : today;
+    } catch {
+      return today;
+    }
+  }, [sperm?.createdAt, today]);
 
   const renderCoinValue = useCallback(
     (value, sizeClass = 'h-4 w-4') => (
@@ -358,7 +379,7 @@ export default function Home() {
       try {
         await submitHabitCheckInApi({
           spermId,
-          date: today,
+          date: submissionDate,
           habits: nextHabits,
         });
         await fetchSpermState(spermId);
@@ -387,7 +408,7 @@ export default function Home() {
       fetchSpermState,
       scheduleFeedbackClear,
       spermId,
-      today,
+      submissionDate,
       selectOverrideFromHabits,
     ],
   );
@@ -498,6 +519,13 @@ export default function Home() {
     },
     [scheduleFeedbackClear],
   );
+
+  const handleUnequipAll = useCallback(() => {
+    setError(null);
+    setEquippedClothing(null);
+    setPreviewClothing(null);
+    scheduleFeedbackClear('Outfit removed.');
+  }, [scheduleFeedbackClear]);
 
   const handleOpenPurchaseModal = useCallback((item) => {
     setPreviewClothing(item.id);
@@ -611,80 +639,68 @@ export default function Home() {
               Toggle today’s habits to keep your swimmer in peak form.
           </p>
         </div>
-          <div className="mt-4 flex-1 overflow-y-auto pr-1">
+          <div className="mt-4 flex-1 min-h-0 overflow-hidden">
             <HabitPanel habitForm={habitForm} onToggle={handleHabitToggle} submitting={submitting} />
           </div>
         </aside>
 
-        <section
-          className="relative z-0 flex w-full flex-col items-center justify-center transition-transform duration-500 ease-out"
-          style={{
-            transform: `translateX(${showTodos ? TODO_PANEL_WIDTH + TODO_PANEL_GAP : 0}px)`,
-          }}
-        >
-          <div className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
-            {sperm?.name ?? 'Buddy'} · Day {sperm?.currentDayIndex ?? 1}
-          </div>
-          <div className="rounded-full bg-pink-100/60 px-4 py-1 text-xs font-semibold text-pink-500">
-            {buddyOverride ? buddyOverride.label : moodLabel}
-          </div>
-          <div className="relative mt-6 flex h-56 w-56 items-center justify-center">
-            <Image
-              src={petriDish}
-              alt="Petri dish backdrop"
-              width={240}
-              height={240}
-              className="absolute h-[220px] w-[220px] translate-y-12 object-contain opacity-90"
-              priority
-            />
-            <div className="relative z-10 flex h-full w-full items-center justify-center">
-              {homeDisplayOutfit ? (
-                <Image
-                  src={homeDisplayOutfit.imagePath}
-                  alt={homeDisplayOutfit.name}
-                  width={220}
-                  height={220}
-                  priority
-                  className="h-full w-full animate-float object-contain drop-shadow-[0_16px_32px_rgba(63,61,86,0.24)]"
-                />
-              ) : (
-                <Image
-                  src={activeBuddyState.asset}
-                  alt={activeBuddyState.alt}
-                  width={220}
-                  height={220}
-                  priority
-                  className="h-full w-full animate-float object-contain drop-shadow-[0_16px_32px_rgba(63,61,86,0.24)]"
-                />
-              )}
+        <section className="relative z-0 flex w-full justify-center transition-transform duration-500 ease-out">
+          <div className="flex w-full max-w-xl flex-col items-center justify-center px-4 text-center">
+            <div className="relative h-[340px] w-full max-w-[320px]">
+              <Image
+                src={petriDish}
+                alt="Petri dish backdrop"
+                width={320}
+                height={320}
+                className="absolute bottom-0 translate-y-12 left-1/2 h-[240px] w-[240px] -translate-x-1/2 object-contain opacity-90"
+                priority
+              />
+              <div className="absolute left-1/2 top-1/2 flex h-[280px] w-[280px] -translate-x-1/2 -translate-y-1/2 items-center justify-center">
+                {homeDisplayOutfit ? (
+                  <Image
+                    src={homeDisplayOutfit.imagePath}
+                    alt={homeDisplayOutfit.name}
+                    width={280}
+                    height={280}
+                    priority
+                    className="h-full w-full animate-float object-contain drop-shadow-[0_16px_32px_rgba(63,61,86,0.24)]"
+                  />
+                ) : (
+                  <Image
+                    src={activeBuddyState.asset}
+                    alt={activeBuddyState.alt}
+                    width={280}
+                    height={280}
+                    priority
+                    className="h-full w-full animate-float object-contain drop-shadow-[0_16px_32px_rgba(63,61,86,0.24)]"
+                  />
+                )}
+              </div>
             </div>
-          </div>
-          <div className="mt-2 text-[0.65rem] font-semibold uppercase tracking-[0.3em] text-slate-400">
-            {homeDisplayOutfit ? homeDisplayOutfit.name : activeBuddyState.label ?? activeBuddyState.alt}
-          </div>
-          <div className="mt-2 text-[0.7rem] font-semibold uppercase tracking-[0.35em] text-slate-500">
-            Wellness {Number.isFinite(effectiveScore) ? Math.round(effectiveScore) : '--'}
-          </div>
-          <div className="mt-4 flex w-full max-w-sm flex-col items-stretch gap-2 text-left">
-            <label className="text-[0.65rem] font-semibold uppercase tracking-[0.3em] text-slate-500">
-              Debug Wellness
-            </label>
-            <input
-              type="range"
-              min="0"
-              max="100"
-              step="1"
-              value={debugWellness ?? Math.round(combinedScore)}
-              onChange={(event) => setDebugWellness(Number(event.target.value))}
-              className="accent-[#8f54ff]"
-            />
-            <button
-              type="button"
-              onClick={() => setDebugWellness(null)}
-              className="self-end text-xs font-semibold text-indigo-500 underline"
-            >
-              reset
-            </button>
+            <div className="mt-4 text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
+              {sperm?.name ?? 'Buddy'}
+            </div>
+            <div className="mt-4 flex w-full max-w-sm flex-col items-stretch gap-2 text-left">
+              <label className="text-[0.65rem] font-semibold uppercase tracking-[0.3em] text-slate-500">
+                Debug Wellness
+              </label>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                step="1"
+                value={debugWellness ?? Math.round(combinedScore)}
+                onChange={(event) => setDebugWellness(Number(event.target.value))}
+                className="accent-[#8f54ff]"
+              />
+              <button
+                type="button"
+                onClick={() => setDebugWellness(null)}
+                className="self-end text-xs font-semibold text-indigo-500 underline"
+              >
+                reset
+              </button>
+            </div>
           </div>
         </section>
       </div>
@@ -801,7 +817,7 @@ export default function Home() {
         </aside>
 
         <section className="flex flex-col justify-between gap-6 overflow-hidden rounded-3xl border border-slate-200 bg-white px-8 py-10 shadow-xl">
-          <div className="flex items-start justify-between gap-6">
+          <div className="flex flex-wrap items-start justify-between gap-6">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
                 Featured Fit
@@ -815,27 +831,41 @@ export default function Home() {
                   : 'Choose an outfit from the sidebar to see it on your swimmer.'}
               </p>
             </div>
-            {selectedItem ? (
-              <div className="text-right">
-                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
-                  Status
-                </p>
-                <p className="text-sm font-semibold text-slate-600">
-                  {selectedEquipped
-                    ? 'Equipped'
-                    : selectedOwned
-                    ? 'Owned'
-                    : `${selectedItem.price} Coins`}
-                </p>
-                {!selectedOwned ? (
-                  <p className="mt-1 text-xs text-amber-600">
-                    {coinsDisplay >= selectedItem.price
-                      ? 'Buy from the sidebar to unlock.'
-                      : `Need ${Math.max(0, selectedItem.price - coinsDisplay)} more coins.`}
+            <div className="flex flex-col items-end gap-3 text-right">
+              {selectedItem ? (
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
+                    Status
                   </p>
-                ) : null}
-              </div>
-            ) : null}
+                  <p className="text-sm font-semibold text-slate-600">
+                    {selectedEquipped
+                      ? 'Equipped'
+                      : selectedOwned
+                      ? 'Owned'
+                      : `${selectedItem.price} Coins`}
+                  </p>
+                  {!selectedOwned ? (
+                    <p className="mt-1 text-xs text-amber-600">
+                      {coinsDisplay >= selectedItem.price
+                        ? 'Buy from the sidebar to unlock.'
+                        : `Need ${Math.max(0, selectedItem.price - coinsDisplay)} more coins.`}
+                    </p>
+                  ) : null}
+                </div>
+              ) : null}
+              <button
+                type="button"
+                onClick={handleUnequipAll}
+                disabled={!equippedClothing}
+                className={`rounded-full border px-4 py-2 text-xs font-semibold transition ${
+                  equippedClothing
+                    ? 'border-rose-200 text-rose-600 hover:bg-rose-50'
+                    : 'cursor-not-allowed border-slate-200 text-slate-300'
+                }`}
+              >
+                Unequip Outfit
+              </button>
+            </div>
         </div>
 
           <div className="relative mx-auto flex h-[520px] w-full max-w-[520px] items-center justify-center">
