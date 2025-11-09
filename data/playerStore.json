@@ -2,13 +2,13 @@
   "baka": {
     "name": "baka",
     "stats": {
-      "motility": 187.0999999999997,
-      "linearity": 161.2000000000001,
-      "flow": 160.2999999999999,
-      "signals": 192.5
+      "motility": 189.5999999999997,
+      "linearity": 164.7000000000001,
+      "flow": 163.2999999999999,
+      "signals": 196.5
     },
-    "elo": 1160,
-    "spermPoints": 655,
+    "elo": 1165,
+    "spermPoints": 713,
     "raceHistory": [
       {
         "place": 1,
@@ -367,21 +367,36 @@
         "eloChange": 5,
         "eloAfter": 1160,
         "pointsEarned": 38
+      },
+      {
+        "place": 3,
+        "totalRacers": 4,
+        "trackId": "spiral",
+        "raceTime": 44.49999999999876,
+        "opponents": [
+          {
+            "name": "SunBurst",
+            "place": 1
+          },
+          {
+            "name": "VelocityVendor",
+            "place": 2
+          },
+          {
+            "name": "DataDrive",
+            "place": 4
+          }
+        ],
+        "timestamp": "2025-11-09T13:12:35.282Z",
+        "eloChange": 5,
+        "eloAfter": 1165,
+        "pointsEarned": 38
       }
     ],
-    "currentStreak": 1,
-    "longestStreak": 2,
-    "lastCheckInDate": "2025-11-10",
-    "todayHabits": {
-      "drinkMatcha": true,
-      "goon": false,
-      "sleep8Hours": false,
-      "drink2LWater": false,
-      "drinkAlcohol": false,
-      "smokeCigarettes": false,
-      "eatFastFood": false,
-      "hotLaptop": false
-    },
+    "currentStreak": 4,
+    "longestStreak": 4,
+    "lastCheckInDate": "2025-11-13",
+    "todayHabits": {},
     "ownedClothing": [
       "67",
       "among-us"
