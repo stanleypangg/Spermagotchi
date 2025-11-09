@@ -16,7 +16,7 @@ export default function HabitPanel({ habitForm, onToggle, submitting }) {
   }, [activeTab]);
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex h-full min-h-0 flex-col gap-3">
       <div className="flex gap-2 rounded-full bg-slate-100 p-1 text-xs font-semibold text-slate-600">
         {TABS.map((tab) => {
           const isActive = tab.id === activeTab;
@@ -35,7 +35,7 @@ export default function HabitPanel({ habitForm, onToggle, submitting }) {
         })}
       </div>
 
-      <div className="flex max-h-48 flex-col gap-1.5 overflow-y-auto pr-1">
+      <div className="flex flex-1 min-h-0 flex-col gap-1.5 overflow-y-auto pr-1">
         {activeHabits.map((habit) => (
           <label
             key={habit.key}
@@ -63,8 +63,6 @@ export default function HabitPanel({ habitForm, onToggle, submitting }) {
           </label>
         ))}
       </div>
-
-      {submitting && <div className="text-right text-xs font-semibold text-indigo-500">Saving…</div>}
     </div>
   );
 }

@@ -59,7 +59,7 @@ export const GOOD_HABITS_CONFIG = Object.freeze([
     look: 'Charge Sprint',
     category: 'good',
     imageOverride: {
-      asset: '/happier.png',
+      asset: '/gooning.webp',
       alt: 'Charged sprint buddy',
     },
   },
@@ -70,7 +70,7 @@ export const GOOD_HABITS_CONFIG = Object.freeze([
     look: 'Well Rested',
     category: 'good',
     imageOverride: {
-      asset: '/neutral.png',
+      asset: '/sleep.webp',
       alt: 'Well rested buddy',
     },
   },
@@ -81,7 +81,7 @@ export const GOOD_HABITS_CONFIG = Object.freeze([
     look: 'Hydro Glide',
     category: 'good',
     imageOverride: {
-      asset: '/happy.png',
+      asset: '/water.webp',
       alt: 'Hydrated buddy',
     },
   },
@@ -95,7 +95,7 @@ export const BAD_HABITS_CONFIG = Object.freeze([
     look: 'Tipsy Drift',
     category: 'bad',
     imageOverride: {
-      asset: '/sad.png',
+      asset: '/drunk.png',
       alt: 'Tipsy drift buddy',
     },
   },
@@ -106,7 +106,7 @@ export const BAD_HABITS_CONFIG = Object.freeze([
     look: 'Smoky Fade',
     category: 'bad',
     imageOverride: {
-      asset: '/sadder.png',
+      asset: '/smoking.png',
       alt: 'Smoky fade buddy',
     },
   },
@@ -117,7 +117,7 @@ export const BAD_HABITS_CONFIG = Object.freeze([
     look: 'Grease Crash',
     category: 'bad',
     imageOverride: {
-      asset: '/sad.png',
+      asset: '/fat.png',
       alt: 'Grease crash buddy',
     },
   },
@@ -128,7 +128,7 @@ export const BAD_HABITS_CONFIG = Object.freeze([
     look: 'Overheated',
     category: 'bad',
     imageOverride: {
-      asset: '/sadder.png',
+      asset: '/laptop hot.png',
       alt: 'Overheated buddy',
     },
   },
@@ -215,7 +215,7 @@ export const SHOP_CLOTHING_ITEMS = Object.freeze([
   },
   {
     id: 'butt-plug',
-    name: 'Chromed Plug Fin',
+    name: 'Butt Plug',
     price: 48,
     rarity: 'Rare',
     imagePath: '/plug.png',
