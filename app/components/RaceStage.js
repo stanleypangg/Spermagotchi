@@ -1235,16 +1235,28 @@ export default function RaceStage({
 
       {/* Top Progress Bar */}
       <div className="pointer-events-none absolute top-0 left-0 right-0 px-4 pt-3">
-        <div className="relative h-6 bg-linear-to-r from-purple-900/40 via-pink-900/40 to-orange-900/40 rounded-full backdrop-blur-md shadow-2xl border-2 border-white/30 overflow-hidden">
-          <div
-            className="absolute inset-0 bg-linear-to-r from-cyan-400 via-pink-400 to-yellow-400 transition-all duration-300 ease-out shadow-[0_0_20px_rgba(251,146,60,0.6)]"
-            style={{ width: `${Math.max(...(frame?.lanes?.map(l => l.progress) ?? [0])) * 100}%` }}
-          />
-          <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-[10px] font-black text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] tracking-wider">
-              {(Math.max(...(frame?.lanes?.map(l => l.progress) ?? [0])) * 100).toFixed(1)}% COMPLETE
-            </span>
-          </div>
+        <div className="relative h-6 bg-slate-900/80 rounded-full backdrop-blur-md shadow-2xl border-2 border-white/40 overflow-hidden">
+          {(() => {
+            const maxProgress = frame?.lanes ? Math.max(...frame.lanes.map(l => l.progress || 0)) : 0;
+            const progressPercent = Math.min(100, Math.max(0, maxProgress * 100));
+            
+            return (
+              <>
+                <div
+                  className="absolute inset-y-0 left-0 bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-400 shadow-[0_0_20px_rgba(16,185,129,0.6)]"
+                  style={{ 
+                    width: `${progressPercent}%`,
+                    transition: 'width 0.1s linear'
+                  }}
+                />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-[10px] font-black text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] tracking-wider">
+                    {progressPercent.toFixed(1)}% COMPLETE
+                  </span>
+                </div>
+              </>
+            );
+          })()}
         </div>
       </div>
 

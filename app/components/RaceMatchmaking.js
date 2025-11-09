@@ -172,18 +172,41 @@ export default function RaceMatchmaking({
                 🗺️ Selecting Track
               </p>
               <div className="flex items-center justify-center gap-3 overflow-x-auto pb-2">
-                {TRACK_PRESETS.map((track, idx) => (
-                  <div
-                    key={track.id}
-                    className={`transform rounded-xl px-6 py-3 text-base font-bold shadow-lg transition-all duration-200 ${
-                      idx === trackScrollIndex % TRACK_PRESETS.length
-                        ? 'scale-125 bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500 text-white shadow-purple-500/50'
-                        : 'scale-90 bg-white text-slate-400 opacity-60'
-                    }`}
-                  >
-                    {track.name}
-                  </div>
-                ))}
+                {TRACK_PRESETS.map((track, idx) => {
+                  const isSelected = idx === trackScrollIndex % TRACK_PRESETS.length;
+                  return (
+                    <div
+                      key={track.id}
+                      className={`relative transform rounded-xl px-6 py-3 text-base font-bold transition-all duration-200 ${
+                        isSelected
+                          ? 'scale-125 bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500 text-white'
+                          : 'scale-90 bg-white text-slate-400 opacity-60'
+                      }`}
+                      style={{
+                        boxShadow: isSelected 
+                          ? '0 0 30px rgba(168, 85, 247, 0.6), 0 0 60px rgba(236, 72, 153, 0.4), 0 10px 40px rgba(0, 0, 0, 0.3)'
+                          : '0 4px 6px rgba(0, 0, 0, 0.1)',
+                      }}
+                    >
+                      {isSelected && (
+                        <>
+                          {/* Animated glowing border */}
+                          <div className="absolute inset-0 rounded-xl border-2 border-white/50 animate-pulse" />
+                          {/* Shimmer effect */}
+                          <div 
+                            className="absolute inset-0 rounded-xl opacity-50"
+                            style={{
+                              background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)',
+                              backgroundSize: '200% 100%',
+                              animation: 'shimmer 1.5s infinite',
+                            }}
+                          />
+                        </>
+                      )}
+                      <span className="relative z-10">{track.name}</span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>

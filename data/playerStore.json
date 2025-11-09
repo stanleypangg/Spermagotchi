@@ -7,8 +7,8 @@
       "flow": 70.90000000000003,
       "signals": 71.5
     },
-    "elo": 1060,
-    "spermPoints": 227,
+    "elo": 1090,
+    "spermPoints": 295,
     "raceHistory": [
       {
         "place": 1,
@@ -151,6 +151,78 @@
         "eloChange": 10,
         "eloAfter": 1060,
         "pointsEarned": 61
+      },
+      {
+        "place": 1,
+        "totalRacers": 4,
+        "trackId": "canyon",
+        "raceTime": 33.333333333332725,
+        "opponents": [
+          {
+            "name": "WoodlandRacer",
+            "place": 2
+          },
+          {
+            "name": "RaceLegend",
+            "place": 3
+          },
+          {
+            "name": "StreamSpeed",
+            "place": 4
+          }
+        ],
+        "timestamp": "2025-11-09T12:23:05.633Z",
+        "eloChange": 20,
+        "eloAfter": 1080,
+        "pointsEarned": 118
+      },
+      {
+        "place": 4,
+        "totalRacers": 4,
+        "trackId": "rapids",
+        "raceTime": 41.14999999999895,
+        "opponents": [
+          {
+            "name": "TurboCharge",
+            "place": 1
+          },
+          {
+            "name": "RapidFire",
+            "place": 2
+          },
+          {
+            "name": "BoostMaster",
+            "place": 3
+          }
+        ],
+        "timestamp": "2025-11-09T12:24:57.683Z",
+        "eloChange": 0,
+        "eloAfter": 1080,
+        "pointsEarned": 24
+      },
+      {
+        "place": 2,
+        "totalRacers": 4,
+        "trackId": "rapids",
+        "raceTime": 45.11666666666539,
+        "opponents": [
+          {
+            "name": "SavannaSwift",
+            "place": 1
+          },
+          {
+            "name": "CycloneForce",
+            "place": 3
+          },
+          {
+            "name": "EclipseMaster",
+            "place": 4
+          }
+        ],
+        "timestamp": "2025-11-09T12:26:55.230Z",
+        "eloChange": 10,
+        "eloAfter": 1090,
+        "pointsEarned": 63
       }
     ],
     "currentStreak": 1,
@@ -158,8 +230,11 @@
     "lastCheckInDate": "2025-11-09",
     "ownedClothing": [],
     "equippedClothing": null,
-    "ownedBackgrounds": [],
-    "equippedBackground": null,
+    "ownedBackgrounds": [
+      "sperm-kingdom",
+      "th16"
+    ],
+    "equippedBackground": "sperm-kingdom",
     "createdAt": "2025-11-09T10:58:34.177Z"
   }
 }
