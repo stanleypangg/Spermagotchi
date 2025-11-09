@@ -33,11 +33,11 @@ export async function createRemoteSperm(name) {
   return payload.sperm;
 }
 
-export async function submitHabitCheckIn({ spermId, date, habits }) {
+export async function submitHabitCheckIn({ spermId, habits }) {
   const res = await fetch(`/api/sperm/${spermId}/checkins`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ date, habits }),
+    body: JSON.stringify({ habits }),
   });
   if (!res.ok) {
     const payload = await res.json().catch(() => ({}));

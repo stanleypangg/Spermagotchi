@@ -50,9 +50,6 @@ export default function HabitPanel({ habitForm, onToggle, submitting }) {
               >
                 {habit.effect}
               </p>
-              <p className="text-[0.65rem] font-semibold uppercase tracking-[0.25em] text-slate-400">
-                Buddy Look: {habit.look}
-              </p>
             </div>
             <input
               type="checkbox"

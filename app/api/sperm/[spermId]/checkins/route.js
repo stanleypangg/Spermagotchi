@@ -14,8 +14,8 @@ export async function POST(request, context) {
     if (!spermId) {
       return NextResponse.json({ error: 'Missing spermId.' }, { status: 400 });
     }
-    const { date, habits } = body ?? {};
-    const result = submitHabitCheckIn(spermId, date, habits);
+    const { habits } = body ?? {};
+    const result = submitHabitCheckIn(spermId, habits);
     return NextResponse.json(result, { status: 200 });
   } catch (error) {
     return handleError(error);

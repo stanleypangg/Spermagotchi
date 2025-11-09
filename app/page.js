@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Image from 'next/image';
 import petriDish from '@/public/petri.png';
 import LandingScreen from './components/LandingScreen';
@@ -15,6 +15,7 @@ import {
   WELLNESS_STATES,
   HABIT_IMAGE_OVERRIDES,
   SHOP_CLOTHING_ITEMS,
+  SHOP_BACKGROUND_ITEMS,
 } from './data/constants';
 import {
   fetchSpermState as fetchSpermStateApi,
@@ -27,14 +28,10 @@ const WARDROBE_STATE_KEY = 'spermagotchi-wardrobe';
 const COIN_ICON_URL = 'https://cdn-icons-png.flaticon.com/512/7672/7672104.png';
 const TODO_PANEL_WIDTH = 360;
 const TODO_PANEL_GAP = 24;
+const DEFAULT_PREVIEW_BACKGROUND = null;
+const DEFAULT_STARTING_COINS = 250;
 
 export default function Home() {
-  const today = useMemo(() => {
-    const now = new Date();
-    const offsetInMs = now.getTimezoneOffset() * 60 * 1000;
-    const local = new Date(now.getTime() - offsetInMs);
-    return local.toISOString().slice(0, 10);
-  }, []);
   const [loading, setLoading] = useState(true);
   const [spermId, setSpermId] = useState(null);
   const [sperm, setSperm] = useState(null);
@@ -58,24 +55,12 @@ export default function Home() {
   const [ownedClothing, setOwnedClothing] = useState([]);
   const [equippedClothing, setEquippedClothing] = useState(null);
   const [previewClothing, setPreviewClothing] = useState(null);
+  const [ownedBackgrounds, setOwnedBackgrounds] = useState([]);
+  const [equippedBackground, setEquippedBackground] = useState(null);
+  const [previewBackground, setPreviewBackground] = useState(null);
   const [purchaseCandidate, setPurchaseCandidate] = useState(null);
   const [showTodos, setShowTodos] = useState(false);
-
-  const submissionDate = useMemo(() => {
-    if (!sperm?.createdAt) {
-      return today;
-    }
-    try {
-      const createdAt = new Date(sperm.createdAt);
-      if (Number.isNaN(createdAt.getTime())) {
-        return today;
-      }
-      const createdDate = createdAt.toISOString().slice(0, 10);
-      return createdDate > today ? createdDate : today;
-    } catch {
-      return today;
-    }
-  }, [sperm?.createdAt, today]);
+  const [shopTab, setShopTab] = useState('outfits');
 
   const renderCoinValue = useCallback(
     (value, sizeClass = 'h-4 w-4') => (
@@ -187,6 +172,16 @@ export default function Home() {
       if (typeof parsed?.coins === 'number' && Number.isFinite(parsed.coins)) {
         setCoins(parsed.coins);
       }
+      if (Array.isArray(parsed?.ownedBackgroundIds)) {
+        setOwnedBackgrounds(
+          parsed.ownedBackgroundIds.filter((value) => typeof value === 'string'),
+        );
+      }
+      if (typeof parsed?.equippedBackgroundId === 'string') {
+        setEquippedBackground(parsed.equippedBackgroundId);
+      } else if (parsed?.equippedBackgroundId === null) {
+        setEquippedBackground(null);
+      }
     } catch (storageError) {
       console.error('Failed to load wardrobe state', storageError);
     }
@@ -201,12 +196,14 @@ export default function Home() {
         coins,
         ownedIds: ownedClothing,
         equippedId: equippedClothing,
+        ownedBackgroundIds: ownedBackgrounds,
+        equippedBackgroundId: equippedBackground,
       });
       window.localStorage.setItem(WARDROBE_STATE_KEY, payload);
     } catch (storageError) {
       console.error('Failed to persist wardrobe state', storageError);
     }
-  }, [coins, ownedClothing, equippedClothing]);
+  }, [coins, ownedClothing, equippedClothing, ownedBackgrounds, equippedBackground]);
 
   useEffect(() => {
     if (ownedClothing.includes('sixty-seven') || equippedClothing === 'sixty-seven') {
@@ -296,7 +293,11 @@ export default function Home() {
 
   useEffect(() => {
     if (coins === null && typeof derived?.overallHealthScore === 'number') {
-      setCoins(Math.max(0, Math.round(derived.overallHealthScore ?? 0)));
+      setCoins(
+        Number.isFinite(DEFAULT_STARTING_COINS)
+          ? Math.max(0, Math.round(DEFAULT_STARTING_COINS))
+          : Math.max(0, Math.round(derived.overallHealthScore ?? 0)),
+      );
     }
   }, [coins, derived]);
 
@@ -307,10 +308,35 @@ export default function Home() {
   }, [activeModal, activeTab, fetchHistory, spermId]);
 
   useEffect(() => {
-    if (activeTab !== 'shop' && previewClothing) {
-      setPreviewClothing(null);
+    if (activeTab !== 'shop') {
+      setPreviewClothing((prev) => (prev != null ? null : prev));
+      setPreviewBackground((prev) => (prev != null ? null : prev));
     }
-  }, [activeTab, previewClothing]);
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (shopTab === 'outfits') {
+      setPreviewBackground((prev) =>
+        prev && prev !== equippedBackground ? equippedBackground ?? null : prev,
+      );
+      if (!previewClothing && equippedClothing) {
+        setPreviewClothing(equippedClothing);
+      }
+    } else if (shopTab === 'backgrounds') {
+      setPreviewClothing((prev) =>
+        prev && prev !== equippedClothing ? equippedClothing ?? null : prev,
+      );
+      if (!previewBackground && equippedBackground) {
+        setPreviewBackground(equippedBackground);
+      }
+    }
+  }, [
+    shopTab,
+    equippedBackground,
+    previewBackground,
+    equippedClothing,
+    previewClothing,
+  ]);
 
   const handleLandingNameChange = useCallback(
     (value) => {
@@ -379,7 +405,6 @@ export default function Home() {
       try {
         await submitHabitCheckInApi({
           spermId,
-          date: submissionDate,
           habits: nextHabits,
         });
         await fetchSpermState(spermId);
@@ -408,7 +433,6 @@ export default function Home() {
       fetchSpermState,
       scheduleFeedbackClear,
       spermId,
-      submissionDate,
       selectOverrideFromHabits,
     ],
   );
@@ -448,6 +472,13 @@ export default function Home() {
     setLoading(false);
     setHistoryLoading(false);
     setShowLanding(true);
+    setCoins(null);
+    setOwnedClothing([]);
+    setEquippedClothing(null);
+    setPreviewClothing(null);
+    setOwnedBackgrounds([]);
+    setEquippedBackground(null);
+    setPreviewBackground(null);
   };
 
   const moodLabel =
@@ -473,9 +504,12 @@ export default function Home() {
     return current;
   }, WELLNESS_STATES[0]);
 
-  const pointsValue = Number.isFinite(derived?.overallHealthScore)
-    ? Math.round(derived.overallHealthScore)
-    : '--';
+  const pointsValue =
+    coins !== null
+      ? coins
+      : Number.isFinite(derived?.overallHealthScore)
+      ? Math.round(derived.overallHealthScore)
+      : '--';
   const energyValue = Number.isFinite(effectiveScore) ? Math.round(effectiveScore) : '--';
   const streakValue = Number.isFinite(sperm?.history?.length) ? sperm.history.length : '--';
 
@@ -487,16 +521,16 @@ export default function Home() {
   ];
 
   const activeBuddyState = buddyOverride ?? wellnessState;
-  const coinsDisplay =
-    coins !== null
-      ? coins
-      : Number.isFinite(pointsValue)
-      ? Number(pointsValue)
-      : 0;
+  const coinsDisplay = coins !== null ? coins : Number.isFinite(pointsValue) ? Number(pointsValue) : 0;
   const equippedOutfitItem =
     SHOP_CLOTHING_ITEMS.find((item) => item.id === equippedClothing) ?? null;
   const previewOutfitItem = previewClothing
     ? SHOP_CLOTHING_ITEMS.find((item) => item.id === previewClothing) ?? null
+    : null;
+  const equippedBackgroundItem =
+    SHOP_BACKGROUND_ITEMS.find((item) => item.id === equippedBackground) ?? null;
+  const previewBackgroundItem = previewBackground
+    ? SHOP_BACKGROUND_ITEMS.find((item) => item.id === previewBackground) ?? null
     : null;
 
   const handleSelectOutfit = useCallback(
@@ -515,22 +549,52 @@ export default function Home() {
       setError(null);
       setEquippedClothing(item.id);
       setPreviewClothing(item.id);
-      scheduleFeedbackClear(`${item.name} equipped!`);
     },
     [scheduleFeedbackClear],
   );
 
-  const handleUnequipAll = useCallback(() => {
+  const handleUnequipOutfit = useCallback(() => {
     setError(null);
     setEquippedClothing(null);
     setPreviewClothing(null);
-    scheduleFeedbackClear('Outfit removed.');
   }, [scheduleFeedbackClear]);
 
-  const handleOpenPurchaseModal = useCallback((item) => {
-    setPreviewClothing(item.id);
-    setPurchaseCandidate(item);
+  const handleSelectBackground = useCallback(
+    (item) => {
+      setError(null);
+      setPreviewBackground(item.id);
+      if (ownedBackgrounds.includes(item.id)) {
+        setEquippedBackground(item.id);
+      }
+    },
+    [ownedBackgrounds],
+  );
+
+  const handleEquipBackground = useCallback(
+    (item) => {
+      setError(null);
+      setEquippedBackground(item.id);
+      setPreviewBackground(item.id);
+      scheduleFeedbackClear(`${item.name} applied!`);
+    },
+    [scheduleFeedbackClear],
+  );
+
+  const handleClearBackground = useCallback(() => {
     setError(null);
+    setEquippedBackground(null);
+    setPreviewBackground(null);
+    scheduleFeedbackClear('Background reset.');
+  }, [scheduleFeedbackClear]);
+
+  const handleOpenPurchaseModal = useCallback((item, category) => {
+    setError(null);
+    if (category === 'background') {
+      setPreviewBackground(item.id);
+    } else {
+      setPreviewClothing(item.id);
+    }
+    setPurchaseCandidate({ category, item });
   }, []);
 
   const handleClosePurchaseModal = useCallback(() => {
@@ -541,7 +605,8 @@ export default function Home() {
     if (!purchaseCandidate) {
       return;
     }
-    const { id, price, name } = purchaseCandidate;
+    const { item, category } = purchaseCandidate;
+    const { id, price, name } = item;
     const currentCoins = coins !== null ? coins : coinsDisplay;
     if (currentCoins < price) {
       setError(`Need ${Math.max(0, price - currentCoins)} more coins to buy ${name}.`);
@@ -554,21 +619,42 @@ export default function Home() {
       return updated < 0 ? 0 : updated;
     });
 
-    setOwnedClothing((prev) => {
-      if (prev.includes(id)) {
-        return prev;
-      }
-      return [...prev, id];
-    });
+    if (category === 'background') {
+      setOwnedBackgrounds((prev) => {
+        if (prev.includes(id)) {
+          return prev;
+        }
+        return [...prev, id];
+      });
+      setEquippedBackground(id);
+      setPreviewBackground(id);
+      scheduleFeedbackClear(`Background "${name}" unlocked!`);
+    } else {
+      setOwnedClothing((prev) => {
+        if (prev.includes(id)) {
+          return prev;
+        }
+        return [...prev, id];
+      });
 
-    setEquippedClothing(id);
-    setPreviewClothing(id);
+      setEquippedClothing(id);
+      setPreviewClothing(id);
+      scheduleFeedbackClear(`Fresh drip! ${name} unlocked.`);
+    }
     setPurchaseCandidate(null);
     setError(null);
-    scheduleFeedbackClear(`Fresh drip! ${name} unlocked.`);
-  }, [coins, coinsDisplay, purchaseCandidate, scheduleFeedbackClear]);
+  }, [
+    coins,
+    coinsDisplay,
+    purchaseCandidate,
+    scheduleFeedbackClear,
+  ]);
 
   const homeDisplayOutfit = equippedOutfitItem;
+  const homeBackgroundImage = equippedBackgroundItem?.imagePath ?? null;
+  const homeBackgroundAlt = equippedBackgroundItem
+    ? `${equippedBackgroundItem.name} background`
+    : 'Default background';
 
   if (showLanding) {
     return (
@@ -583,7 +669,22 @@ export default function Home() {
   }
 
   const renderHomeView = () => (
-    <main className="relative flex min-h-screen flex-col bg-white pb-24">
+    <main className="relative flex min-h-screen flex-col pb-24">
+      {homeBackgroundImage ? (
+        <>
+          <Image
+            src={homeBackgroundImage}
+            alt={homeBackgroundAlt}
+            fill
+            priority
+            unoptimized
+            className="absolute inset-0 -z-10 object-cover"
+          />
+          <div className="absolute inset-0 -z-10 bg-white/30 backdrop-blur-[2px]" />
+        </>
+      ) : (
+        <div className="absolute inset-0 -z-10 bg-white" />
+      )}
       <header className="flex flex-wrap items-center justify-between gap-4 px-6 pt-6">
         <button
           type="button"
@@ -646,22 +747,22 @@ export default function Home() {
 
         <section className="relative z-0 flex w-full justify-center transition-transform duration-500 ease-out">
           <div className="flex w-full max-w-xl flex-col items-center justify-center px-4 text-center">
-            <div className="relative h-[340px] w-full max-w-[320px]">
+            <div className="relative mt-8 flex h-[360px] w-full max-w-[360px] flex-col items-center justify-center">
               <Image
                 src={petriDish}
                 alt="Petri dish backdrop"
                 width={320}
                 height={320}
-                className="absolute bottom-0 translate-y-12 left-1/2 h-[240px] w-[240px] -translate-x-1/2 object-contain opacity-90"
+                className="absolute bottom-0 left-1/2 z-10 h-[240px] w-[240px] -translate-x-1/2 translate-y-12 object-contain opacity-90"
                 priority
               />
-              <div className="absolute left-1/2 top-1/2 flex h-[280px] w-[280px] -translate-x-1/2 -translate-y-1/2 items-center justify-center">
+              <div className="absolute left-1/2 top-1/2 z-20 flex h-[320px] w-[320px] -translate-x-1/2 -translate-y-1/2 items-center justify-center">
                 {homeDisplayOutfit ? (
                   <Image
                     src={homeDisplayOutfit.imagePath}
                     alt={homeDisplayOutfit.name}
-                    width={280}
-                    height={280}
+                    width={320}
+                    height={320}
                     priority
                     className="h-full w-full animate-float object-contain drop-shadow-[0_16px_32px_rgba(63,61,86,0.24)]"
                   />
@@ -669,8 +770,8 @@ export default function Home() {
                   <Image
                     src={activeBuddyState.asset}
                     alt={activeBuddyState.alt}
-                    width={280}
-                    height={280}
+                    width={320}
+                    height={320}
                     priority
                     className="h-full w-full animate-float object-contain drop-shadow-[0_16px_32px_rgba(63,61,86,0.24)]"
                   />
@@ -708,22 +809,48 @@ export default function Home() {
   );
 
   const renderShopView = () => {
-    const selectedId = previewClothing ?? equippedClothing ?? null;
-    const selectedItem =
-      SHOP_CLOTHING_ITEMS.find((item) => item.id === selectedId) ?? null;
-    const overlayItem = previewOutfitItem ?? selectedItem ?? null;
-    const selectedOwned = selectedItem ? ownedClothing.includes(selectedItem.id) : false;
-    const selectedEquipped = selectedItem ? equippedClothing === selectedItem.id : false;
+    const selectedOutfitId = previewClothing ?? equippedClothing ?? null;
+    const selectedOutfit =
+      SHOP_CLOTHING_ITEMS.find((item) => item.id === selectedOutfitId) ?? null;
+    const overlayOutfit = previewOutfitItem ?? selectedOutfit ?? null;
 
-  return (
-      <main className="grid h-screen grid-rows-1 gap-6 overflow-hidden bg-white px-4 py-8 md:grid-cols-[320px_1fr] md:px-12">
+    const selectedBackgroundId = previewBackground ?? equippedBackground ?? null;
+    const selectedBackground =
+      SHOP_BACKGROUND_ITEMS.find((item) => item.id === selectedBackgroundId) ?? null;
+    const overlayBackgroundItem = previewBackgroundItem ?? equippedBackgroundItem ?? null;
+    const previewBackgroundImage = overlayBackgroundItem?.imagePath ?? DEFAULT_PREVIEW_BACKGROUND;
+    const backgroundAlt = overlayBackgroundItem
+      ? `${overlayBackgroundItem.name} background`
+      : 'Default background';
+
+    const isBackgroundTab = shopTab === 'backgrounds';
+    const sidebarItems = isBackgroundTab ? SHOP_BACKGROUND_ITEMS : SHOP_CLOTHING_ITEMS;
+
+    const selectedItem = isBackgroundTab ? selectedBackground : selectedOutfit;
+    const selectedOwned = selectedItem
+      ? isBackgroundTab
+        ? ownedBackgrounds.includes(selectedItem.id)
+        : ownedClothing.includes(selectedItem.id)
+      : false;
+    const selectedEquipped = selectedItem
+      ? isBackgroundTab
+        ? equippedBackground === selectedItem.id
+        : equippedClothing === selectedItem.id
+      : false;
+    const statusTitle = isBackgroundTab ? 'Featured Background' : 'Featured Fit';
+    const emptyTitle = isBackgroundTab ? 'Pick a background' : 'Pick an outfit';
+    const emptyDescription = isBackgroundTab
+      ? 'Choose a background from the sidebar to preview the environment.'
+      : 'Choose an outfit from the sidebar to see it on your swimmer.';
+
+    return (
+      <main className="grid min-h-[calc(100vh-88px)] max-h-[calc(100vh-88px)] grid-rows-1 gap-6 overflow-hidden bg-white px-4 py-8 md:grid-cols-[320px_1fr] md:px-12">
         <aside className="flex flex-col gap-4 overflow-hidden">
           <div className="rounded-3xl border border-slate-200 bg-white px-6 py-5 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
                 <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
-                  <img src={COIN_ICON_URL} alt="Coin icon" className="h-4 w-4" />
-                  <span>Coins</span>
+                  <span>Sperm Count</span>
                 </div>
                 <p className="mt-2 text-2xl font-bold text-slate-800">
                   {renderCoinValue(coinsDisplay, 'h-6 w-6')}
@@ -743,15 +870,47 @@ export default function Home() {
           <div className="flex flex-1 flex-col gap-3 overflow-hidden rounded-3xl border border-slate-200 bg-white px-4 py-5 shadow-sm">
             <header className="px-2">
               <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
-                Wardrobe Shop
+                Shop
               </p>
-              <p className="text-[0.7rem] text-slate-400">Tap to preview · Buy to own · Equip instantly</p>
+              <div className="mt-3 flex gap-1 rounded-full bg-slate-100 p-1 text-xs font-semibold text-slate-500">
+                {[
+                  { id: 'outfits', label: 'Outfits' },
+                  { id: 'backgrounds', label: 'Backgrounds' },
+                ].map((tab) => {
+                  const isActive = shopTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => {
+                        setShopTab(tab.id);
+                        if (tab.id === 'outfits') {
+                          setPreviewBackground(equippedBackground ?? null);
+                        } else {
+                          setPreviewClothing(equippedClothing ?? null);
+                        }
+                      }}
+                      className={`flex-1 rounded-full px-3 py-1 transition ${
+                        isActive ? 'bg-white text-slate-800 shadow-sm' : 'hover:text-slate-700'
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
+                  );
+                })}
+              </div>
             </header>
             <div className="flex flex-1 flex-col gap-3 overflow-y-auto pr-1">
-              {SHOP_CLOTHING_ITEMS.map((item) => {
-                const isOwned = ownedClothing.includes(item.id);
-                const isEquipped = equippedClothing === item.id;
-                const isSelected = selectedId === item.id;
+              {sidebarItems.map((item) => {
+                const isOwned = isBackgroundTab
+                  ? ownedBackgrounds.includes(item.id)
+                  : ownedClothing.includes(item.id);
+                const isEquipped = isBackgroundTab
+                  ? equippedBackground === item.id
+                  : equippedClothing === item.id;
+                const isSelected = isBackgroundTab
+                  ? selectedBackgroundId === item.id
+                  : selectedOutfitId === item.id;
                 const affordable = coinsDisplay >= item.price;
 
                 return (
@@ -761,43 +920,56 @@ export default function Home() {
                       isSelected ? 'border-indigo-200 bg-indigo-50' : 'border-slate-200 bg-white hover:border-slate-300'
                     }`}
                   >
-                    <button
-                      type="button"
-                      onClick={() => handleSelectOutfit(item)}
-                      className="flex flex-1 items-center gap-2 text-left"
-                    >
-                      <span className="text-sm font-semibold text-slate-700">{item.name}</span>
-                      {isEquipped ? (
-                        <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.3em] text-indigo-600">
-                          Equipped
-                        </span>
-                      ) : isOwned ? (
-                        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.3em] text-slate-500">
-                          Owned
-            </span>
-                      ) : null}
-                    </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          (isBackgroundTab ? handleSelectBackground : handleSelectOutfit)(item)
+                        }
+                        className="flex flex-1 items-center gap-2 text-left"
+                      >
+                        <span className="text-sm font-semibold text-slate-700">{item.name}</span>
+                        {isOwned ? (
+                          <span
+                            className={`ml-auto inline-flex h-6 w-6 items-center justify-center rounded-full text-xs ${
+                              isEquipped
+                                ? 'bg-indigo-500 text-white'
+                                : 'bg-slate-200 text-slate-600'
+                            }`}
+                            aria-label={isBackgroundTab ? (isEquipped ? 'Applied' : 'Owned') : isEquipped ? 'Equipped' : 'Owned'}
+                          >
+                            {isEquipped ? '✓' : '•'}
+                          </span>
+                        ) : null}
+                      </button>
                     {isOwned ? (
                       <button
                         type="button"
                         onClick={(event) => {
                           event.stopPropagation();
-                          handleEquipOwned(item);
+                          (isBackgroundTab ? handleEquipBackground : handleEquipOwned)(item);
                         }}
-                        className={`whitespace-nowrap rounded-full px-3 py-1 text-xs font-semibold ${
+                        className={`inline-flex min-w-[104px] items-center justify-center gap-2 rounded-full px-3 py-1 text-xs font-semibold transition ${
                           isEquipped
                             ? 'bg-indigo-500 text-white'
                             : 'border border-indigo-200 text-indigo-600 hover:bg-indigo-50'
                         }`}
                       >
-                        {isEquipped ? 'Equipped' : 'Equip'}
+                        <span>
+                          {isBackgroundTab
+                            ? isEquipped
+                              ? 'Applied'
+                              : 'Apply'
+                            : isEquipped
+                            ? 'Equipped'
+                            : 'Equip'}
+                        </span>
                       </button>
                     ) : (
                       <button
                         type="button"
                         onClick={(event) => {
                           event.stopPropagation();
-                          handleOpenPurchaseModal(item);
+                          handleOpenPurchaseModal(item, isBackgroundTab ? 'background' : 'outfit');
                         }}
                         className={`flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold transition ${
                           affordable
@@ -820,15 +992,15 @@ export default function Home() {
           <div className="flex flex-wrap items-start justify-between gap-6">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
-                Featured Fit
+                {statusTitle}
               </p>
               <h2 className="mt-1 text-2xl font-bold text-slate-800">
-                {selectedItem ? selectedItem.name : 'Pick an outfit'}
+                {selectedItem ? selectedItem.name : emptyTitle}
               </h2>
               <p className="mt-2 text-sm text-slate-500">
                 {selectedItem
                   ? selectedItem.description
-                  : 'Choose an outfit from the sidebar to see it on your swimmer.'}
+                  : emptyDescription}
               </p>
             </div>
             <div className="flex flex-col items-end gap-3 text-right">
@@ -839,7 +1011,9 @@ export default function Home() {
                   </p>
                   <p className="text-sm font-semibold text-slate-600">
                     {selectedEquipped
-                      ? 'Equipped'
+                      ? isBackgroundTab
+                        ? 'Applied'
+                        : 'Equipped'
                       : selectedOwned
                       ? 'Owned'
                       : `${selectedItem.price} Coins`}
@@ -855,39 +1029,62 @@ export default function Home() {
               ) : null}
               <button
                 type="button"
-                onClick={handleUnequipAll}
-                disabled={!equippedClothing}
+                onClick={isBackgroundTab ? handleClearBackground : handleUnequipOutfit}
+                disabled={
+                  isBackgroundTab
+                    ? !equippedBackground
+                    : !equippedClothing || !ownedClothing.includes(equippedClothing)
+                }
                 className={`rounded-full border px-4 py-2 text-xs font-semibold transition ${
-                  equippedClothing
+                  (isBackgroundTab
+                    ? equippedBackground
+                    : equippedClothing && ownedClothing.includes(equippedClothing))
                     ? 'border-rose-200 text-rose-600 hover:bg-rose-50'
                     : 'cursor-not-allowed border-slate-200 text-slate-300'
                 }`}
               >
-                Unequip Outfit
+                {isBackgroundTab ? 'Reset Background' : 'Unequip Outfit'}
               </button>
             </div>
         </div>
 
-          <div className="relative mx-auto flex h-[520px] w-full max-w-[520px] items-center justify-center">
-            {overlayItem ? (
-              <Image
-                src={overlayItem.imagePath}
-                alt={`${overlayItem.name} preview`}
-                width={520}
-                height={520}
-                priority
-                className="h-full w-full animate-float object-contain drop-shadow-[0_25px_70px_rgba(63,61,86,0.25)]"
-              />
+          <div className="relative mx-auto flex h-[520px] -mt-5 my-auto w-full max-w-[520px] items-center justify-center">
+            {previewBackgroundImage ? (
+              <div className="absolute inset-0 -z-10 overflow-hidden rounded-[40px] border border-slate-200/70 shadow-[0_40px_80px_rgba(63,61,86,0.18)]">
+                <Image
+                  src={previewBackgroundImage}
+                  alt={backgroundAlt}
+                  fill
+                  className="object-cover"
+                  priority
+                  unoptimized
+                />
+                <div className="absolute inset-0 bg-white/12 backdrop-blur-[1px]" />
+              </div>
             ) : (
-              <Image
-                src={activeBuddyState.asset}
-                alt={activeBuddyState.alt}
-                width={520}
-                height={520}
-                priority
-                className="h-full w-full animate-float object-contain drop-shadow-[0_25px_70px_rgba(63,61,86,0.25)]"
-              />
+              <div className="absolute inset-0 -z-10 rounded-[40px] border border-slate-200/70 bg-white shadow-[0_40px_80px_rgba(63,61,86,0.18)]" />
             )}
+            <div className="relative z-10 flex h-full w-full items-center justify-center px-6 py-8">
+              {overlayOutfit ? (
+                <Image
+                  src={overlayOutfit.imagePath}
+                  alt={`${overlayOutfit.name} preview`}
+                  width={520}
+                  height={520}
+                  priority
+                  className="h-full w-full animate-float object-contain drop-shadow-[0_25px_70px_rgba(63,61,86,0.25)]"
+                />
+              ) : (
+                <Image
+                  src={activeBuddyState.asset}
+                  alt={activeBuddyState.alt}
+                  width={520}
+                  height={520}
+                  priority
+                  className="h-full w-full animate-float object-contain drop-shadow-[0_25px_70px_rgba(63,61,86,0.25)]"
+                />
+              )}
+            </div>
           </div>
         </section>
       </main>
@@ -912,7 +1109,9 @@ export default function Home() {
       <NavigationBar items={NAV_ITEMS} activeTab={activeTab} onSelect={handleNavSelect} />
 
       <Modal
-        title={purchaseCandidate ? `Purchase ${purchaseCandidate.name}?` : ''}
+        title={
+          purchaseCandidate ? `Purchase ${purchaseCandidate.item.name}?` : ''
+        }
         open={Boolean(purchaseCandidate)}
         onClose={handleClosePurchaseModal}
       >
@@ -921,22 +1120,29 @@ export default function Home() {
             <div className="flex items-center gap-3">
               <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-slate-100">
                 <Image
-                  src={purchaseCandidate.imagePath}
-                  alt={purchaseCandidate.name}
+                  src={purchaseCandidate.item.imagePath}
+                  alt={purchaseCandidate.item.name}
                   width={56}
                   height={56}
-                  className="h-full w-full object-contain"
+                  className={`h-full w-full rounded-lg ${
+                    purchaseCandidate.category === 'background' ? 'object-cover' : 'object-contain'
+                  }`}
+                  unoptimized={purchaseCandidate.category === 'background'}
                 />
               </div>
               <div>
-                <p className="text-sm font-semibold text-slate-700">{purchaseCandidate.name}</p>
-                <p className="text-xs text-slate-500">{purchaseCandidate.description}</p>
+                <p className="text-sm font-semibold text-slate-700">
+                  {purchaseCandidate.item.name}
+                </p>
+                <p className="text-xs text-slate-500">
+                  {purchaseCandidate.item.description}
+                </p>
               </div>
             </div>
             <div className="rounded-2xl bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-600">
               <span className="inline-flex items-center gap-2">
                 <span>Cost:</span>
-                {renderCoinValue(purchaseCandidate.price)}
+                {renderCoinValue(purchaseCandidate.item.price)}
               </span>
               <span className="mx-2 text-slate-400">·</span>
               <span className="inline-flex items-center gap-2">
@@ -944,36 +1150,40 @@ export default function Home() {
                 {renderCoinValue(coinsDisplay)}
               </span>
             </div>
-            {coinsDisplay < purchaseCandidate.price ? (
+            {coinsDisplay < purchaseCandidate.item.price ? (
               <p className="text-xs font-semibold text-rose-500">
-                Need {purchaseCandidate.price - coinsDisplay} more coins to purchase this item.
+                Need {purchaseCandidate.item.price - coinsDisplay} more coins to purchase this item.
               </p>
             ) : (
-              <p className="text-xs text-emerald-600">You have enough coins to unlock this outfit.</p>
+              <p className="text-xs text-emerald-600">
+                {purchaseCandidate.category === 'background'
+                  ? 'You have enough coins to unlock this background.'
+                  : 'You have enough coins to unlock this outfit.'}
+              </p>
             )}
             <div className="flex justify-end gap-3">
-            <button
-              type="button"
+              <button
+                type="button"
                 onClick={handleClosePurchaseModal}
                 className="rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-500 transition hover:border-slate-300 hover:text-slate-700"
-            >
+              >
                 Cancel
-            </button>
-            <button
-              type="button"
+              </button>
+              <button
+                type="button"
                 onClick={handleConfirmPurchase}
-                disabled={coinsDisplay < purchaseCandidate.price}
+                disabled={coinsDisplay < purchaseCandidate.item.price}
                 className={`rounded-full px-4 py-2 text-xs font-semibold transition ${
-                  coinsDisplay < purchaseCandidate.price
+                  coinsDisplay < purchaseCandidate.item.price
                     ? 'cursor-not-allowed bg-slate-100 text-slate-400'
                     : 'bg-emerald-500 text-white hover:bg-emerald-600'
                 }`}
               >
                 <span className="inline-flex items-center gap-2">
                   <span>Buy for</span>
-                  {renderCoinValue(purchaseCandidate.price)}
+                  {renderCoinValue(purchaseCandidate.item.price)}
                 </span>
-            </button>
+              </button>
             </div>
           </div>
         ) : null}
