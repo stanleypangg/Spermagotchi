@@ -16,11 +16,14 @@ const BOT_NAMES = [
   'Orion', 'Phantom', 'Quasar', 'Rex', 'Saber', 'Tempest',
 ];
 
-const TINT_COLORS = [
+// Player color (reserved) - exported for consistency
+export const PLAYER_COLOR = '#7dd3fc'; // sky blue
+
+// Bot colors (no duplicates with player) - exported for use elsewhere
+export const BOT_TINT_COLORS = [
   '#f9a8d4', // pink
   '#bef264', // lime
   '#c4b5fd', // purple
-  '#7dd3fc', // sky blue
   '#fca5a5', // red
   '#fdba74', // orange
   '#fde68a', // yellow
@@ -29,6 +32,10 @@ const TINT_COLORS = [
   '#c084fc', // violet
   '#fb923c', // orange-400
   '#a78bfa', // purple-400
+  '#f472b6', // pink-400
+  '#a3e635', // lime-400
+  '#fbbf24', // amber-400
+  '#34d399', // emerald-400
 ];
 
 const SPRITE_POOL = [
@@ -86,6 +93,10 @@ export function generateBots(playerStats, count = 3, difficulty = 1.0, leaderboa
   const playerLevel = calculatePlayerLevel(playerStats);
   const bots = [];
   
+  // Shuffle colors to ensure unique colors per bot in this race
+  const shuffledColors = [...BOT_TINT_COLORS].sort(() => Math.random() - 0.5);
+  const usedColors = new Set();
+  
   // If leaderboard bots are provided, try to match similar ELO opponents
   if (leaderboardBots && leaderboardBots.length > 0) {
     const playerElo = playerStats.elo || 1000;
@@ -104,7 +115,9 @@ export function generateBots(playerStats, count = 3, difficulty = 1.0, leaderboa
       
       return selected.map((bot, i) => {
         const sprite = SPRITE_POOL[Math.floor(Math.random() * SPRITE_POOL.length)];
-        const tint = TINT_COLORS[Math.floor(Math.random() * TINT_COLORS.length)];
+        
+        // Assign unique color to each bot
+        const tint = shuffledColors[i % shuffledColors.length];
         
         // Normalize bot stats for race engine
         const normalizedStats = normalizeStatsForRace(bot.stats);
@@ -148,7 +161,9 @@ export function generateBots(playerStats, count = 3, difficulty = 1.0, leaderboa
     usedNames.add(name);
     
     const sprite = SPRITE_POOL[Math.floor(Math.random() * SPRITE_POOL.length)];
-    const tint = TINT_COLORS[Math.floor(Math.random() * TINT_COLORS.length)];
+    
+    // Assign unique color to each bot (no duplicates in the same race)
+    const tint = shuffledColors[i % shuffledColors.length];
     
     bots.push({
       id: `bot_${i}_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
@@ -172,10 +187,13 @@ export function playerStatsToRaceFormat(playerStats, playerName = 'You', playerS
   // Normalize stats to 0-100 scale for race engine
   const normalizedStats = normalizeStatsForRace(playerStats);
   
+  // Format name as "{username} (You)"
+  const displayName = playerName === 'You' ? 'You' : `${playerName} (You)`;
+  
   return {
     id: 'player',
-    name: playerName,
-    tint: '#7dd3fc',
+    name: displayName,
+    tint: PLAYER_COLOR, // Sky blue - reserved for player only
     stats: normalizedStats,
     sprite: playerSprite,
     isBot: false,

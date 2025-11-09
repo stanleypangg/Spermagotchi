@@ -79,84 +79,92 @@ export const MOCK_RACERS = Object.freeze([
   },
 ]);
 
-// DRIFTWAY: Smooth flowing S-curves perfect for drifting
+// DRIFTWAY: Aggressive alternating S-curves - DRIFT HEAVEN
 const DRIFTWAY_PATH = [
   { x: 0, y: 0 },
-  { x: 8, y: -8 },
-  { x: 16, y: -22 },
-  { x: 24, y: -30 },
-  { x: 32, y: -25 },
-  { x: 40, y: -5 },
-  { x: 48, y: 15 },
-  { x: 56, y: 28 },
-  { x: 64, y: 32 },
-  { x: 72, y: 22 },
-  { x: 80, y: 5 },
+  { x: 10, y: -18 },
+  { x: 20, y: -38 },
+  { x: 30, y: -42 },
+  { x: 40, y: -28 },
+  { x: 50, y: 0 },
+  { x: 60, y: 28 },
+  { x: 70, y: 42 },
+  { x: 80, y: 38 },
+  { x: 90, y: 18 },
+  { x: 100, y: 0 },
 ];
 
-// GULF STREAM: Long sweeping oceanic curves
+// GULF STREAM: Wide gentle flowing river with long sweeping bends
 const GULFSTREAM_PATH = [
   { x: 0, y: 0 },
-  { x: 12, y: -5 },
-  { x: 24, y: -12 },
-  { x: 36, y: -18 },
-  { x: 48, y: -15 },
-  { x: 60, y: -5 },
-  { x: 72, y: 8 },
-  { x: 84, y: 18 },
-  { x: 96, y: 20 },
+  { x: 15, y: -2 },
+  { x: 30, y: -6 },
+  { x: 45, y: -12 },
+  { x: 60, y: -14 },
+  { x: 75, y: -12 },
+  { x: 90, y: -6 },
+  { x: 105, y: 2 },
+  { x: 120, y: 8 },
+  { x: 135, y: 12 },
+  { x: 150, y: 10 },
 ];
 
-// RAPIDS: Chaotic quick direction changes like whitewater
+// RAPIDS: Extreme zigzag chaos - TECHNICAL NIGHTMARE
 const RAPIDS_PATH = [
   { x: 0, y: 0 },
-  { x: 6, y: -15 },
-  { x: 12, y: -8 },
-  { x: 18, y: -22 },
-  { x: 24, y: -12 },
-  { x: 30, y: 5 },
-  { x: 36, y: -5 },
-  { x: 42, y: 12 },
-  { x: 48, y: 2 },
-  { x: 54, y: 18 },
-  { x: 60, y: 8 },
-  { x: 66, y: -8 },
-  { x: 72, y: 0 },
+  { x: 5, y: -20 },
+  { x: 10, y: 5 },
+  { x: 15, y: -18 },
+  { x: 20, y: 8 },
+  { x: 25, y: -25 },
+  { x: 30, y: 12 },
+  { x: 35, y: -15 },
+  { x: 40, y: 18 },
+  { x: 45, y: -10 },
+  { x: 50, y: 22 },
+  { x: 55, y: -5 },
+  { x: 60, y: 15 },
+  { x: 65, y: -12 },
+  { x: 70, y: 8 },
+  { x: 75, y: 0 },
 ];
 
-// SPIRAL: Gradually tightening spiral pattern
+// SPIRAL: Tight inward spiral - GETS CLAUSTROPHOBIC
 const SPIRAL_PATH = [];
-for (let i = 0; i <= 14; i++) {
-  const angle = (i / 14) * Math.PI * 2.5; // 1.25 rotations
-  const radius = 35 - (i * 1.8); // Gradually tightening
+for (let i = 0; i <= 20; i++) {
+  const angle = (i / 20) * Math.PI * 3.5; // 1.75 rotations
+  const radius = 45 - (i * 2); // Tightening faster
   SPIRAL_PATH.push({
-    x: i * 6,
+    x: i * 5,
     y: Math.sin(angle) * radius,
   });
 }
 
-// CANYON: Tight winding like a narrow canyon pass
+// CANYON: Sharp hairpin switchbacks like a mountain road
 const CANYON_PATH = [
   { x: 0, y: 0 },
-  { x: 10, y: -12 },
-  { x: 20, y: -18 },
-  { x: 30, y: -22 },
-  { x: 40, y: -18 },
-  { x: 50, y: -8 },
-  { x: 60, y: 2 },
-  { x: 70, y: 8 },
-  { x: 80, y: 6 },
-  { x: 90, y: -2 },
+  { x: 15, y: -8 },
+  { x: 25, y: -20 },
+  { x: 28, y: -35 },
+  { x: 25, y: -50 },
+  { x: 15, y: -62 },
+  { x: 0, y: -68 },
+  { x: -15, y: -70 },
+  { x: -25, y: -60 },
+  { x: -28, y: -45 },
+  { x: -25, y: -30 },
+  { x: -10, y: -15 },
+  { x: 5, y: -5 },
 ];
 
-// VORTEX: Circular swirling pattern
+// VORTEX: Figure-8 with dynamic radius - DISORIENTING
 const VORTEX_PATH = [];
-for (let i = 0; i <= 16; i++) {
-  const angle = (i / 16) * Math.PI * 2.8; // 1.4 rotations
-  const radius = 28 + Math.sin(angle * 1.5) * 10; // Oscillating radius
+for (let i = 0; i <= 24; i++) {
+  const t = (i / 24) * Math.PI * 2;
+  const radius = 35 + Math.cos(t * 3) * 12; // Oscillating radius
   VORTEX_PATH.push({
-    x: i * 5.5,
-    y: Math.sin(angle) * radius + Math.cos(angle * 0.5) * 8,
+    x: i * 4,
+    y: Math.sin(t) * radius * Math.cos(t * 0.5),
   });
 }
 
