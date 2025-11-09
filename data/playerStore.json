@@ -7,8 +7,8 @@
       "flow": 163.2999999999999,
       "signals": 196.5
     },
-    "elo": 1165,
-    "spermPoints": 713,
+    "elo": 1185,
+    "spermPoints": 827,
     "raceHistory": [
       {
         "place": 1,
@@ -391,12 +391,45 @@
         "eloChange": 5,
         "eloAfter": 1165,
         "pointsEarned": 38
+      },
+      {
+        "place": 1,
+        "totalRacers": 4,
+        "trackId": "spiral",
+        "raceTime": 42.61666666666553,
+        "opponents": [
+          {
+            "name": "IonBlast",
+            "place": 2
+          },
+          {
+            "name": "NeonSpeed",
+            "place": 3
+          },
+          {
+            "name": "IceBreaker",
+            "place": 4
+          }
+        ],
+        "timestamp": "2025-11-09T13:18:08.098Z",
+        "eloChange": 20,
+        "eloAfter": 1185,
+        "pointsEarned": 114
       }
     ],
     "currentStreak": 4,
     "longestStreak": 4,
     "lastCheckInDate": "2025-11-13",
-    "todayHabits": {},
+    "todayHabits": {
+      "drinkMatcha": false,
+      "goon": false,
+      "sleep8Hours": false,
+      "drink2LWater": false,
+      "drinkAlcohol": false,
+      "smokeCigarettes": false,
+      "eatFastFood": false,
+      "hotLaptop": false
+    },
     "ownedClothing": [
       "67",
       "among-us"
