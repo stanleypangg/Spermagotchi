@@ -514,6 +514,7 @@ export default function Home() {
               currentStreak: playerData.currentStreak || 0,
               longestStreak: playerData.longestStreak || 0,
               lastCheckInDate: playerData.lastCheckInDate,
+              todayHabits: playerData.todayHabits || {},
               currentDayIndex: 1,
               createdAt: playerData.createdAt,
               history: [],
@@ -619,6 +620,9 @@ export default function Home() {
     }
   }, [createName, createRemoteSperm, fetchSpermState, scheduleFeedbackClear]);
 
+  // NOTE: This function is no longer used for habit toggling
+  // Habits are now only applied when "Next Day" is clicked via /api/player/skip-day
+  // Kept for backwards compatibility or future use
   const syncHabitForm = useCallback(
     async (nextHabits, previousHabits) => {
       if (!spermId) {

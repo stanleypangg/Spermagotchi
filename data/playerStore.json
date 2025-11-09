@@ -7,8 +7,8 @@
       "flow": 155.69999999999993,
       "signals": 189
     },
-    "elo": 1155,
-    "spermPoints": 617,
+    "elo": 1160,
+    "spermPoints": 655,
     "raceHistory": [
       {
         "place": 1,
@@ -343,6 +343,30 @@
         "eloChange": 20,
         "eloAfter": 1155,
         "pointsEarned": 112
+      },
+      {
+        "place": 3,
+        "totalRacers": 4,
+        "trackId": "gulfstream",
+        "raceTime": 43.39999999999882,
+        "opponents": [
+          {
+            "name": "HurricaneHit",
+            "place": 1
+          },
+          {
+            "name": "EveningSwift",
+            "place": 2
+          },
+          {
+            "name": "LokiTrick",
+            "place": 4
+          }
+        ],
+        "timestamp": "2025-11-09T13:05:34.888Z",
+        "eloChange": 5,
+        "eloAfter": 1160,
+        "pointsEarned": 38
       }
     ],
     "currentStreak": 1,
