@@ -19,30 +19,63 @@ export const MOCK_BALANCE = Object.freeze({
   },
 });
 
+const SPRITE_POOL = [
+  '/67.png',
+  '/amongus.png',
+  '/drunk.png',
+  '/fat.png',
+  '/happier.png',
+  '/happy.png',
+  '/laptop hot.png',
+  '/matcha.png',
+  '/neutral.png',
+  '/petri.png',
+  '/plug.png',
+  '/sad.png',
+  '/sadder.png',
+  '/smoking.png',
+  '/speed.png',
+];
+
+function shuffledSprites(pool, count) {
+  const copy = [...pool];
+  for (let i = copy.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy.slice(0, count);
+}
+
+const ASSIGNED_SPRITES = shuffledSprites(SPRITE_POOL, 4);
+
 export const MOCK_RACERS = Object.freeze([
   {
     id: 'player',
     name: 'You',
     tint: '#7dd3fc',
     stats: { MI: 58, LQ: 54, RE: 46, CS: 44 },
+    sprite: ASSIGNED_SPRITES[0] ?? '/67.png',
   },
   {
     id: 'dash',
     name: 'Dash',
     tint: '#f9a8d4',
     stats: { MI: 64, LQ: 48, RE: 42, CS: 36 },
+    sprite: ASSIGNED_SPRITES[1] ?? '/speed.png',
   },
   {
     id: 'glide',
     name: 'Glide',
     tint: '#bef264',
     stats: { MI: 52, LQ: 60, RE: 40, CS: 52 },
+    sprite: ASSIGNED_SPRITES[2] ?? '/amongus.png',
   },
   {
     id: 'vector',
     name: 'Vector',
     tint: '#c4b5fd',
     stats: { MI: 48, LQ: 50, RE: 58, CS: 46 },
+    sprite: ASSIGNED_SPRITES[3] ?? '/matcha.png',
   },
 ]);
 

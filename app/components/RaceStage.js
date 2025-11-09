@@ -14,6 +14,48 @@ const ZONE_COLORS = {
   viscous: '#fde68a',
 };
 
+const SPRITE_SIZE = Object.freeze({
+  width: 44,
+  height: 44,
+});
+
+const DEFAULT_SPRITE = '/neutral.png';
+const SPRITE_OVERRIDES = Object.freeze({
+  hyperburst: '/speed.png',
+  winner: '/happier.png',
+  finished: '/happy.png',
+  parked: '/petri.png',
+  viscous: '/fat.png',
+  gradient: '/matcha.png',
+  tired: '/sad.png',
+});
+
+function resolveSpermSprite(lane) {
+  if (!lane) return DEFAULT_SPRITE;
+  if (lane.hyperburst) {
+    return SPRITE_OVERRIDES.hyperburst;
+  }
+  if (lane.finished) {
+    return lane.place === 1
+      ? SPRITE_OVERRIDES.winner
+      : SPRITE_OVERRIDES.finished;
+  }
+  if (lane.parked) {
+    return SPRITE_OVERRIDES.parked;
+  }
+  if (lane.zone === 'viscous') {
+    return SPRITE_OVERRIDES.viscous;
+  }
+  if (lane.zone === 'gradient') {
+    return SPRITE_OVERRIDES.gradient;
+  }
+  const velocity = Math.max(0, lane.velocity ?? 0);
+  if (velocity < 120) {
+    return SPRITE_OVERRIDES.tired;
+  }
+  return lane.sprite ?? DEFAULT_SPRITE;
+}
+
 function polylineToPath(points) {
   if (!points?.length) return '';
   return points
@@ -226,20 +268,77 @@ export default function RaceStage({
         width="100%"
         style={{ maxWidth: width, height }}
         viewBox={`${bounds.minX} ${bounds.minY} ${viewBoxWidth} ${viewBoxHeight}`}
-        className="rounded-3xl bg-slate-50 shadow-[0_40px_90px_rgba(15,23,42,0.25)] ring-1 ring-slate-200"
+        className="rounded-[36px] bg-linear-to-br from-sky-100 via-purple-100 to-pink-100 shadow-[0_40px_90px_rgba(88,28,135,0.25)] ring-2 ring-sky-200"
       >
         <defs>
+          <linearGradient id="playground-track" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#bae6fd" />
+            <stop offset="50%" stopColor="#fce7f3" />
+            <stop offset="100%" stopColor="#fef3c7" />
+          </linearGradient>
+          <radialGradient id="playground-glow" cx="50%" cy="50%" r="70%">
+            <stop offset="0%" stopColor="rgba(255,255,255,0.85)" />
+            <stop offset="100%" stopColor="rgba(255,255,255,0)" />
+          </radialGradient>
+          <pattern
+            id="bubble-pattern"
+            x="0"
+            y="0"
+            width="60"
+            height="60"
+            patternUnits="userSpaceOnUse"
+          >
+            <circle cx="20" cy="20" r="6" fill="rgba(255,255,255,0.18)" />
+            <circle cx="45" cy="35" r="4" fill="rgba(255,255,255,0.12)" />
+            <circle cx="15" cy="50" r="3" fill="rgba(255,255,255,0.1)" />
+          </pattern>
           <radialGradient id="lane-glow" r="65%" cx="50%" cy="50%">
             <stop offset="0%" stopColor="rgba(255,255,255,0.8)" />
             <stop offset="100%" stopColor="rgba(255,255,255,0)" />
           </radialGradient>
-          <linearGradient id="track-texture" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="rgba(148,163,184,0.25)" />
-            <stop offset="50%" stopColor="rgba(226,232,240,0.85)" />
-            <stop offset="100%" stopColor="rgba(148,163,184,0.25)" />
+          <linearGradient id="tube-outer-wall" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#e0a4c9" />
+            <stop offset="25%" stopColor="#f0c6dd" />
+            <stop offset="75%" stopColor="#e0a4c9" />
+            <stop offset="100%" stopColor="#c78eb2" />
+          </linearGradient>
+          <linearGradient id="tube-inner-wall" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#b87ca3" />
+            <stop offset="25%" stopColor="#d4a1c6" />
+            <stop offset="75%" stopColor="#b87ca3" />
+            <stop offset="100%" stopColor="#a56890" />
+          </linearGradient>
+          <linearGradient id="tube-floor" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#e3f2fd" />
+            <stop offset="50%" stopColor="#f8d7e8" />
+            <stop offset="100%" stopColor="#ede7f6" />
+          </linearGradient>
+          <linearGradient id="tube-highlight" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="rgba(255,255,255,0.5)" />
+            <stop offset="100%" stopColor="rgba(255,255,255,0)" />
+          </linearGradient>
+          <linearGradient id="serration-stripe" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="rgba(136,71,120,0.15)" />
+            <stop offset="50%" stopColor="rgba(136,71,120,0.08)" />
+            <stop offset="100%" stopColor="rgba(136,71,120,0.15)" />
+          </linearGradient>
+          <linearGradient id="connection-piece" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#9b5a82" />
+            <stop offset="50%" stopColor="#b87ca3" />
+            <stop offset="100%" stopColor="#9b5a82" />
           </linearGradient>
           <filter id="thruster-glow">
             <feGaussianBlur stdDeviation="3.5" result="blur" />
+          </filter>
+          <filter id="tube-shadow" x="-30%" y="-30%" width="160%" height="160%">
+            <feDropShadow dx="0" dy="6" stdDeviation="10" floodColor="rgba(136,71,120,0.35)" />
+          </filter>
+          <filter id="player-glow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="6" result="coloredBlur"/>
+            <feMerge>
+              <feMergeNode in="coloredBlur"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
           </filter>
         </defs>
 
@@ -249,34 +348,123 @@ export default function RaceStage({
             y={overallBounds.minY - 140}
             width={overallBounds.width + 280}
             height={overallBounds.height + 280}
-            fill="url(#track-texture)"
-            opacity={0.25}
+            fill="url(#playground-track)"
+            opacity={0.55}
+          />
+        )}
+
+        {overallBounds && (
+          <rect
+            x={overallBounds.minX - 200}
+            y={overallBounds.minY - 200}
+            width={overallBounds.width + 400}
+            height={overallBounds.height + 400}
+            fill="url(#bubble-pattern)"
+            opacity={0.65}
           />
         )}
 
         <path
           d={outerPath}
-          stroke="#cbd5f5"
+          stroke="url(#tube-outer-wall)"
+          strokeWidth={12}
+          fill="none"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          filter="url(#tube-shadow)"
+        />
+
+        <path
+          d={outerPath}
+          stroke="url(#tube-highlight)"
           strokeWidth={6}
           fill="none"
-          opacity={0.75}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          opacity={0.6}
         />
 
         <path
           d={innerPath}
-          stroke="#cbd5f5"
+          stroke="url(#tube-inner-wall)"
+          strokeWidth={12}
+          fill="none"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          filter="url(#tube-shadow)"
+        />
+
+        <path
+          d={innerPath}
+          stroke="url(#tube-highlight)"
           strokeWidth={6}
           fill="none"
-          opacity={0.75}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          opacity={0.5}
         />
 
         <path
           d={centerPath}
-          stroke="url(#track-texture)"
+          stroke="url(#tube-floor)"
           strokeWidth={trackStroke}
           strokeLinecap="round"
           fill="none"
         />
+
+        {geometry.controlPoints && (() => {
+          const serrations = [];
+          const numSegments = Math.floor(geometry.totalLength / 25);
+          for (let i = 0; i <= numSegments; i++) {
+            const progress = i / numSegments;
+            const sample = sampleTrackAt(geometry, progress * geometry.totalLength);
+            const normal = { x: -sample.tangent.y, y: sample.tangent.x };
+            const outerRadius = (geometry.width ?? 80) / 2 + 6;
+            const innerRadius = -(geometry.width ?? 80) / 2 - 6;
+            serrations.push(
+              <line
+                key={`serration-${i}`}
+                x1={sample.x + normal.x * outerRadius}
+                y1={sample.y + normal.y * outerRadius}
+                x2={sample.x + normal.x * innerRadius}
+                y2={sample.y + normal.y * innerRadius}
+                stroke="url(#serration-stripe)"
+                strokeWidth={3}
+                opacity={0.6}
+              />
+            );
+          }
+          return serrations;
+        })()}
+
+        {geometry.controlPoints && (() => {
+          const connections = [];
+          const step = Math.floor(geometry.controlPoints.length / 5);
+          for (let i = 0; i < geometry.controlPoints.length; i += step) {
+            const pt = geometry.controlPoints[i];
+            const sample = sampleTrackAt(geometry, (i / geometry.controlPoints.length) * geometry.totalLength);
+            const normal = { x: -sample.tangent.y, y: sample.tangent.x };
+            const outerRadius = (geometry.width ?? 80) / 2 + 6;
+            const innerRadius = (geometry.width ?? 80) / 2 - 6;
+            connections.push(
+              <g key={`connection-${i}`}>
+                <path
+                  d={`M ${pt.x + normal.x * outerRadius} ${pt.y + normal.y * outerRadius} L ${pt.x + normal.x * innerRadius} ${pt.y + normal.y * innerRadius}`}
+                  stroke="url(#connection-piece)"
+                  strokeWidth={16}
+                  strokeLinecap="round"
+                />
+                <path
+                  d={`M ${pt.x - normal.x * outerRadius} ${pt.y - normal.y * outerRadius} L ${pt.x - normal.x * innerRadius} ${pt.y - normal.y * innerRadius}`}
+                  stroke="url(#connection-piece)"
+                  strokeWidth={16}
+                  strokeLinecap="round"
+                />
+              </g>
+            );
+          }
+          return connections;
+        })()}
 
         {geometry.zones.map((zone) => {
           const total = geometry.totalLength;
@@ -302,49 +490,59 @@ export default function RaceStage({
             key={lane.id}
             transform={`translate(${lane.x}, ${lane.y}) rotate(${((lane.heading ?? 0) * 180) / Math.PI})`}
           >
-            <rect
-              x={-4.6}
-              y={-14}
-              width={9.2}
-              height={28}
-              rx={4}
+            <defs>
+              <clipPath id={`clip-${lane.id}`}>
+                <circle cx={0} cy={0} r={SPRITE_SIZE.width / 2} />
+              </clipPath>
+            </defs>
+            <circle
+              cx={0}
+              cy={0}
+              r={SPRITE_SIZE.width / 2 + 4}
               fill={lane.tint ?? '#38bdf8'}
-              stroke="#0f172a"
-              strokeWidth={1.6}
+              opacity={0.6}
+              filter="url(#player-glow)"
             />
-            <rect
-              x={-3.8}
-              y={6}
-              width={7.6}
-              height={6.5}
-              rx={2.5}
-              fill="rgba(255,255,255,0.65)"
+            <circle
+              cx={0}
+              cy={0}
+              r={SPRITE_SIZE.width / 2}
+              fill="white"
+              stroke={lane.tint ?? '#38bdf8'}
+              strokeWidth={3}
+              filter="url(#tube-shadow)"
+            />
+            <image
+              href={resolveSpermSprite(lane)}
+              x={-SPRITE_SIZE.width * 1.1}
+              y={-SPRITE_SIZE.height * 0.8}
+              width={SPRITE_SIZE.width * 2.2}
+              height={SPRITE_SIZE.height * 2.2}
+              preserveAspectRatio="xMidYMid slice"
+              clipPath={`url(#clip-${lane.id})`}
             />
             {lane.hyperburst && (
               <ellipse
                 cx={0}
-                cy={16}
-                rx={6}
-                ry={12}
+                cy={SPRITE_SIZE.width / 2 + 8}
+                rx={16}
+                ry={22}
                 fill={lane.tint}
                 opacity={0.4}
                 filter="url(#thruster-glow)"
               />
             )}
-            <path
-              d="M0 -16 L2 -6 L-2 -6 Z"
-              fill="rgba(15,23,42,0.65)"
-            />
           </g>
         ))}
 
         {indicators.map((lane) => (
           <g key={`${lane.id}-indicator`} transform={`translate(${lane.edgeX}, ${lane.edgeY})`}>
             <circle
-              r={12}
-              fill={lane.tint ?? '#38bdf8'}
-              stroke="#0f172a"
-              strokeWidth={2}
+              r={14}
+              fill="white"
+              stroke={lane.tint ?? '#38bdf8'}
+              strokeWidth={2.5}
+              filter="url(#bubble-shadow)"
             />
             <text
               x={0}
@@ -365,11 +563,11 @@ export default function RaceStage({
         ))}
       </svg>
 
-      <div className="pointer-events-none absolute left-6 top-6 flex flex-col gap-2 text-xs font-semibold text-slate-100 drop-shadow">
+      <div className="pointer-events-none absolute left-6 top-6 flex flex-col gap-3 text-xs font-semibold text-white drop-shadow-lg">
         {leaderboard.slice(0, 3).map((lane) => (
           <div
             key={`hud-${lane.id}`}
-            className="flex items-center gap-3 rounded-full bg-slate-900/65 px-4 py-2 backdrop-blur"
+            className="flex items-center gap-3 rounded-full bg-linear-to-r from-sky-500/90 via-fuchsia-500/80 to-rose-500/80 px-4 py-2 backdrop-blur-md shadow-lg"
           >
             <span
               className="h-2 w-2 rounded-full"
@@ -384,32 +582,35 @@ export default function RaceStage({
         ))}
       </div>
 
-      <div className="pointer-events-none absolute bottom-5 right-5 flex items-center gap-2 rounded-2xl bg-slate-900/80 px-4 py-3 text-xs font-semibold text-slate-200 backdrop-blur">
-        <div className="relative h-12 w-12 rounded-full border border-slate-500">
+      <div className="pointer-events-none absolute bottom-5 right-5 flex items-center gap-3 rounded-2xl bg-linear-to-r from-indigo-500/90 via-violet-500/80 to-sky-500/90 px-5 py-3 text-xs font-semibold text-white backdrop-blur-md shadow-2xl">
+        <div className="relative h-14 w-14 rounded-full border border-white/40 bg-white/15 shadow-inner">
           <div
-            className="absolute inset-1 rounded-full"
+            className="absolute inset-[6px] rounded-full"
             style={{
-              background: 'radial-gradient(circle at 30% 30%, rgba(255,255,255,0.35), transparent)',
+              background:
+                'radial-gradient(circle at 30% 30%, rgba(255,255,255,0.55), transparent)',
             }}
           />
           {frame?.lanes?.map((lane) => (
             <div
               key={`dot-${lane.id}`}
-              className="absolute h-2 w-2 rounded-full shadow-[0_0_10px_rgba(255,255,255,0.45)]"
+              className="absolute h-2.5 w-2.5 rounded-full shadow-[0_0_15px_rgba(255,255,255,0.55)]"
               style={{
                 backgroundColor: lane.tint ?? '#38bdf8',
-                left: `${50 + Math.cos(lane.heading ?? 0) * 22}%`,
-                top: `${50 + Math.sin(lane.heading ?? 0) * 22}%`,
+                left: `${50 + Math.cos(lane.heading ?? 0) * 30}%`,
+                top: `${50 + Math.sin(lane.heading ?? 0) * 30}%`,
               }}
             />
           ))}
         </div>
-        <div className="flex flex-col text-[10px] leading-tight">
-          <span>Speed</span>
-          <span className="text-base font-bold text-white">
+        <div className="flex flex-col text-[11px] leading-tight">
+          <span className="uppercase tracking-[0.15em] text-[10px] text-white/80">
+            Speed
+          </span>
+          <span className="text-lg font-black text-white drop-shadow">
             {((leader?.velocity ?? 0) / 100).toFixed(1)} m/s
           </span>
-          <span className="text-slate-400">
+          <span className="text-white/75">
             Zone {leader?.zone ?? '--'}
           </span>
         </div>
