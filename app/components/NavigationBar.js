@@ -2,8 +2,8 @@
 
 export default function NavigationBar({ items, activeTab, onSelect }) {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 flex w-full items-center justify-center border-t border-slate-200 bg-white/90 px-3 py-4 backdrop-blur-md transition duration-300">
-      <div className="flex w-full max-w-xl items-center justify-between gap-2">
+    <nav className="fixed bottom-6 left-1/2 z-50 w-full max-w-3xl -translate-x-1/2 px-4">
+      <div className="flex w-full items-center justify-between gap-2 rounded-3xl border border-slate-200 bg-white/90 px-4 py-3 shadow-lg backdrop-blur-md transition duration-300">
         {items.map((item) => {
           const isActive = activeTab === item.id;
           return (

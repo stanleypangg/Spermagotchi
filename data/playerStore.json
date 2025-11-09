@@ -408,5 +408,49 @@
     ],
     "equippedBackground": "sperm-kingdom",
     "createdAt": "2025-11-09T10:58:34.177Z"
+  },
+  "cache": {
+    "name": "cache",
+    "stats": {
+      "motility": 50,
+      "linearity": 50,
+      "flow": 50,
+      "signals": 50
+    },
+    "elo": 1000,
+    "spermPoints": 185,
+    "raceHistory": [],
+    "currentStreak": 0,
+    "longestStreak": 0,
+    "lastCheckInDate": null,
+    "todayHabits": {},
+    "ownedClothing": [],
+    "equippedClothing": null,
+    "ownedBackgrounds": [
+      "sperm-kingdom"
+    ],
+    "equippedBackground": "sperm-kingdom",
+    "createdAt": "2025-11-09T14:40:16.060Z"
+  },
+  "mnmnm": {
+    "name": "mnmnm",
+    "stats": {
+      "motility": 50,
+      "linearity": 50,
+      "flow": 50,
+      "signals": 50
+    },
+    "elo": 1000,
+    "spermPoints": 250,
+    "raceHistory": [],
+    "currentStreak": 0,
+    "longestStreak": 0,
+    "lastCheckInDate": null,
+    "todayHabits": {},
+    "ownedClothing": [],
+    "equippedClothing": null,
+    "ownedBackgrounds": [],
+    "equippedBackground": null,
+    "createdAt": "2025-11-09T15:08:35.587Z"
   }
 }

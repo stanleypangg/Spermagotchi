@@ -8,14 +8,15 @@
     "start": "next start"
   },
   "dependencies": {
-    "react": "19.2.0",
-    "react-dom": "19.2.0",
+    "@dimforge/rapier2d-compat": "^0.14.0",
+    "@supabase/supabase-js": "^2.80.0",
     "next": "16.0.1",
-    "@dimforge/rapier2d-compat": "^0.14.0"
+    "react": "19.2.0",
+    "react-dom": "19.2.0"
   },
   "devDependencies": {
-    "babel-plugin-react-compiler": "1.0.0",
     "@tailwindcss/postcss": "^4",
+    "babel-plugin-react-compiler": "1.0.0",
     "tailwindcss": "^4"
   }
 }

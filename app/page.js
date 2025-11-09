@@ -1101,7 +1101,7 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
   }
 
   const renderHomeView = () => (
-    <main className="relative flex min-h-[calc(100vh-88px)] flex-col pb-[88px]">
+    <main className="relative flex min-h-screen flex-col pb-32">
       {homeBackgroundImage ? (
         <>
           <Image
@@ -1127,8 +1127,8 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
           >
             <div className={`flex items-center gap-2 rounded-full border-2 px-4 py-2 shadow-lg transition hover:scale-105 hover:shadow-xl ${
               (sperm.currentStreak || 0) > 0
-                ? 'border-orange-300 bg-gradient-to-r from-orange-100 to-amber-100'
-                : 'border-slate-300 bg-gradient-to-r from-slate-100 to-slate-200'
+                ? 'border-orange-300 bg-linear-to-r from-orange-100 to-amber-100'
+                : 'border-slate-300 bg-linear-to-r from-slate-100 to-slate-200'
             }`}>
               <span className="text-2xl">{(sperm.currentStreak || 0) > 0 ? '🔥' : '📅'}</span>
               <div className="text-left">
@@ -1204,7 +1204,7 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
             </div>
                 
                 {/* Right side: Rank Badge */}
-                <div className={`flex-shrink-0 rounded-full bg-gradient-to-r ${rankInfo.color} px-3 py-1.5 shadow-lg ${rankInfo.glow}`}>
+                <div className={`shrink-0 rounded-full bg-linear-to-r ${rankInfo.color} px-3 py-1.5 shadow-lg ${rankInfo.glow}`}>
                   <p className="text-xs font-black text-white drop-shadow-md">{rankInfo.rank}</p>
                 </div>
                 
@@ -1243,7 +1243,7 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
           aria-modal={showTodos}
           aria-hidden={!showTodos}
           aria-labelledby="daily-todos-title"
-          className="fixed left-0 top-0 z-40 flex flex-col overflow-hidden rounded-[32px] border border-indigo-100/70 bg-white/95 px-7 pb-8 pt-9 shadow-[0_24px_60px_rgba(63,61,86,0.16)] transition-all duration-500 ease-out"
+          className="fixed left-0 top-0 z-40 flex flex-col overflow-hidden border border-indigo-100/70 bg-white/95 px-7 pb-8 pt-9 shadow-[0_24px_60px_rgba(63,61,86,0.16)] transition-all duration-500 ease-out"
           style={{
             width: TODO_PANEL_WIDTH,
             height: panelHeight,
@@ -1469,7 +1469,7 @@ const currentBackgroundPreviewItem = previewBackgroundItem ?? equippedBackground
                         setError('Failed to advance day');
                       }
                     }}
-                    className="rounded-full border-2 border-orange-300 bg-gradient-to-r from-orange-100 to-amber-100 px-4 py-2 text-sm font-bold text-orange-700 shadow-md transition hover:from-orange-200 hover:to-amber-200 hover:scale-105"
+                    className="rounded-full border-2 border-orange-300 bg-linear-to-r from-orange-100 to-amber-100 px-4 py-2 text-sm font-bold text-orange-700 shadow-md transition hover:from-orange-200 hover:to-amber-200 hover:scale-105"
                   >
                     ⏭️ Next Day (Demo)
                   </button>
